@@ -11,7 +11,7 @@ class DetailMasuk extends Model
     use HasFactory;
     protected $table = 'detail_barangmasuk';
     protected $fillable = [
-        'IdBarang',
+        'IdRoster',
         'IdMasuk',
         'IdSupplier', // ini buat id
         'QtyMasuk',
@@ -20,10 +20,7 @@ class DetailMasuk extends Model
     ];
 
     // relasi ke laporan
-    public function laporan()
-    {
-        return $this->hasMany(Laporan::class, 'IdMasuk', 'IdMasuk');
-    }
+    // laporan() relation removed; Laporan model not present
 
     // If you really have no primary key, you can uncomment the next two lines:
     // public $incrementing = false;
@@ -35,15 +32,15 @@ class DetailMasuk extends Model
         return $this->belongsTo(BarangMasuk::class, 'IdMasuk', 'IdMasuk');
     }
 
-    // Relationship to Supplier
+    // Relationship to Supplier (now using users table)
     public function supplier()
     {
-        return $this->belongsTo(Supplier::class, 'IdSupplier', 'IdSupplier');
+        return $this->belongsTo(Supplier::class, 'IdSupplier', 'id');
     }
 
     // Relationship to Items (Barang)
     public function item()
     {
-        return $this->belongsTo(Items::class, 'IdBarang', 'IdBarang');
+        return $this->belongsTo(Items::class, 'IdRoster', 'IdRoster');
     }
 }

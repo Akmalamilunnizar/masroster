@@ -53,23 +53,11 @@ class TypeItemsController extends Controller
     {
         // dd($request->all());
 
-        // Ambil ID terakhir
-        $latestType = TypeItems::orderBy('IdJenisBarang', 'desc')->first();
-
-        if (!$latestType) {
-            $newId = 'S0001';
-        } else {
-            // Ambil angka dari ID terakhir
-            $number = intval(substr($latestType->IdJenisBarang, 3)) + 1;
-            $newId = 'S' . str_pad($number, 4, '0', STR_PAD_LEFT);
-        }
-
         $request->validate([
-            'JenisBarang' => 'required|unique:jenisbarang',
+            'JenisBarang' => 'required|unique:jenisbarang,JenisBarang',
         ]);
 
         TypeItems::create([
-            'IdJenisBarang' => $newId,
             'JenisBarang' => $request->JenisBarang,
         ]);
 
@@ -96,26 +84,25 @@ public function UpdateType(Request $request)
     // Ambil data lama dari database
     $oldData = TypeItems::where('IdJenisBarang', $request->original_id)->first();
 
+    if (!$oldData) {
+        return redirect()->route('alltype')->with('error', 'Data tidak ditemukan.');
+    }
+
     // Validasi
     $request->validate([
-        'IdJenisBarang' => [
+        'JenisBarang' => [
             'required',
-            Rule::unique('jenisbarang')->ignore($request->original_id, 'IdJenisBarang'),
+            Rule::unique('jenisbarang', 'JenisBarang')->ignore($request->original_id, 'IdJenisBarang'),
         ],
-        'JenisBarang' => ['required'],
     ]);
 
     // Cek apakah ada perubahan
-    if (
-        $oldData->IdJenisBarang === $request->IdJenisBarang &&
-        $oldData->JenisBarang === $request->JenisBarang
-    ) {
+    if ($oldData->JenisBarang === $request->JenisBarang) {
         return redirect()->route('alltype')->with('message', 'Tidak ada perubahan yang dilakukan.');
     }
 
-    // Update data jika ada perubahan
+    // Update data jika ada perubahan (hanya JenisBarang)
     TypeItems::where('IdJenisBarang', $request->original_id)->update([
-        'IdJenisBarang' => $request->IdJenisBarang,
         'JenisBarang' => $request->JenisBarang,
     ]);
 
@@ -233,5 +220,64 @@ public function UpdateType(Request $request)
 
 
     //     return $form;
-    // }
+    //     }
+
+    public function batchDelete(Request $request)
+    {
+        $request->validate([
+            'type_ids' => 'required|array',
+            'type_ids.*' => 'required|string'
+        ]);
+
+        $deletedCount = 0;
+        $errors = [];
+
+        foreach ($request->type_ids as $typeId) {
+            try {
+                // Check if this type is being used by any items
+                $itemsUsingType = \App\Models\Produk::where('id_jenis', $typeId)->count();
+                
+                if ($itemsUsingType > 0) {
+                    $errors[] = "Jenis barang dengan ID: $typeId tidak dapat dihapus karena masih digunakan oleh $itemsUsingType item";
+                    continue;
+                }
+
+                // Delete the type
+                \App\Models\TypeItems::where('IdJenisBarang', $typeId)->delete();
+                $deletedCount++;
+            } catch (\Exception $e) {
+                $errors[] = "Gagal menghapus jenis barang dengan ID: $typeId - " . $e->getMessage();
+            }
+        }
+
+        if (count($errors) > 0) {
+            return redirect()->route('alltype')->with('message', 'Beberapa jenis barang gagal dihapus: ' . implode(', ', $errors))->with('alert', 'warning');
+        }
+
+        return redirect()->route('alltype')->with('message', "Berhasil menghapus $deletedCount jenis barang!")->with('alert', 'success');
+    }
+
+    public function quickAddJenis(Request $request)
+    {
+        try {
+            $request->validate([
+                'JenisBarang' => 'required|unique:jenisbarang,JenisBarang'
+            ]);
+
+            $jenis = TypeItems::create([
+                'JenisBarang' => $request->JenisBarang
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'id' => $jenis->IdJenisBarang,
+                'name' => $jenis->JenisBarang
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
 }

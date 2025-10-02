@@ -6,3 +6,34 @@
 
 // Bootstrap
 @import 'bootstrap/scss/bootstrap';
+
+/* Fix sidebar overlap issues - Global styles */
+.layout-page {
+  margin-left: 280px !important;
+  width: calc(100% - 280px) !important;
+  padding-left: 0.5rem !important;
+}
+
+.container-xxl {
+  margin-left: 0 !important;
+  padding-left: 1rem !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.container-xxl.flex-grow-1.container-p-y {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  margin-left: 0 !important;
+}
+
+.layout-container {
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.content-wrapper {
+  margin-left: 0 !important;
+  width: 100% !important;
+}

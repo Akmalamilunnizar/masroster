@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\LaporanTransaksi;
 
 class Transaksi extends Model
 {
@@ -18,10 +17,9 @@ class Transaksi extends Model
 
     protected $fillable = [
         'IdTransaksi',
-        'username',
-        'id',
+        'id_admin',
+        'id_customer',
         'address_id',
-        'alamat_pengiriman',
         'Bayar',
         'GrandTotal',
         'tglTransaksi',
@@ -30,7 +28,14 @@ class Transaksi extends Model
         'tglUpdate',
         'notes',
         'shipping_method',
-        'shipping_type'
+        'delivery_method',
+        'shipping_type',
+        'ongkir',
+    ];
+
+    protected $casts = [
+        'tglTransaksi' => 'datetime',
+        'tglUpdate' => 'datetime',
     ];
 
     public function detailTransaksi()
@@ -40,23 +45,25 @@ class Transaksi extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'IdCust', 'IdCust');
+        return $this->belongsTo(User::class, 'id_customer', 'id');
     }
 
-    public function user()
+    public function admin()
     {
-        return $this->belongsTo(User::class, 'username', 'username');
+        return $this->belongsTo(User::class, 'id_admin', 'id');
     }
+    
+    public function address()
+    {
+        return $this->belongsTo(Address::class, 'address_id', 'id');
+    }
+    
     public function detail()
     {
-        return $this->belongsTo(User::class, 'username', 'username');
+        return $this->hasMany(DetailTransaksi::class, 'IdTransaksi', 'IdTransaksi');
     }
 
-
-    public function laporantransaksi()
-    {
-        return $this->hasMany(LaporanTransaksi::class, 'IdTransaksi', 'IdTransaksi');
-    }
+    // laporantransaksi() relation removed; LaporanTransaksi model not present
 
     public function produk()
     {
@@ -66,9 +73,6 @@ class Transaksi extends Model
         ;
     }
 
-    public function address()
-    {
-        return $this->belongsTo(\App\Models\Address::class, 'address_id', 'id');
-    }
+
 
 }

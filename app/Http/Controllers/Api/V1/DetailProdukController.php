@@ -13,7 +13,7 @@ class DetailProdukController extends Controller
 {
     public function show(string $id): View
     {
-        $produk = Produk::with(['sizes.satuan'])->findOrFail($id);
+        $produk = Produk::with(['sizes', 'jenisRoster', 'motif'])->findOrFail($id);
 
         // Get description from database
         $description = $produk->deskripsi ?? 'Produk berkualitas dengan hasil cetak yang memukau. Tersedia dalam berbagai ukuran dan finishing.';
@@ -21,8 +21,8 @@ class DetailProdukController extends Controller
         // Get user data if authenticated
         $user = null;
         $userPhone = '';
-        if (auth()->check()) {
-            $user = auth()->user();
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $user = \Illuminate\Support\Facades\Auth::user();
             $userPhone = $user->nomor_telepon ?? '';
         }
 

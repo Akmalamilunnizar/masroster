@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Export 7 Hari - Form Inspeksi Power Tong</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 10px;
+        }
+
+        .logo {
+            width: 100px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            border: 1px solid black;
+            margin-top: 10px;
+            /* page-break-inside: avoid; */
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 4px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .no-border {
+            border: none !important;
+        }
+
+        .table-header {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        td:last-child,
+        th:last-child {
+            border-right: 1px solid black !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    {{-- <div style="text-align: center;">
+        <img src="{{ public_path('main_assets/icons/acs.png') }}" class="logo" alt="Logo">
+        <div class="title">Checklist Harian Power Tong</div>
+        <div style="margin-top: 5px;">Unit: {{ $form->rigUnit->rig_unit ?? 'N/A' }}</div>
+    </div> --}}
+
+    <table>
+        <thead>
+            <tr>
+                <td rowspan="2" colspan="8" style="text-align: center; vertical-align: middle;border:1px solid black">
+                    <img src="{{ public_path('main_assets/icons/acs.png') }}" class="logo" alt="Logo">
+                </td>
+                <td rowspan="2" colspan="7" style="text-align: center; vertical-align: middle;border:1px solid black">
+                    CHECKLIST INSPEKSI POWER
+                    TONG
+                </td>
+            </tr>
+            <tr></tr>
+            <tr>
+                <td rowspan="2" colspan="8"
+                    style="text-align: center; vertical-align: middle; font-weight:bold;border:1px solid black">
+                    PT.ASRINDO CITRASENI SATRIA</td>
+                <td style="text-align: center; vertical-align: middle;border:1px solid black">Rev.</td>
+                <td colspan="2" style="text-align: center; vertical-align: middle;border:1px solid black">Tanggal
+                    Terbit</td>
+                <td style="text-align: center; vertical-align: middle;border:1px solid black">Halaman</td>
+                <td colspan="3" style="text-align: center; vertical-align: middle;border:1px solid black">Nomor
+                    Informasi Dokumen</td>
+            </tr>
+
+            <tr>
+                <td style="text-align: center; vertical-align: middle;border:1px solid black">03</td>
+                <td colspan="2" style="text-align: center; vertical-align: middle;border:1px solid black">01 Agustus
+                    2023</td>
+                <td style="text-align: center; vertical-align: middle;border:1px solid black">1/1</td>
+                <td colspan="3" style="text-align: center; vertical-align: middle;border:1px solid black">
+                    ACS-F-RIG-023</td>
+            </tr>
+            <tr>
+                <td colspan="8" style="text-align: center; vertical-align: middle;border:1px solid white"></td>
+                <td colspan="7" style="text-align: left; vertical-align: middle;border:1px solid white">Isilah
+                    cheklist dibawah ini sesuai dengan kondisi berikut:</td>
+
+            </tr>
+            <tr>
+                <td colspan="1" style="text-align: left; vertical-align: middle;border:1px solid white"></td>
+                <td colspan="3"
+                    style="text-align: left; vertical-align: middle; font-style:italic; border: 1px solid white;">
+                    RIG/Unit</td>
+                <td colspan="1" style="text-align: left; vertical-align: middle;border:1px solid white">:
+                    {{ $form->rigUnit->rig_unit ?? 'N/A' }}</td>
+                <td colspan="3" style="text-align: left; vertical-align: middle;border:1px solid white"></td>
+                <td colspan="5" style="text-align: left; vertical-align: middle;border:1px solid white">
+                    Terpenuhi/layak/bagus</td>
+                <td colspan="2" style="text-align: left; vertical-align: middle;border:1px solid white">:V ya</td>
+            </tr>
+            <tr>
+                <td colspan="8" style="text-align: center; vertical-align: middle;border:1px solid white"></td>
+                <td colspan="5" style="text-align: left; vertical-align: middle;border:1px solid white">Tidak
+                    Terpenuhi/Tidak layak/ Tidak bagus</td>
+                <td colspan="2" style="text-align: left; vertical-align: middle;border:1px solid white">:X tidak</td>
+            </tr>
+            <tr>
+                <td colspan="8"
+                    style="text-align: center; vertical-align:middle; border:1px solid white; border-bottom: 1px solid black">
+                </td>
+                <td colspan="5"
+                    style="text-align: left; vertical-align: middle;border:1px solid white ; border-bottom: 1px solid black">
+                    Tidak diterapkan</td>
+                <td colspan="2"
+                    style="text-align: left; vertical-align: middle;border:1px solid white ; border-bottom: 1px solid black">
+                    :N/A</td>
+            </tr>
+            <tr>
+                <td rowspan="3"
+                    style="text-align: center; vertical-align: middle; font-weight:bold;width: 10%;border:1px solid black">
+                    NO</td>
+                <td rowspan="3" colspan="6"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">URAIAN
+                </td>
+                @foreach ($data as $item)
+                <td colspan="1"
+                    style="text-align: left; vertical-align: middle;font-weight:bold;border:1px solid black">Tgl:
+                    {{ $item['Tanggal'] }}</td>
+                @endforeach
+                <td rowspan="3" colspan="1"
+                    style="text-align: center; vertical-align: middle; font-weight:bold;border:1px solid black">
+                    Keterangan
+                </td>
+
+            </tr>
+            <tr>
+                @foreach ($data as $item)
+                <td colspan="1"
+                    style="text-align: left; vertical-align: middle;font-weight:bold;border:1px solid black">Lokasi:
+                    {{ $item['Lokasi'] }}</td>
+                @endforeach
+            </tr>
+            <tr>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari
+                    ke-1:</td>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari
+                    Ke-2:</td>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari Ke-3
+                </td>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari Ke-4
+                </td>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari Ke-5
+                </td>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari Ke-6
+                </td>
+                <td colspan="1"
+                    style="text-align: center; vertical-align: middle;font-weight:bold;border:1px solid black">Hari Ke-7
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($params as $index => $detail)
+            <tr>
+                <td style="text-align: center; vertical-align: middle;border:1px solid black">{{ $index + 1 }}
+                </td>
+                <td colspan="6" style="text-align: left; vertical-align: middle;border:1px solid black">
+                    {{ $detail }}</td>
+                @foreach ($data as $item)
+                @php
+                $current = is_array($item[$detail])
+                ? $item[$detail]
+                : ['kondisi' => null, 'keterangan' => null];
+                @endphp
+
+                <td style="text-align: center; vertical-align: middle;border:1px solid black">
+                    @if ($current['kondisi'] === '1')
+                    V
+                    @elseif ($current['kondisi'] === '2')
+                    X
+                    @else
+                    -
+                    @endif
+                </td>
+                @endforeach
+                <td style="text-align: left; vertical-align: middle;border:1px solid black"></td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="7" style="text-align: center; vertical-align: middle; border: 1px solid black">
+                    Diinspeksi Oleh (Floorman),</td>
+                @foreach ($data as $item)
+                <td style="text-align: center; vertical-align: middle; border: 1px solid black">
+                    {{ $item['Inspektor'] ?? '-' }}
+                </td>
+                @endforeach
+                <td style="border: 1px solid black;"></td>
+
+            </tr>
+            <tr>
+                <td colspan="7" style="text-align: center; vertical-align: middle; border: 1px solid black">Diperiksa
+                    Oleh (Approveer),</td>
+                @foreach ($data as $item)
+                <td style="text-align: center; vertical-align: middle; border: 1px solid black">
+                    {{ $item['Approver'] ?? '-' }}
+                </td>
+                @endforeach
+                <td style="border: 1px solid black;"></td>
+            </tr>
+        </tfoot>
+
+    </table>
+</body>
+
+</html>

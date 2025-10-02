@@ -20,10 +20,11 @@ class Size extends Model
         'id_satuan'
     ];
 
-    public function satuan()
-    {
-        return $this->belongsTo(Satuan::class, 'id_satuan', 'IdSatuan');
-    }
+    // Satuan model has been removed; keep method for backward compatibility returning null relation
+    // public function satuan()
+    // {
+    //     return $this->belongsTo(Satuan::class, 'id_satuan', 'IdSatuan');
+    // }
 
     public function produks()
     {

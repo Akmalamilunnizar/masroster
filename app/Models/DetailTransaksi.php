@@ -13,7 +13,7 @@ class DetailTransaksi extends Model
 
     protected $fillable = [
         'IdTransaksi',
-        'IdProduk',
+        'IdRoster',
         'id_ukuran',
         'CustomUkuran',
         'QtyProduk',
@@ -28,7 +28,7 @@ class DetailTransaksi extends Model
 
     public function produk()
     {
-        return $this->belongsTo(Produk::class, 'IdProduk', 'IdProduk');
+        return $this->belongsTo(Produk::class, 'IdRoster', 'IdRoster');
     }
 
     public function size()

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Laporan;
 
 class BarangMasuk extends Model
 {
@@ -19,9 +18,6 @@ class BarangMasuk extends Model
     ];
 
 
-    public function laporan()
-    {
-        return $this->hasMany(Laporan::class, 'IdIn', 'idmasuk');
-    }
+    // laporan() relation removed; Laporan model not present
 
 }

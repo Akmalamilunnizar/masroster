@@ -10,11 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\TypeItems;
-use App\Models\Satuan;
-use App\Models\Supplier;
+use App\Models\Size;
 use App\Models\Items;
 use Illuminate\Validation\Rule;
-use Encore\Admin\Layout\Content;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ItemsController extends Controller
@@ -29,8 +27,8 @@ class ItemsController extends Controller
         // Get all jenis barang for the filter dropdown
         $jenisBarang = TypeItems::all();
 
-        // Start query with relationships
-        $query = Items::with(['jenisBarang', 'satuan']);
+        // Start query with relationships (satuan removed)
+        $query = Items::with(['jenisBarang']);
 
         // Filter by jenis barang if selected
         if ($jenis_barang) {
@@ -40,7 +38,7 @@ class ItemsController extends Controller
         // Filter by search term
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('IdBarang', 'like', "%{$search}%")
+                $q->where('IdRoster', 'like', "%{$search}%")
                   ->orWhere('NamaBarang', 'like', "%{$search}%");
             });
         }
@@ -50,7 +48,7 @@ class ItemsController extends Controller
 
         foreach ($items as $item) {
             // Try to get the latest stock-in for the selected month/year
-            $queryMasuk = DetailMasuk::where('IdBarang', $item->IdBarang)
+            $queryMasuk = DetailMasuk::where('IdRoster', $item->IdRoster)
                 ->when($bulan, function ($q) use ($bulan) {
                     $q->whereMonth('created_at', $bulan);
                 })
@@ -62,7 +60,7 @@ class ItemsController extends Controller
 
             // If not found, get the latest stock-in regardless of filter
             if (!$queryMasuk) {
-                $queryMasuk = DetailMasuk::where('IdBarang', $item->IdBarang)
+                $queryMasuk = DetailMasuk::where('IdRoster', $item->IdRoster)
                     ->orderBy('created_at', 'desc')
                     ->first();
             }
@@ -74,14 +72,14 @@ class ItemsController extends Controller
             }
 
             $item->latestDetailKeluar = DB::table('detail_barangkeluar')
-                ->where('IdBarang', $item->IdBarang)
+                ->where('IdRoster', $item->IdRoster)
                 ->orderBy('created_at', 'desc')
                 ->first();
         }
 
         // Get stock history with filters
         $riwayatStok = DB::table('detail_barangmasuk')
-            ->join('databarang', 'detail_barangmasuk.IdBarang', '=', 'databarang.IdBarang')
+            ->join('databarang', 'detail_barangmasuk.IdRoster', '=', 'databarang.IdRoster')
             ->join('barangmasuk', 'detail_barangmasuk.IdMasuk', '=', 'barangmasuk.IdMasuk')
             ->when($bulan, function ($q) use ($bulan) {
                 $q->whereMonth('barangmasuk.tglMasuk', $bulan);
@@ -104,7 +102,7 @@ class ItemsController extends Controller
 
         // Get stock exit history with filters
         $riwayatKeluar = DB::table('detail_barangkeluar')
-            ->join('databarang', 'detail_barangkeluar.IdBarang', '=', 'databarang.IdBarang')
+            ->join('databarang', 'detail_barangkeluar.IdRoster', '=', 'databarang.IdRoster')
             ->join('barangkeluar', 'detail_barangkeluar.IdKeluar', '=', 'barangkeluar.IdKeluar')
             ->when($bulan, function ($q) use ($bulan) {
                 $q->whereMonth('barangkeluar.tglKeluar', $bulan);
@@ -133,10 +131,10 @@ class ItemsController extends Controller
         $bulan = $request->bulan;
         $tahun = $request->tahun;
 
-        $items = Items::with(['jenisBarang', 'satuan'])->get();
+        $items = Items::with(['jenisBarang'])->get();
 
         foreach ($items as $item) {
-            $queryMasuk = DetailMasuk::where('IdBarang', $item->IdBarang)
+            $queryMasuk = DetailMasuk::where('IdRoster', $item->IdRoster)
                 ->when($bulan, function ($q) use ($bulan) {
                     $q->whereMonth('created_at', $bulan);
                 })
@@ -153,7 +151,7 @@ class ItemsController extends Controller
             }
 
             $item->latestDetailKeluar = DB::table('detail_barangkeluar')
-                ->where('IdBarang', $item->IdBarang)
+                ->where('IdRoster', $item->IdRoster)
                 ->orderBy('created_at', 'desc')
                 ->first();
         }
@@ -189,21 +187,18 @@ class ItemsController extends Controller
         // dd($username);
 
         // Ambil ID terakhir dari tabel supplier
-        $lastSupplier = Supplier::orderBy('IdSupplier', 'desc')->first();
-        $newIdSupplier = $lastSupplier ? 'SP' . str_pad((int) substr($lastSupplier->IdSupplier, 2) + 1, 4, '0', STR_PAD_LEFT) : 'SP0001';
-
-        $suppliers = Supplier::all();
+        $sizeList = Size::all();
         $typeid = TypeItems::all();
-        $typeS = Satuan::all();
+        // $typeS = Satuan::all();
 
-        return view("admin.additems", compact('typeid', 'typeS', 'newIdSupplier', 'newIdMasuk', 'typeid', 'typeS', 'suppliers', 'username'));
+        return view("admin.additems", compact('typeid', 'newIdMasuk', 'typeid', 'sizeList', 'username'));
     }
 
 
     public function StoreItem(Request $request)
     {
         $request->validate([
-            'IdBarang' => 'required|unique:databarang',
+            'IdRoster' => 'required|unique:databarang',
             'NamaBarang' => 'required|unique:databarang',
             'IdJenisBarang' => 'required',
             'IdSatuan' => 'required',
@@ -217,7 +212,7 @@ class ItemsController extends Controller
 
         // Simpan ke tabel databarang (timestamps auto)
         Items::create([
-            'IdBarang' => $request->IdBarang,
+            'IdRoster' => $request->IdRoster,
             'NamaBarang' => $request->NamaBarang,
             'IdJenisBarang' => $request->IdJenisBarang,
             'JumlahStok' => 0, // Tidak perlu diisi karena udah ada trigger sql
@@ -235,7 +230,7 @@ class ItemsController extends Controller
         DetailMasuk::create([
             'IdMasuk' => $request->IdMasuk,
             'IdSupplier' => $request->IdSupplier,
-            'IdBarang' => $request->IdBarang,
+            'IdRoster' => $request->IdRoster,
             'QtyMasuk' => $request->QtyMasuk,
             'HargaSatuan' => $request->HargaSatuan,
             'SubTotal' => $request->SubTotal,
@@ -244,16 +239,16 @@ class ItemsController extends Controller
         return redirect()->route('allitems')->with('message', 'Barang telah berhasil ditambah!');
     }
 
-    public function detail($IdBarang)
+    public function detail($IdRoster)
     {
         // Ambil data barang dengan relasi yang dibutuhkan
         $item = Items::with(['jenisBarang', 'satuan'])
-            ->where('IdBarang', $IdBarang)
+            ->where('IdRoster', $IdRoster)
             ->firstOrFail();
 
         // Ambil histori detail barang masuk (DetailMasuk) yang terkait barang ini, terbaru dulu
         $historiMasuk = DetailMasuk::with('supplier')
-            ->where('IdBarang', $IdBarang)
+            ->where('IdRoster', $IdRoster)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -261,7 +256,7 @@ class ItemsController extends Controller
         $historiKeluar = DB::table('detail_barangkeluar as dbk')
             ->join('barangkeluar as bk', 'dbk.IdKeluar', '=', 'bk.IdKeluar')
             ->select('dbk.*', 'bk.tglKeluar')
-            ->where('dbk.IdBarang', $IdBarang)
+            ->where('dbk.IdRoster', $IdRoster)
             ->orderBy('bk.tglKeluar', 'desc')
             ->get();
 
@@ -275,18 +270,18 @@ class ItemsController extends Controller
         $item = Items::with(['jenisBarang', 'satuan'])->findOrFail($id);
 
         $historiMasuk = DetailMasuk::with('supplier')
-                            ->where('IdBarang', $id)
+                            ->where('IdRoster', $id)
                             ->orderBy('created_at', 'desc')
                             ->get();
 
         $historiKeluar = DB::table('detail_barangkeluar as dbk')
                             ->join('barangkeluar as bk', 'dbk.IdKeluar', '=', 'bk.IdKeluar')
                             ->select('dbk.*', 'bk.tglKeluar')
-                            ->where('dbk.IdBarang', $id)
+                            ->where('dbk.IdRoster', $id)
                             ->orderBy('bk.tglKeluar', 'desc')
                             ->get();
 
-        $pdf = PDF::loadView('admin.pdf_detail', compact('item', 'historiMasuk', 'historiKeluar'))
+        $pdf = Pdf::loadView('admin.pdf_detail', compact('item', 'historiMasuk', 'historiKeluar'))
                     ->setPaper('A4', 'portrait');
 
         return $pdf->stream('Detail_Barang_'.$item->NamaBarang.'.pdf');
@@ -294,38 +289,36 @@ class ItemsController extends Controller
 
 
 
-    public function EditItem($IdBarang)
+    public function EditItem($IdRoster)
     {
 
-        $iteminfo = Items::findOrFail($IdBarang);
+        $iteminfo = Items::findOrFail($IdRoster);
         $category_parent = $iteminfo->IdJenisBarang;
         // dd($category_parent);
         $parent_title = TypeItems::where('IdJenisBarang', $category_parent)->first();
         $category_parentS = $iteminfo->IdSatuan;
-        $parent_titleS = Satuan::where('IdSatuan', $category_parentS)->first();
         // dd($iteminfo);
         $typeid = TypeItems::all();
-        $typeS = Satuan::all();
 
-        return view('admin.edititem', compact('iteminfo', 'typeid', 'typeS', 'parent_title', 'parent_titleS'));
+        return view('admin.edititem', compact('iteminfo', 'typeid', 'parent_title', 'parent_titleS'));
     }
 
     public function UpdateItem(Request $request)
     {
-        $itemid = $request->IdBarang;
+        $itemid = $request->IdRoster;
 
         $request->validate([
             'NamaBarang' => [
                 'required',
-                Rule::unique('databarang', 'NamaBarang')->ignore($request->IdBarang, 'IdBarang'),
+                Rule::unique('databarang', 'NamaBarang')->ignore($request->IdRoster, 'IdRoster'),
             ],
 
-            'IdBarang' => 'required',
+            'IdRoster' => 'required',
             'IdJenisBarang' => 'required',
             'IdSatuan' => 'required',
         ]);
 
-        Items::where('IdBarang', $request->IdBarang)->update([
+        Items::where('IdRoster', $request->IdRoster)->update([
             'NamaBarang' => $request->NamaBarang,
             'IdJenisBarang' => $request->IdJenisBarang,
             'IdSatuan' => $request->IdSatuan,
@@ -334,16 +327,16 @@ class ItemsController extends Controller
         return redirect()->route('allitems')->with('message', 'Update Informasi Barang Berhasil!');
     }
 
-    public function DeleteItem($IdBarang)
+    public function DeleteItem($IdRoster)
     {
         // Ambil semua IdMasuk yang berkaitan dengan barang ini
-        $idMasukList = DetailMasuk::where('IdBarang', $IdBarang)->pluck('IdMasuk');
+        $idMasukList = DetailMasuk::where('IdRoster', $IdRoster)->pluck('IdMasuk');
 
         // Hapus semua entri detail masuk yang terkait dengan barang ini
-        DetailMasuk::where('IdBarang', $IdBarang)->delete();
+        DetailMasuk::where('IdRoster', $IdRoster)->delete();
 
         // Hapus dari databarang
-        Items::where('IdBarang', $IdBarang)->delete();
+        Items::where('IdRoster', $IdRoster)->delete();
 
         // Cek apakah IdMasuk yang tadi sudah tidak digunakan lagi di detail_barangmasuk
         foreach ($idMasukList as $idMasuk) {
@@ -354,6 +347,48 @@ class ItemsController extends Controller
         }
 
         return redirect()->route('allitems')->with('message', 'Penghapusan Barang ');
+    }
+
+    public function batchDelete(Request $request)
+    {
+        $request->validate([
+            'item_ids' => 'required|array',
+            'item_ids.*' => 'required|string'
+        ]);
+
+        $deletedCount = 0;
+        $errors = [];
+
+        foreach ($request->item_ids as $itemId) {
+            try {
+                // Ambil semua IdMasuk yang berkaitan dengan barang ini
+                $idMasukList = DetailMasuk::where('IdRoster', $itemId)->pluck('IdMasuk');
+
+                // Hapus semua entri detail masuk yang terkait dengan barang ini
+                DetailMasuk::where('IdRoster', $itemId)->delete();
+
+                // Hapus dari databarang
+                Items::where('IdRoster', $itemId)->delete();
+
+                // Cek apakah IdMasuk yang tadi sudah tidak digunakan lagi di detail_barangmasuk
+                foreach ($idMasukList as $idMasuk) {
+                    $used = DetailMasuk::where('IdMasuk', $idMasuk)->exists();
+                    if (!$used) {
+                        BarangMasuk::where('IdMasuk', $idMasuk)->delete();
+                    }
+                }
+
+                $deletedCount++;
+            } catch (\Exception $e) {
+                $errors[] = "Gagal menghapus item dengan ID: $itemId - " . $e->getMessage();
+            }
+        }
+
+        if (count($errors) > 0) {
+            return redirect()->route('allitems')->with('error', 'Beberapa item gagal dihapus: ' . implode(', ', $errors));
+        }
+
+        return redirect()->route('allitems')->with('message', "Berhasil menghapus $deletedCount item!");
     }
 
     public function KeluarBarang()
@@ -372,12 +407,12 @@ class ItemsController extends Controller
         $request->validate([
             'IdKeluar' => 'required',
             'username' => 'required',
-            'IdBarang' => 'required',
+            'IdRoster' => 'required',
             'QtyKeluar' => 'required|numeric|min:1',
         ]);
 
         // Check if stock is sufficient
-        $item = Items::findOrFail($request->IdBarang);
+        $item = Items::findOrFail($request->IdRoster);
         if ($item->JumlahStok < $request->QtyKeluar) {
             return redirect()->back()->with('error', 'Stok tidak mencukupi!');
         }
@@ -395,7 +430,7 @@ class ItemsController extends Controller
             // Insert into detail_barangkeluar (timestamps auto)
             \App\Models\DetailKeluar::create([
                 'IdKeluar' => $request->IdKeluar,
-                'IdBarang' => $request->IdBarang,
+                'IdRoster' => $request->IdRoster,
                 'QtyKeluar' => $request->QtyKeluar,
             ]);
 
@@ -410,7 +445,7 @@ class ItemsController extends Controller
     public function tambahQty(Request $request)
     {
         $request->validate([
-            'IdBarang' => 'required',
+            'IdRoster' => 'required',
             'QtyMasuk' => 'required|integer|min:1',
         ]);
 
@@ -422,8 +457,8 @@ class ItemsController extends Controller
             ? 'BM' . str_pad((int) substr($lastMasuk->IdMasuk, 2) + 1, 4, '0', STR_PAD_LEFT)
             : 'BM0001';
 
-        // Ambil data detail masuk terakhir untuk IdBarang ini untuk mendapatkan HargaSatuan terbaru
-        $latestDetailMasuk = DetailMasuk::where('IdBarang', $request->IdBarang)
+        // Ambil data detail masuk terakhir untuk IdRoster ini untuk mendapatkan HargaSatuan terbaru
+        $latestDetailMasuk = DetailMasuk::where('IdRoster', $request->IdRoster)
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -444,7 +479,7 @@ class ItemsController extends Controller
         DB::table('detail_barangmasuk')->insert([
             'IdMasuk' => $newIdMasuk,
             'IdSupplier' => $idSupplier, // Gunakan IdSupplier yang diambil
-            'IdBarang' => $request->IdBarang,
+            'IdRoster' => $request->IdRoster,
             'QtyMasuk' => $request->QtyMasuk,
             'HargaSatuan' => $hargaSatuan, // Gunakan HargaSatuan yang diambil
             'SubTotal' => $subTotal, // Gunakan SubTotal yang dihitung

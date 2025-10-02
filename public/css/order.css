@@ -1,0 +1,161 @@
+ 
+    body {
+      background: #f8f9fa;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .stepper-wrapper {
+      display: flex;
+      justify-content: space-between;
+      margin: 40px auto;
+      max-width: 800px;
+      position: relative;
+    }
+
+    .stepper-wrapper::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #dee2e6;
+      z-index: 0;
+    }
+
+    .stepper-item {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      flex: 1;
+    }
+
+    .step-counter {
+      height: 40px;
+      width: 40px;
+      margin: 0 auto;
+      background-color: #dee2e6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #6c757d;
+    }
+
+    .stepper-item.active .step-counter,
+    .stepper-item.completed .step-counter {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .step-name {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #6c757d;
+    }
+
+
+    .form-container {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      max-width: 800px;
+      margin: auto;
+    }
+
+
+
+    .checkout-steps {
+      position: relative;
+      counter-reset: step;
+    }
+
+    .step {
+      text-align: center;
+      width: 100%;
+      position: relative;
+      font-weight: 500;
+      color: #bbb;
+    }
+
+
+
+    .step span {
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .step::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: #ccc;
+      top: 18px;
+      left: 50%;
+      z-index: -1;
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .step.active ~ .step::before {
+      background-color: white;
+      border-color: #ccc;
+      color: #bbb;
+    }
+
+    .stepper-item:not(.completed):not(.active) .step-counter {
+      background-color: #dee2e6; /* Abu-abu untuk langkah yang belum dimulai */
+    }
+
+    .btn-next {
+      background-color: #0d6efd;
+      color: white;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+    }
+
+.modal-content {
+  transition: all 0.3s ease-in-out;
+}
+.modal-body p {
+  margin: 0;
+}
+
+/* payment */
+.form-container {
+  max-width: 1000px;
+  width: 1000px;
+  padding: 50px;
+  margin: 40px auto; /* tambah margin atas bawah dan center secara horizontal */
+  background: #fff; /* kalau perlu background supaya lebih fokus */
+  border-radius: 8px; /* sudut melengkung bikin elegan */
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.1); /* efek bayangan halus */
+}
+.d-flex.align-items-center.gap-3.flex-wrap {
+  row-gap: 20px;
+  column-gap: 20px;
+}
+.d-flex.align-items-center.gap-2 img {
+  margin-right: 12px;
+}
+.btn-back {
+  margin-right: 20px;
+}
+.btn-next {
+  /* pastikan ada jarak kiri */
+  margin-left: 10px;
+}
+h5.mb-4, h6 {
+  margin-bottom: 16px;
+}
+
+
+

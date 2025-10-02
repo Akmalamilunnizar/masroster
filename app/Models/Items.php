@@ -4,46 +4,48 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Laporan;
 
 class Items extends Model
 {
     use HasFactory;
-    protected $table = 'databarang';
-    protected $primaryKey = 'IdBarang';
+    protected $table = 'produk';
+    protected $primaryKey = 'IdRoster';
     protected $fillable = [
-        'IdBarang', // ini buat id
-        'NamaBarang',
-        'IdJenisBarang',
+        'IdRoster',
+        'id_jenis',
+        'id_tipe',
+        'id_motif',
         'JumlahStok',
-        'IdSatuan'
+        'Img',
+        'deskripsi',
     ];
 
     public $timestamps = true;
-    public function jenisBarang()
+    public function jenisRoster()
     {
-        return $this->belongsTo(TypeItems::class, 'IdJenisBarang', 'IdJenisBarang');
+        return $this->belongsTo(TypeItems::class, 'id_jenis', 'IdJenisBarang');
     }
 
-    public function satuan()
-    {
-        return $this->belongsTo(Satuan::class, 'IdSatuan', 'IdSatuan');
-    }
+
 
     public function detailBarangMasuk()
     {
-        return $this->hasOne(DetailMasuk::class, 'IdBarang', 'IdBarang');
+        return $this->hasOne(DetailMasuk::class, 'IdRoster', 'IdRoster');
     }
 
     public function detailBarangKeluar()
     {
-        return $this->hasOne(DetailKeluar::class, 'IdBarang', 'IdBarang');
+        return $this->hasOne(DetailKeluar::class, 'IdRoster', 'IdRoster');
     }
 
-    public function laporan()
+    // laporan() relation removed; Laporan model not present
+
+    public function bahan()
     {
-        return $this->hasMany(Laporan::class, 'IdBarang', 'IdBarang');
+        return $this->belongsTo(Items::class, 'id_bahan', 'IdBarang');
     }
-
-
+    public function size()
+    {
+        return $this->belongsTo(Size::class, 'ukuran', 'id_ukuran');
+    }
 }

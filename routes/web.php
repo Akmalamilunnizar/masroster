@@ -10,12 +10,12 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ItemsController; /* */
 use App\Http\Controllers\Api\V1\ParameterReportController;
 use App\Http\Controllers\Api\V1\DiseaseReportController;
-use App\Http\Controllers\Api\V1\ProductController;
+// use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SubCategoryController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\TransaksiController; // Pastikan ini di-import
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController; // Pastikan ini di-import
+// use App\Http\Controllers\ProfileController; // Commented out - doesn't exist
 use App\Models\Items; /* */
 use App\Models\ParameterReport;
 use App\Models\DiseaseReport;
@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\DiagnosaController;
 use App\Http\Controllers\Api\V1\AdminProfileController;
 use App\Http\Controllers\Api\V1\TypeItemsController;
+use App\Http\Controllers\Api\V1\MotifRosterController;
+use App\Http\Controllers\Api\V1\TipeRosterController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Models\TypeItems;
 use App\Http\Controllers\Api\V1\TokoController;
@@ -36,10 +38,11 @@ use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\PesananController;
-use App\Http\Controllers\Api\V1\PaymentController;
+// use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\DetailProdukController;
+use App\Http\Controllers\Api\V1\DetailHargaController;
 use App\Http\Controllers\Api\V1\SizeController;
-use App\Http\Controllers\Api\V1\DiskonController;
+// use App\Http\Controllers\Api\V1\DiskonController;
 
 
 
@@ -47,11 +50,11 @@ use App\Http\Controllers\Api\V1\DiskonController;
 //     return view('welcome');
 // });
 
-Route::get('/customer/{id}', [CustomerController::class, 'show'])->name('customerDetails');
+Route::get('/customer/{id}', [CustomerController::class, 'customerDetails'])->name('customerDetails');
 
 Route::get('/', function () {
-    $produk = Produk::orderBy('IdProduk', 'desc')->take(8)->get();
-    $produkTerlaris = Produk::orderBy('IdProduk', 'desc')->take(4)->get();
+    $produk = Produk::orderBy('IdRoster', 'desc')->take(8)->get();
+    $produkTerlaris = Produk::orderBy('IdRoster', 'desc')->take(4)->get();
     return view('welcome', compact('produk', 'produkTerlaris'));
 });
 
@@ -71,33 +74,66 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
     Route::get('/admin/all-ukuran', [SizeController::class, 'index'])->name('allukuran');
+    
+    // Customer routes
+    Route::get('/admin/all-customer', [CustomerController::class, 'Index'])->name('allcustomer');
+    Route::get('/admin/get-customer-addresses/{id}', [CustomerController::class, 'getCustomerAddresses'])->name('getCustomerAddresses');
     Route::get('/admin/add-ukuran', [SizeController::class, 'create'])->name('addukuran');
     Route::post('/admin/store-ukuran', [SizeController::class, 'store'])->name('storeukuran');
     Route::get('/admin/edit-ukuran/{id}', [SizeController::class, 'edit'])->name('editukuran');
     Route::put('/admin/update-ukuran/{id}', [SizeController::class, 'update'])->name('updateukuran');
     Route::delete('/admin/delete-ukuran/{id}', [SizeController::class, 'destroy'])->name('deleteukuran');
 
-    Route::get('/admin/all-diskon', [DiskonController::class, 'index'])->name('alldiskon');
-    Route::get('/admin/add-diskon', [DiskonController::class, 'create'])->name('adddiskon');
-    Route::post('/admin/store-diskon', [DiskonController::class, 'store'])->name('storediskon');
-    Route::get('/admin/edit-diskon/{id}', [DiskonController::class, 'edit'])->name('editdiskon');
-    Route::put('/admin/update-diskon/{id}', [DiskonController::class, 'update'])->name('updatediskon');
-    Route::delete('/admin/delete-diskon/{id}', [DiskonController::class, 'destroy'])->name('deletediskon');
+    // Route::get('/admin/all-diskon', [DiskonController::class, 'index'])->name('alldiskon');
+    // Route::get('/admin/add-diskon', [DiskonController::class, 'create'])->name('adddiskon');
+    // Route::post('/admin/store-diskon', [DiskonController::class, 'store'])->name('storediskon');
+    // Route::get('/admin/edit-diskon/{id}', [DiskonController::class, 'edit'])->name('editdiskon');
+    // Route::put('/admin/update-diskon/{id}', [DiskonController::class, 'update'])->name('updatediskon');
+    // Route::delete('/admin/delete-diskon/{id}', [DiskonController::class, 'destroy'])->name('deletediskon');
 
     Route::post('/admin/store-produk', [ProdukController::class, 'storeProduk'])->name('storeproduk');
 }); 
 
 
 Route::controller(DetailProdukController::class)->group(function () {
-    Route::get('/admin/detail-produk', 'index')->name('detail.produk');
     Route::get('/detail-produk/{id}', [DetailProdukController::class, 'show'])->name('detail.produk');
     Route::get('/admin/produk', [DetailProdukController::class, 'indexAdmin'])->name('admin.produk.index');
+});
+
+// Authenticated but NOT role-restricted AJAX endpoints for dependent dropdowns
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/get-connected-tipe', [ProdukController::class, 'getConnectedTipe'])->name('get.connected.tipe');
+    Route::get('/admin/get-connected-motif', [ProdukController::class, 'getConnectedMotif'])->name('get.connected.motif');
+    // Test route to verify AJAX reachability
+    Route::get('/admin/test-ajax', function() {
+        return response()->json(['message' => 'AJAX test successful']);
+    })->name('test.ajax');
+    
+    // Quick add routes for modals
+    Route::post('/admin/quick-add-jenis', [TypeItemsController::class, 'quickAddJenis'])->name('quick.add.jenis');
+    Route::post('/admin/quick-add-tipe', [TipeRosterController::class, 'quickAddTipe'])->name('quick.add.tipe');
+    Route::post('/admin/quick-add-motif', [MotifRosterController::class, 'quickAddMotif'])->name('quick.add.motif');
+    Route::post('/admin/quick-add-size', [SizeController::class, 'quickAddSize'])->name('quick.add.size');
+});
+
+// Detail Harga Routes
+Route::controller(DetailHargaController::class)->group(function () {
+    Route::get('/admin/detail-harga', 'index')->name('detailharga.index');
+    Route::get('/admin/detail-harga/create', 'create')->name('detailharga.create');
+    Route::post('/admin/detail-harga', 'store')->name('detailharga.store');
+            Route::get('/admin/detail-harga/{id_roster}/{id_user}/{id_ukuran}/edit', 'edit')->name('detailharga.edit');
+        Route::put('/admin/detail-harga/{id_roster}/{id_user}/{id_ukuran}', 'update')->name('detailharga.update');
+        Route::delete('/admin/detail-harga/{id_roster}/{id_user}/{id_ukuran}', 'destroy')->name('detailharga.destroy');
+    Route::delete('/admin/detail-harga/batch-delete', 'batchDelete')->name('detailharga.batch-delete');
+    Route::get('/admin/detail-harga/user-last-prices', 'getUserLastPrices')->name('detailharga.user-last-prices');
+    Route::get('/admin/detail-harga/roster-prices', 'getRosterPrices')->name('detailharga.roster-prices');
 });
 
 
 Route::controller(ItemsController::class)->group(function () {
     Route::get('/admin/all-item', 'Index')->name('allitems'); /* */
     Route::get('/admin/all-item/exportpdf', 'exportPdf')->name('allitems.exportpdf');
+    Route::delete('/admin/batch-delete-items', 'batchDelete')->name('batch.delete.items');
     Route::get('/admin/all-item/detail/{id}', 'detail')->name('admin.detail_allitems');
     Route::get('/admin/all-item/exportpdf/{id}', 'exportPdfDetail')->name('allitems.exportpdf.detail'); 
     Route::get('/admin/manage-item', 'ManageItems')->name('manageitems');
@@ -119,36 +155,57 @@ Route::controller(ItemsController::class)->group(function () {
 
 Route::post('/predict', [ForecastController::class, 'predict']);
 
-Route::controller(SatuanController::class)->group(function () {
-    Route::get('/admin/all-satuan', 'Index')->name('allsatuan');
-    Route::get('/admin/manage-satuan', 'ManageSatuan')->name('managesatuan');
-    Route::get('/admin/all-satuan/search', 'SearchSatuan')->name('searchsatuan');
-    Route::get('/admin/add-satuan', 'AddSatuan')->name('addsatuan');
-    Route::post('/admin/store-satuan', 'StoreSatuan')->name('store-satuan');
-    Route::get('/admin/edit-satuan/{id}', 'EditSatuan')->name('editsatuan');
-    Route::post('/admin/update-satuan', 'UpdateSatuan')->name('updatesatuan');
-    Route::get('/admin/delete-satuan/{id}', 'DeleteSatuan')->name('deletesatuan');
-});
 
-Route::controller(TransaksiController::class)->group(function () {
-    Route::get('/admin/all-transaksi', 'index')->name('alltransaksi');
-    Route::get('/admin/all-transaksi/exportpdf', 'exportPdf')->name('alltransaksi.exportpdf');
-    Route::post('/admin/all-transaksi/{id}/terima', 'terimaOrderan')->name('terimaOrderan');
-    Route::post('/admin/all-transaksi/{id}/tolak', 'tolakOrderan')->name('tolakOrderan');
-    Route::get('/admin/view-order/{id}', 'ViewOrder')->name('vieworder');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::controller(TransaksiController::class)->group(function () {
+        Route::get('/admin/all-transaksi', 'index')->name('alltransaksi');
+        Route::get('/admin/all-transaksi/exportpdf', 'exportPdf')->name('alltransaksi.exportpdf');
+        Route::post('/admin/all-transaksi/{id}/terima', 'terimaOrderan')->name('terimaOrderan');
+        Route::post('/admin/all-transaksi/{id}/tolak', 'tolakOrderan')->name('tolakOrderan');
+        Route::post('/admin/all-transaksi/{id}/update-invoice', 'updateInvoice')->name('transaksi.updateInvoice');
+        Route::get('/admin/view-order/{id}', 'ViewOrder')->name('vieworder');
+        
+        // Manual CRUD routes
+        Route::get('/admin/transaksi/create', 'create')->name('transaksi.create');
+        Route::post('/admin/transaksi', 'store')->name('transaksi.store');
+        Route::get('/admin/transaksi/{id}/edit', 'edit')->name('transaksi.edit');
+        Route::put('/admin/transaksi/{id}', 'update')->name('transaksi.update');
+        Route::delete('/admin/transaksi/{id}', 'destroy')->name('transaksi.destroy');
+        
+        // Export routes for forecasting
+        Route::get('/export-lstm', 'exportLstm')->name('export.lstm');
+        Route::get('/export-prophet', 'exportProphet')->name('export.prophet');
+        
+        // Test route for ID generation
+        Route::get('/admin/test-id-generation', function() {
+            $lastTransaksi = \App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first();
+            if ($lastTransaksi) {
+                $numericPart = (int) substr($lastTransaksi->IdTransaksi, 2) + 1;
+                $newId = 'TX' . str_pad($numericPart, 6, '0', STR_PAD_LEFT);
+            } else {
+                $newId = 'TX000001';
+            }
+            return response()->json([
+                'last_id' => $lastTransaksi ? $lastTransaksi->IdTransaksi : 'None',
+                'new_id' => $newId,
+                'new_id_length' => strlen($newId)
+            ]);
+        })->name('test.id.generation');
+    });
 });
 
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(TypeItemsController::class)->group(function () {
-        Route::get('/admin/all-type', 'Index')->name('alltype');
-        Route::get('/admin/all-type/search', 'SearchType')->name('searchtype');
-        Route::get('/admin/add-type', 'AddType')->name('addtype');
-        Route::post('/admin/store-type', 'StoreType')->name('store-type');
-        Route::get('/admin/edit-type/{id}', 'EditType')->name('edittype');
-        Route::post('/admin/update-type', 'UpdateType')->name('updatetype');
-        Route::get('/admin/delete-type/{id}', 'DeleteType')->name('deletetype');
-    });
+    Route::get('/admin/all-type', 'Index')->name('alltype');
+    Route::get('/admin/all-type/search', 'SearchType')->name('searchtype');
+    Route::get('/admin/add-type', 'AddType')->name('addtype');
+    Route::post('/admin/store-type', 'StoreType')->name('store-type');
+    Route::get('/admin/edit-type/{id}', 'EditType')->name('edittype');
+    Route::post('/admin/update-type', 'UpdateType')->name('updatetype');
+    Route::get('/admin/delete-type/{id}', 'DeleteType')->name('deletetype');
+    Route::delete('/admin/batch-delete-types', 'batchDelete')->name('batch.delete.types');
+});
 });
 
 
@@ -216,6 +273,7 @@ Route::controller(ProdukController::class)->group(function () {
 Route::controller(TransaksiController::class)->group(function () {
     Route::get('/admin/all-transaksi', 'index')->name('alltransaksi');
     Route::get('/admin/all-transaksi/exportpdf', 'exportPdf')->name('alltransaksi.exportpdf');
+    Route::get('/admin/all-transaksi/exportexcel', 'exportExcel')->name('alltransaksi.exportexcel');
     Route::get('/admin/all-transaksi/{id}/terima', 'terimaOrderan')->name('terimaOrderan');
     Route::post('/admin/all-transaksi/{id}/tolak', 'tolakOrderan')->name('tolakOrderan');
 });
@@ -241,8 +299,8 @@ Route::controller(SupplierController::class)->group(function () {
 
 Route::controller(CustomerController::class)->group(function () {
     // Tampilkan semua supplier
-    Route::get('/admin/daftar-customer', 'index')->name('allcustomer');
-    Route::get('/customer/{id}', 'show')->name('customerDetails');
+    // Route::get('/admin/daftar-customer', 'index')->name('allcustomer'); // Duplicate route removed
+    Route::get('/customer/{id}', 'customerDetails')->name('customerDetails');
     // Tampilkan form tambah supplier
 });
 
@@ -306,7 +364,7 @@ Route::get('/routes', function () {
 Route::controller(TokoController::class)->group(function () {
     // Route::get('/tokodashboard', function () {return view('toko.dashboardToko');})->name('tokodashboard');
     Route::get('/tokodashboard', [TokoController::class, 'tokodashboard'])->name('tokodashboard');
-    Route::get('/search', [ProductController::class, 'search'])->name('searchProduct');
+    // Route::get('/search', [ProductController::class, 'search'])->name('searchProduct');
     Route::get('/pesanan', [TokoController::class, 'pesanan'])->middleware('auth')->name('pesanan');
     Route::get('/kontak', function () {
         return redirect('/#contact-us');
@@ -325,7 +383,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/save-address', 'saveAddress')->name('save.address');
         Route::post('/save-shipping', 'saveShipping')->name('save.shipping');
         Route::get('/shipping', [CartController::class, 'shipping'])->name('shipping');
-        Route::get('/payment', [\App\Http\Controllers\Api\V1\PaymentController::class, 'payment'])->name('payment');
+        // Route::get('/payment', [\App\Http\Controllers\Api\V1\PaymentController::class, 'payment'])->name('payment');
         Route::get('/review', [\App\Http\Controllers\Api\V1\OrderController::class, 'review'])->name('review');
 
         // API Cart
@@ -346,6 +404,29 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/addresses/{address}/default', 'setDefault')->name('addresses.default');
         Route::delete('/addresses/{address}', 'destroy')->name('addresses.destroy');
         Route::post('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
+    });
+    // Motif Roster
+    Route::controller(MotifRosterController::class)->group(function () {
+        Route::get('/admin/all-motif', 'index')->name('allmotif');
+        Route::delete('/admin/all-motif/batch-delete', 'batchDelete')->name('batch.delete.motif');
+        Route::get('/admin/add-motif', 'create')->name('addmotif');
+        Route::post('/admin/store-motif', 'store')->name('storemotif');
+        Route::post('/admin/store-detail-motif', 'storeDetailMotif')->name('store.detail.motif');
+        Route::get('/admin/edit-motif/{id}', 'edit')->name('editmotif');
+        Route::put('/admin/update-motif/{id}', 'update')->name('updatemotif');
+        Route::delete('/admin/delete-motif/{id}', 'destroy')->name('deletemotif');
+    });
+
+    // Tipe Roster
+    Route::controller(TipeRosterController::class)->group(function () {
+        Route::get('/admin/all-tipe-roster', 'index')->name('alltiperoster');
+        Route::delete('/admin/all-tipe-roster/batch-delete', 'batchDelete')->name('batch.delete.tiperoster');
+        Route::get('/admin/add-tipe-roster', 'create')->name('addtiperoster');
+        Route::post('/admin/store-tipe-roster', 'store')->name('storetiperoster');
+        Route::post('/admin/store-detail-tipe', 'storeDetailTipe')->name('store.detail.tipe');
+        Route::get('/admin/edit-tipe-roster/{id}', 'edit')->name('edittiperoster');
+        Route::put('/admin/update-tipe-roster/{id}', 'update')->name('updatetiperoster');
+        Route::delete('/admin/delete-tipe-roster/{id}', 'destroy')->name('deletetiperoster');
     });
 });
 
@@ -368,13 +449,13 @@ Route::get('/routes', function () {
 Route::get('/userprofile', [DashboardController::class, 'Index']);
 Route::middleware('auth')->group(function () {
     Route::get('resources/admin/logout', [DashboardController::class, 'AdminLogout'])->name('adminlogout');
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+// Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+// Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // TAMBAHKAN BARIS INI UNTUK RUTE UPDATE PASSWORD
-    Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
-    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    // Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
+    // Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
 });
 
@@ -399,9 +480,23 @@ Route::get('/checkout', [DeliveryShoppingController::class, 'index'])->name('che
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
 
 // Midtrans Payment Routes
-Route::controller(PaymentController::class)->group(function () {
-    Route::post('/payment/create-snap-token', 'createSnapToken')->name('payment.create-snap-token');
-    Route::post('/payment/notification', 'handleNotification')->name('payment.notification');
+/*
+// Route::controller(PaymentController::class)->group(function () {
+    // Route::post('/payment/create-snap-token', 'createSnapToken')->name('payment.create-snap-token');
+    // Route::post('/payment/notification', 'handleNotification')->name('payment.notification');
+    // Route::get('/payment/success', 'paymentSuccess')->name('payment.success');
+    // Route::get('/payment/error', 'paymentError')->name('payment.error');
+// });
+*/
+
+// Test route for debugging
+Route::get('/test-transaction', function() {
+    return response()->json([
+        'users' => App\Models\User::where('user', '!=', 'Admin')->count(),
+        'products' => App\Models\Produk::count(),
+        'sizes' => App\Models\Size::count(),
+        'last_transaction' => App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first()?->IdTransaksi ?? 'None'
+    ]);
 });
 
 Route::post('/set-midtrans-paid', function (Illuminate\Http\Request $request) {
@@ -410,7 +505,7 @@ Route::post('/set-midtrans-paid', function (Illuminate\Http\Request $request) {
 });
 
 Route::post('/set-payment-method', function (Illuminate\Http\Request $request) {
-    session(['payment_method' => $request->method]);
+    session(['payment_method' => $request->input('method')]);
     session(['midtrans_paid' => $request->paid]);
     return response()->json(['success' => true]);
 });

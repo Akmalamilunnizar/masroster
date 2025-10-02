@@ -1,0 +1,16 @@
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background-color: white; /* pastikan tidak transparan */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* opsional: bayangan */
+  }
+  
+  .step-circle {
+    transition: background-color 0.3s;
+}
+
+.progress-container > div {
+    flex: 1;
+    text-align: center;
+}
