@@ -82,7 +82,7 @@ class ProdukController extends Controller
                     'nullable',
                     'exists:motif_roster,IdMotif',
                 ],
-                'JumlahStok' => 'required|integer|min:0',
+                'stock' => 'required|integer|min:0',
                 'Img' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'deskripsi' => 'required|string|max:1500',
             ]);
@@ -101,7 +101,7 @@ class ProdukController extends Controller
                 'id_jenis' => $request->IdJenisBarang,
                 'id_tipe' => $request->id_tipe,
                 'id_motif' => $request->id_motif,
-                'JumlahStok' => $request->JumlahStok,
+                'stock' => $request->stock,
                 'Img' => $path,
                 'deskripsi' => $request->deskripsi,
             ]);
@@ -147,6 +147,7 @@ class ProdukController extends Controller
                 'nullable',
                 'exists:motif_roster,IdMotif',
             ],
+            'stock' => 'required|integer|min:0',
             'Img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'deskripsi' => 'required|string|max:1500',
         ]);
@@ -167,6 +168,7 @@ class ProdukController extends Controller
                 'id_jenis' => $request->IdJenisBarang,
                 'id_tipe' => $request->id_tipe,
                 'id_motif' => $request->id_motif,
+                'stock' => $request->stock,
                 'deskripsi' => $request->deskripsi,
             ]);
 
@@ -231,7 +233,7 @@ class ProdukController extends Controller
             'IdRoster' => $request->IdRoster,
             'NamaBarang' => $request->NamaBarang,
             'IdJenisBarang' => $request->IdJenisBarang,
-            'JumlahStok' => 0, // handled by trigger
+            'stock' => 0, // handled by trigger
             'IdSatuan' => $request->IdSatuan,
         ]);
 
@@ -266,7 +268,7 @@ class ProdukController extends Controller
 
         // Check if stock is sufficient
         $item = Items::findOrFail($request->IdRoster);
-        if ($item->JumlahStok < $request->QtyKeluar) {
+        if ($item->stock < $request->QtyKeluar) {
             return redirect()->back()->with('error', 'Stok tidak mencukupi!');
         }
 
@@ -406,7 +408,7 @@ class ProdukController extends Controller
     public function getConnectedTipe(Request $request)
     {
         $jenisId = (int) $request->query('jenis_id');
-        
+
         // Debug logging
         Log::info('getConnectedTipe called with jenis_id: ' . $jenisId);
 
@@ -426,7 +428,7 @@ class ProdukController extends Controller
     public function getConnectedMotif(Request $request)
     {
         $tipeId = (int) $request->query('tipe_id');
-        
+
         // Debug logging
         Log::info('getConnectedMotif called with tipe_id: ' . $tipeId);
 

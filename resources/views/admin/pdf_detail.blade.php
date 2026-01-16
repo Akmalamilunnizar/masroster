@@ -80,7 +80,7 @@
     </div>    
     <div class="detail-row">
         <div class="detail-label">Jumlah Stok:</div>
-        <div class="detail-value">{{ $item->JumlahStok ?? 0 }}</div>
+        <div class="detail-value">{{ $item->stock ?? 0 }}</div>
     </div>
 
     <!-- Riwayat Barang Masuk -->

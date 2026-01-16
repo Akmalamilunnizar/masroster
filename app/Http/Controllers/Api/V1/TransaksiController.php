@@ -154,10 +154,10 @@ class TransaksiController extends Controller
 
         $callback = function() use ($transactions) {
             $file = fopen('php://output', 'w');
-            
+
             // Add headers
             fputcsv($file, ['tanggal', 'produk', 'jumlah_terjual', 'stok_awal', 'stok_akhir']);
-            
+
             foreach ($transactions as $transaksi) {
                 foreach ($transaksi->detailTransaksi as $detail) {
                     $row = [
@@ -170,7 +170,7 @@ class TransaksiController extends Controller
                     fputcsv($file, $row);
                 }
             }
-            
+
             fclose($file);
         };
 
@@ -194,10 +194,10 @@ class TransaksiController extends Controller
 
         $callback = function() use ($transactions) {
             $file = fopen('php://output', 'w');
-            
+
             // Add headers
             fputcsv($file, ['ds', 'y', 'hari_libur', 'promo', 'kategori_produk']);
-            
+
             foreach ($transactions as $transaksi) {
                 foreach ($transaksi->detailTransaksi as $detail) {
                     $row = [
@@ -210,7 +210,7 @@ class TransaksiController extends Controller
                     fputcsv($file, $row);
                 }
             }
-            
+
             fclose($file);
         };
 
@@ -264,6 +264,18 @@ class TransaksiController extends Controller
     }
 
     /**
+     * Print invoice for a transaction
+     */
+    public function printInvoice($id)
+    {
+        $orders = Transaksi::with(['customer', 'admin', 'address', 'detailTransaksi.produk', 'detailTransaksi.size'])
+            ->where('IdTransaksi', $id)
+            ->firstOrFail();
+
+        return view('admin.transaksi.print-invoice', compact('orders'));
+    }
+
+    /**
      * Update invoice number for a transaction
      *
      * @param  \Illuminate\Http\Request  $request
@@ -290,7 +302,7 @@ class TransaksiController extends Controller
     {
         $users = User::where('user', '!=', 'Admin')->get();
         $products = \App\Models\Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->get();
-        
+
         // Generate new transaction ID (max 8 characters)
         $lastTransaksi = Transaksi::orderBy('IdTransaksi', 'desc')->first();
         if ($lastTransaksi) {
@@ -311,31 +323,36 @@ class TransaksiController extends Controller
     {
         // Debug: Log the incoming request data
         Log::info('Transaction store request received:', $request->all());
-        
+
         // Clean up formatted values before validation
         $requestData = $request->all();
-        
+
         // Convert formatted Bayar to raw number
         if (isset($requestData['Bayar'])) {
             $requestData['Bayar'] = (int) str_replace(['.', ','], '', $requestData['Bayar']);
         }
-        
+
         // Convert formatted GrandTotal to raw number
         if (isset($requestData['GrandTotal'])) {
             $requestData['GrandTotal'] = (int) str_replace(['.', ','], '', $requestData['GrandTotal']);
         }
-        
+
         // Convert formatted ongkir to raw number
         if (isset($requestData['ongkir'])) {
             $requestData['ongkir'] = (int) str_replace(['.', ','], '', $requestData['ongkir']);
         }
-        
+
         // Update the request with cleaned values
         $request->merge($requestData);
-        
+
         Log::info('Cleaned request data:', $request->all());
-        
+
         try {
+            // Set default shipping method for offline transactions
+            if ($request->shipping_method === 'Offline') {
+                $request->merge(['shipping_method' => 'Offline']);
+            }
+
             $validated = $request->validate([
                 'IdTransaksi' => 'required|unique:transaksi,IdTransaksi',
                 'id_customer' => 'required|exists:users,id',
@@ -344,7 +361,7 @@ class TransaksiController extends Controller
                 'GrandTotal' => 'required|numeric|min:0',
                 'StatusPembayaran' => 'required|in:Lunas,Hutang,Transfer',
                 'StatusPesanan' => 'required|in:Pending,Diterima,Ditolak,MENUNGGU KONFIRMASI',
-                'shipping_method' => 'required|string',
+                'shipping_method' => 'required|string|in:Online,Offline',
                 'delivery_method' => 'required|in:Pickup,Delivery',
                 'shipping_type' => 'required|in:Free Ongkir,Ongkir',
                 'ongkir' => 'required|numeric|min:0',
@@ -355,7 +372,7 @@ class TransaksiController extends Controller
                 'products.*.qty' => 'required|integer|min:1',
                 'products.*.price' => 'required|numeric|min:0',
             ]);
-            
+
             Log::info('Validation passed:', $validated);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed:', [
@@ -369,7 +386,7 @@ class TransaksiController extends Controller
         try {
             // Debug: Log the request data
             Log::info('Transaction creation request:', $request->all());
-            
+
             // Create transaction
             $transaksi = Transaksi::create([
                 'IdTransaksi' => $request->IdTransaksi,
@@ -387,7 +404,7 @@ class TransaksiController extends Controller
                 'ongkir' => $request->ongkir,
                 'notes' => $request->notes,
             ]);
-            
+
             Log::info('Transaction created successfully:', $transaksi->toArray());
 
             // Create detail transactions
@@ -450,7 +467,7 @@ class TransaksiController extends Controller
         $transaksi = Transaksi::with(['detailTransaksi.produk', 'detailTransaksi.size', 'customer', 'address'])->findOrFail($id);
         $users = User::where('user', '!=', 'Admin')->get();
         $products = \App\Models\Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->get();
-        
+
         // Load addresses for the current customer
         $customerAddresses = [];
         if ($transaksi->customer) {
@@ -465,6 +482,11 @@ class TransaksiController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Set default shipping method for offline transactions
+        if ($request->shipping_method === 'Offline') {
+            $request->merge(['shipping_method' => 'Offline']);
+        }
+
         $request->validate([
             'id_customer' => 'required|exists:users,id',
             'address_id' => 'required|exists:addresses,id',
@@ -472,9 +494,9 @@ class TransaksiController extends Controller
             'GrandTotal' => 'required|numeric|min:0',
             'StatusPembayaran' => 'required|in:Lunas,Hutang,Transfer',
             'StatusPesanan' => 'required|in:Pending,Diterima,Ditolak,MENUNGGU KONFIRMASI',
-            'shipping_method' => 'required|string',
+            'shipping_method' => 'required|string|in:Online,Offline',
             'delivery_method' => 'required|in:Pickup,Delivery',
-            'shipping_type' => 'nullable|string',
+            'shipping_type' => 'required|in:Free Ongkir,Ongkir',
             'ongkir' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'products' => 'required|array|min:1',
@@ -487,7 +509,7 @@ class TransaksiController extends Controller
         DB::beginTransaction();
         try {
             $transaksi = Transaksi::findOrFail($id);
-            
+
             // Update transaction
             $transaksi->update([
                 'id_customer' => $request->id_customer,
@@ -563,7 +585,7 @@ class TransaksiController extends Controller
         try {
             // Delete detail transactions first
             \App\Models\DetailTransaksi::where('IdTransaksi', $id)->delete();
-            
+
             // Delete main transaction
             Transaksi::findOrFail($id)->delete();
 

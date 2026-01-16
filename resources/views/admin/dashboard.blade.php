@@ -19,75 +19,75 @@ CIME | Halaman Dashboard
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         transition: all 0.3s ease;
     }
-    
+
     .card:hover {
         box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.2);
         transform: translateY(-2px);
     }
-    
+
     .avatar {
         width: 3rem;
         height: 3rem;
     }
-    
+
     .avatar-xl {
         width: 4rem;
         height: 4rem;
     }
-    
+
     .bg-label-primary {
         background-color: rgba(13, 110, 253, 0.1) !important;
         color: #0d6efd !important;
     }
-    
+
     .bg-label-warning {
         background-color: rgba(255, 193, 7, 0.1) !important;
         color: #ffc107 !important;
     }
-    
+
     .bg-label-info {
         background-color: rgba(13, 202, 240, 0.1) !important;
         color: #0dcaf0 !important;
     }
-    
+
     .bg-label-success {
         background-color: rgba(25, 135, 84, 0.1) !important;
         color: #198754 !important;
     }
-    
+
     .text-success {
         color: #198754 !important;
     }
-    
+
     .card-header {
         background-color: #f8f9fc;
         border-bottom: 1px solid #e3e6f0;
         padding: 1rem 1.5rem;
     }
-    
+
     .card-title {
         font-weight: 600;
         color: #5a5c69;
     }
-    
+
     .h4 {
         font-weight: 700;
         color: #5a5c69;
     }
-    
+
     .h2 {
         font-weight: 700;
         color: #5a5c69;
     }
-    
+
     .text-muted {
         color: #858796 !important;
     }
-    
+
     .fw-bold {
         font-weight: 700 !important;
     }
-    
+
     .fw-semibold {
         font-weight: 600 !important;
     }
@@ -124,7 +124,7 @@ CIME | Halaman Dashboard
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-body d-flex align-items-center">
@@ -142,7 +142,7 @@ CIME | Halaman Dashboard
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-body d-flex align-items-center">
@@ -160,7 +160,7 @@ CIME | Halaman Dashboard
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-body d-flex align-items-center">
@@ -220,7 +220,7 @@ CIME | Halaman Dashboard
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-4 mb-4">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -245,7 +245,7 @@ CIME | Halaman Dashboard
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-4 mb-4">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -263,9 +263,9 @@ CIME | Halaman Dashboard
 @push('scripts')
 <script>
     // Top Stock Items Chart - Using Real Data Only
-    var topStockData = {!! json_encode($topStockRoster->pluck('JumlahStok')) !!};
+    var topStockData = {!! json_encode($topStockRoster->pluck('stock')) !!};
     var topStockCategories = {!! json_encode($topStockRoster->pluck('IdRoster')) !!};
-    
+
     var topStockOptions = {
         series: [{
             name: 'Stok',

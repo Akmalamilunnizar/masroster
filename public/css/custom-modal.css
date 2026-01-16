@@ -1,0 +1,106 @@
+/**
+ * Custom Modal Styles
+ * Beautiful, modern styling for CustomModal system
+ */
+
+/* Custom Modal Styles */
+.animated-modal {
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+    padding: 2rem !important;
+}
+
+.swal2-popup .swal2-title {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+}
+
+.swal2-popup .swal2-content {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+}
+
+.swal2-popup .swal2-icon {
+    width: 5rem !important;
+    height: 5rem !important;
+    margin: 1rem auto 1.5rem !important;
+}
+
+.swal2-popup .btn {
+    padding: 0.625rem 1.5rem !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.swal2-popup .btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.swal2-popup .btn:active {
+    transform: translateY(0) !important;
+}
+
+.swal2-timer-progress-bar {
+    background: rgba(25, 135, 84, 0.3) !important;
+}
+
+/* Animation support */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 40px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+    to {
+        opacity: 0;
+        transform: translate3d(0, 40px, 0);
+    }
+}
+
+@keyframes shakeX {
+    from, to {
+        transform: translate3d(0, 0, 0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translate3d(-10px, 0, 0);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translate3d(10px, 0, 0);
+    }
+}
+
+.animate__animated {
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+}
+
+.animate__faster {
+    animation-duration: 0.3s;
+}
+
+.animate__fadeInUp {
+    animation-name: fadeInUp;
+}
+
+.animate__fadeOutDown {
+    animation-name: fadeOutDown;
+}
+
+.animate__shakeX {
+    animation-name: shakeX;
+}

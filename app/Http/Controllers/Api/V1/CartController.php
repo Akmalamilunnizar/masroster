@@ -33,26 +33,30 @@ class CartController extends Controller
             $cart = session()->get('cart', []);
 
             $productId = $request->id;
-            $ukuran = $request->ukuran; // ukuran id or custom string
-            $ukuran_label = $request->ukuran_label ?? null; // label for display (optional)
+            $ukuran = $request->ukuran ?? 'custom'; // ukuran id or custom string, default to 'custom'
+            $ukuran_label = $request->ukuran_label ?? 'Custom Ukuran'; // label for display (optional)
             $custom_ukuran = $request->custom_ukuran ?? null; // custom ukuran (optional)
             // Make a unique key for product+ukuran
             $cartKey = $productId . '|' . $ukuran;
 
+            $quantity = $request->quantity ?? 1;
+            $subtotal = $request->subtotal ?? ($request->harga * $quantity);
+            
             if (isset($cart[$cartKey])) {
                 // Jika produk+ukuran sudah ada, tambahkan jumlah
-                $cart[$cartKey]['quantity']++;
+                $cart[$cartKey]['quantity'] += $quantity;
+                $cart[$cartKey]['subtotal'] = $cart[$cartKey]['harga'] * $cart[$cartKey]['quantity'];
             } else {
                 // Jika produk+ukuran belum ada, tambahkan baru
                 $cart[$cartKey] = [
                     "id" => $request->id,
-                    "quantity" => $request->quantity,
+                    "quantity" => $quantity,
                     "nama" => $request->nama,
                     "harga" => $request->harga,
                     "img" => $request->img,
                     "ukuran" => $ukuran,
                     "ukuran_label" => $ukuran_label,
-                    "subtotal" => $request->subtotal,
+                    "subtotal" => $subtotal,
                     "custom_ukuran" => $custom_ukuran,
                 ];
             }

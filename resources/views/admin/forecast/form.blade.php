@@ -163,7 +163,7 @@ function loadFromDatabase() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error loading data from database: ' + error.message);
+        CustomModal.error('Error loading data from database: ' + error.message);
     })
     .finally(() => {
         // Reset button state

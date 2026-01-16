@@ -109,14 +109,14 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                @if($produk->JumlahStok > 0)
-                                    @if($produk->JumlahStok < 10)
+                                @if($produk->stock > 0)
+                                    @if($produk->stock < 10)
                                         <span class="badge bg-warning text-dark">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>{{ $produk->JumlahStok }}
+                                            <i class="fas fa-exclamation-triangle me-1"></i>{{ $produk->stock }}
                                         </span>
                                     @else
                                         <span class="badge bg-success">
-                                            <i class="fas fa-check-circle me-1"></i>{{ $produk->JumlahStok }}
+                                            <i class="fas fa-check-circle me-1"></i>{{ $produk->stock }}
                                         </span>
                                     @endif
                                 @else

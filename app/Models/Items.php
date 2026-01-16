@@ -15,7 +15,7 @@ class Items extends Model
         'id_jenis',
         'id_tipe',
         'id_motif',
-        'JumlahStok',
+        'stock',
         'Img',
         'deskripsi',
     ];

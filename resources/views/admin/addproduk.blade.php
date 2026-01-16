@@ -100,9 +100,9 @@
                 </div>
                 <!-- Stok Awal -->
                 <div class="mb-3">
-                    <label for="JumlahStok" class="form-label">Stok Awal</label>
-                    <input type="number" name="JumlahStok" id="JumlahStok" class="form-control" 
-                           placeholder="Masukkan jumlah stok awal" min="0" value="{{ old('JumlahStok', 0) }}" required>
+                    <label for="stock" class="form-label">Stok Awal</label>
+                    <input type="number" name="stock" id="stock" class="form-control" 
+                           placeholder="Masukkan jumlah stok awal" min="0" value="{{ old('stock', 0) }}" required>
                     <div class="form-text">Masukkan jumlah stok awal untuk produk ini</div>
                 </div>
                 <!-- Deskripsi -->
@@ -390,11 +390,11 @@
         .then(r => r.ok ? r.json() : Promise.reject(r))
         .then(data => {
             console.log('Test AJAX successful:', data);
-            alert('AJAX test successful: ' + JSON.stringify(data));
+                CustomModal.success('AJAX test successful: ' + JSON.stringify(data));
         })
         .catch((error) => {
             console.error('Test AJAX failed:', error);
-            alert('AJAX test failed: ' + error.message);
+            CustomModal.error('AJAX test failed: ' + error.message);
         });
     }
 
@@ -499,7 +499,7 @@
             if (e.ctrlKey && e.shiftKey && e.key === 'M') {
                 console.log('Force clearing all modals...');
                 forceClearAllModals();
-                alert('All modals and backdrops cleared!');
+                CustomModal.info('All modals and backdrops cleared!');
             }
         });
     });
@@ -567,20 +567,19 @@
                 }
                 document.getElementById('addJenisForm').reset();
                 
-                alert('Jenis berhasil ditambahkan!');
+                CustomModal.success('Jenis berhasil ditambahkan!');
             } else {
-                alert('Error: ' + data.message);
+                CustomModal.error(data.message || 'Terjadi kesalahan saat menambah jenis');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat menambah jenis');
+            CustomModal.error('Terjadi kesalahan saat menambah jenis');
         });
     }
 
     function addTipe() {
         console.log('addTipe function called');
-        alert('addTipe function is working!');
         const formData = new FormData(document.getElementById('addTipeForm'));
         fetch('{{ route("quick.add.tipe") }}', {
             method: 'POST',
@@ -606,14 +605,14 @@
                 }
                 document.getElementById('addTipeForm').reset();
                 
-                alert('Tipe berhasil ditambahkan!');
+                CustomModal.success('Tipe berhasil ditambahkan!');
             } else {
-                alert('Error: ' + data.message);
+                CustomModal.error(data.message || 'Terjadi kesalahan saat menambah tipe');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat menambah tipe');
+            CustomModal.error('Terjadi kesalahan saat menambah tipe');
         });
     }
 
@@ -640,14 +639,14 @@
                 bootstrap.Modal.getInstance(document.getElementById('addMotifModal')).hide();
                 document.getElementById('addMotifForm').reset();
                 
-                alert('Motif berhasil ditambahkan!');
+                CustomModal.success('Motif berhasil ditambahkan!');
             } else {
-                alert('Error: ' + data.message);
+                CustomModal.error(data.message || 'Terjadi kesalahan saat menambah motif');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat menambah motif');
+            CustomModal.error('Terjadi kesalahan saat menambah motif');
         });
     }
 
@@ -676,14 +675,14 @@
                 bootstrap.Modal.getInstance(document.getElementById('addSizeModal')).hide();
                 document.getElementById('addSizeForm').reset();
                 
-                alert('Ukuran berhasil ditambahkan!');
+                CustomModal.success('Ukuran berhasil ditambahkan!');
             } else {
-                alert('Error: ' + data.message);
+                CustomModal.error(data.message || 'Terjadi kesalahan saat menambah ukuran');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat menambah ukuran');
+            CustomModal.error('Terjadi kesalahan saat menambah ukuran');
         });
     }
 

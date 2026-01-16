@@ -41,6 +41,9 @@ CIME | Detail Pesanan
                 <i class='bx bx-package me-2'></i>Informasi Pesanan
             </h5>
             <div>
+                <a href="{{ route('print.invoice', $orders->IdTransaksi) }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                    <i class='bx bx-printer me-1'></i> Print Faktur
+                </a>
                 @if($orders->StatusPesanan == 'Menunggu Konfirmasi')
                     <form action="{{ route('terimaOrderan', $orders->IdTransaksi) }}" method="POST" class="d-inline">
                         @csrf
@@ -71,9 +74,9 @@ CIME | Detail Pesanan
                     <div class="mb-3">
                         <label class="form-label fw-bold">Status Pesanan</label>
                         <p class="form-control-static">
-                            <span class="badge bg-label-{{ 
-                                $orders->StatusPesanan == 'Diterima' ? 'success' : 
-                                ($orders->StatusPesanan == 'Ditolak' ? 'danger' : 'warning') 
+                            <span class="badge bg-label-{{
+                                $orders->StatusPesanan == 'Diterima' ? 'success' :
+                                ($orders->StatusPesanan == 'Ditolak' ? 'danger' : 'warning')
                             }}">
                                 {{ $orders->StatusPesanan }}
                             </span>
@@ -164,8 +167,8 @@ CIME | Detail Pesanan
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ asset('storage/' . $item->produk->Img) }}" 
-                                             alt="{{ $item->produk->NamaProduk }}" 
+                                        <img src="{{ asset('storage/' . $item->produk->Img) }}"
+                                             alt="{{ $item->produk->NamaProduk }}"
                                              class="rounded me-2"
                                              style="width: 50px; height: 50px; object-fit: cover;">
                                         <div>
@@ -179,8 +182,8 @@ CIME | Detail Pesanan
                                 <td>Rp {{ number_format($item->SubTotal, 0, ',', '.') }}</td>
                                 <td>
                                     @if($item->design_file)
-                                        <a href="{{ asset('storage/' . $item->design_file) }}" 
-                                           class="btn btn-sm btn-primary" 
+                                        <a href="{{ asset('storage/' . $item->design_file) }}"
+                                           class="btn btn-sm btn-primary"
                                            target="_blank">
                                             <i class='bx bx-download me-1'></i> Download
                                         </a>

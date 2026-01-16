@@ -68,12 +68,14 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <div class="btn-group" role="group">
-                                    <a href="{{ route('edittiperoster', $tipe->IdTipe) }}" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $tipe->IdTipe }})">
-                                        <i class="fas fa-trash"></i>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <a href="{{ route('edittiperoster', $tipe->IdTipe) }}" 
+                                        class="btn btn-sm btn-warning" 
+                                        style="border-radius: 6px; min-width: 70px;">
+                                         <i class="fas fa-edit me-1"></i> Edit
+                                     </a>
+                                    <button type="button" class="btn btn-sm btn-danger"  style="border-radius: 6px; min-width: 70px;" onclick="confirmDelete({{ $tipe->IdTipe }})">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
                                     </button>
                                 </div>
                             </td>

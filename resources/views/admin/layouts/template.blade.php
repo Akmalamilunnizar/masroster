@@ -9,6 +9,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Custom Modal CSS -->
+    <link rel="stylesheet" href="{{ asset('css/custom-modal.css') }}">
 
     <title>@yield('page_title')</title>
 
@@ -126,14 +128,14 @@
             margin-bottom: 0 !important;
             padding: 0 !important;
         }
-        
+
         /* Ensure content is not hidden */
         .layout-container {
             display: flex !important;
             min-height: 100vh !important;
             width: 100% !important;
         }
-        
+
         /* Force content to be visible */
         .container-xxl {
             margin-left: 0 !important;
@@ -141,7 +143,7 @@
             width: 100% !important;
             max-width: none !important;
         }
-        
+
         /* Ensure form content is properly positioned */
         .card {
             position: relative !important;
@@ -150,7 +152,7 @@
             width: 100% !important;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
         }
-        
+
         /* Override any conflicting styles */
         body {
             overflow-x: hidden !important;
@@ -158,26 +160,26 @@
             margin: 0 !important;
             padding: 0 !important;
         }
-        
+
         /* Fix for form elements */
         .form-control, .form-select {
             width: 100% !important;
             box-sizing: border-box !important;
         }
-        
+
         /* Ensure proper spacing */
         .row {
             margin-left: 0 !important;
             margin-right: 0 !important;
             width: 100% !important;
         }
-        
+
         .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
             padding-left: 0.75rem !important;
             padding-right: 0.75rem !important;
             box-sizing: border-box !important;
         }
-        
+
         /* Fix navbar positioning */
         .layout-navbar {
             position: sticky !important;
@@ -186,7 +188,7 @@
             background: linear-gradient(135deg,rgb(255, 255, 255),rgb(255, 255, 255)) !important;
             border-bottom: 1px solid #e9ecef !important;
         }
-        
+
         /* Fix content wrapper */
         .content-wrapper {
             flex: 1 !important;
@@ -196,112 +198,112 @@
             margin-left: 0 !important;
             width: 100% !important;
         }
-        
+
         /* Ensure proper form layout */
         .container-p-y {
             padding-top: 0.75rem !important;
             padding-bottom: 0.75rem !important;
         }
-        
+
         /* Reduce excessive spacing */
         .py-3 {
             padding-top: 0.5rem !important;
             padding-bottom: 0.5rem !important;
         }
-        
+
         .mb-4 {
             margin-bottom: 0.75rem !important;
         }
-        
+
         .mb-3 {
             margin-bottom: 0.5rem !important;
         }
-        
+
         /* Fix card spacing */
         .card {
             margin-bottom: 0.75rem !important;
         }
-        
+
         .card-body {
             padding: 0.75rem !important;
         }
-        
+
         .card-header {
             padding: 0.5rem 0.75rem !important;
         }
-        
+
         /* Fix form row spacing */
         .row {
             margin-left: -0.375rem !important;
             margin-right: -0.375rem !important;
             width: 100% !important;
         }
-        
+
         .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
             padding-left: 0.375rem !important;
             padding-right: 0.375rem !important;
             box-sizing: border-box !important;
         }
-        
+
         /* Fix input groups */
         .input-group {
             width: 100% !important;
         }
-        
+
         .input-group-text {
             background-color: #f8f9fa !important;
             border: 1px solid #ced4da !important;
         }
-        
+
         /* Fix form elements spacing */
         .form-label {
             margin-bottom: 0.25rem !important;
             font-weight: 500 !important;
         }
-        
+
         .form-control, .form-select {
             margin-bottom: 0.5rem !important;
         }
-        
+
         /* Fix page header spacing */
         .page-header {
             margin-bottom: 0.75rem !important;
             padding: 0.75rem !important;
         }
-        
+
         /* Fix alert spacing */
         .alert {
             margin-bottom: 0.75rem !important;
         }
-        
+
         /* Fix table spacing */
         .table th, .table td {
             padding: 0.5rem 0.375rem !important;
             vertical-align: middle !important;
         }
-        
+
         .table thead th {
             font-size: 0.8rem !important;
             font-weight: 600 !important;
         }
-        
+
         .table tbody td {
             font-size: 0.875rem !important;
         }
-        
+
         /* Fix container spacing */
         .container-xxl {
             padding-left: 0.75rem !important;
             padding-right: 0.75rem !important;
         }
-        
+
         /* CRITICAL: Fix sidebar overlap for transaction pages */
         .layout-page {
             margin-left: 280px !important;
             width: calc(100% - 280px) !important;
             padding-left: 0.5rem !important;
         }
-        
+
         .container-xxl.flex-grow-1.container-p-y {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
@@ -420,7 +422,7 @@
                             <i class='menu-icon tf-icons bx bx-package'></i>
                             <div>Daftar Jenis Produk</div>
                         </a>
-                    </li>                    
+                    </li>
                     <li class="menu-item {{ request()->is('admin/all-tipe-roster*') || request()->is('admin/edit-tipe-roster*') || request()->is('admin/add-tipe-roster') ? 'active' : '' }}">
                         <a href="{{ route('alltiperoster') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-package'></i>
@@ -445,7 +447,7 @@
                             <div>Daftar Customer</div>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item {{ request()->is('admin/all-transaksi*') ? 'active' : '' }}">
                         <a href="{{ route('alltransaksi') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-collection"></i>
@@ -573,6 +575,31 @@
     <script src="{{ asset('dashboard2/assets/js/dashboards-analytics.js') }}"></script>
 
     <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+    <!-- Custom Modal System -->
+    <script src="{{ asset('js/custom-modal.js') }}"></script>
+
+    <!-- Session Flash Messages Handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session()->has('message'))
+                CustomModal.success('{{ session()->get("message") }}', 'Berhasil!');
+            @endif
+
+            @if(session()->has('error'))
+                CustomModal.error('{{ session()->get("error") }}', 'Error!');
+            @endif
+
+            @if(session()->has('warning'))
+                CustomModal.warning('{{ session()->get("warning") }}', 'Peringatan!');
+            @endif
+
+            @if(session()->has('info'))
+                CustomModal.info('{{ session()->get("info") }}', 'Informasi');
+            @endif
+        });
+    </script>
+
     @stack('scripts')
 </body>
 

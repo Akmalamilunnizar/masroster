@@ -173,16 +173,7 @@
                 </form>
             </div>
         </div>
-        @if (session()->has('message'))
-            <div class="alert alert-success">
-                {{ session()->get('message') }}
-            </div>
-        @endif
-        @if (session()->has('error'))
-            <div class="alert alert-danger">
-                {{ session()->get('error') }}
-            </div>
-        @endif
+        {{-- Session messages are automatically displayed via CustomModal --}}
         <div class="card">
             <h5 class="card-header">Barang Yang Tersedia</h5>
             <div class="table-responsive text-nowrap">
@@ -255,7 +246,7 @@
                                     </div>
                                 </td>
                                 <td class="text-center">{{ $item->jenisBarang->JenisBarang }}</td>
-                                <td class="text-center">{{ $item->JumlahStok }}</td>
+                                <td class="text-center">{{ $item->stock }}</td>
                                 <td class="text-center">{{ $item->latestDetailKeluar?->IdKeluar ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailKeluar ? \Carbon\Carbon::parse($item->latestDetailKeluar->created_at)->format('d-m-Y H:i') : '-' }}</td>
                                 <td class="text-center">

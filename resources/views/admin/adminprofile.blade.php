@@ -137,14 +137,14 @@ CIME | Halaman Profil Admin
                 
                 // Validasi ukuran file (2MB)
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                    CustomModal.warning('Ukuran file terlalu besar. Maksimal 2MB.');
                     input.value = '';
                     return;
                 }
 
                 // Validasi tipe file
                 if (!file.type.match('image.*')) {
-                    alert('File harus berupa gambar.');
+                    CustomModal.warning('File harus berupa gambar.');
                     input.value = '';
                     return;
                 }
@@ -159,7 +159,7 @@ CIME | Halaman Profil Admin
             form.addEventListener('submit', function(e) {
                 if (!nameInput.value.trim()) {
                     e.preventDefault();
-                    alert('Nama wajib diisi');
+                    CustomModal.warning('Nama wajib diisi');
                     nameInput.focus();
                 }
             });

@@ -6,11 +6,7 @@ CIME | Halaman Keluar Barang
     <div class="container-xxl flex-grow-1 container-p-y">
         <h4 class="py-3 mb-4"><span class="text-muted fw-light">Halaman/</span> Keluar Barang</h4>
 
-        @if (session()->has('error'))
-            <div class="alert alert-danger">
-                {{ session()->get('error') }}
-            </div>
-        @endif
+        {{-- Session messages are automatically displayed via CustomModal --}}
 
         <div class="card">
             <h5 class="card-header fw-bold">Form Barang Keluar</h5>
@@ -34,8 +30,8 @@ CIME | Halaman Keluar Barang
                             <select class="form-select" id="IdBarang" name="IdBarang" required>
                                 <option value="">Pilih Barang...</option>
                                 @foreach ($items as $item)
-                                    <option value="{{ $item->IdBarang }}" data-stock="{{ $item->JumlahStok }}">
-                                        {{ $item->NamaBarang }} (Stok: {{ $item->JumlahStok }} {{ $item->satuan->Satuan }})
+                                    <option value="{{ $item->IdBarang }}" data-stock="{{ $item->stock }}">
+                                        {{ $item->NamaBarang }} (Stok: {{ $item->stock }} {{ $item->satuan->Satuan }})
                                     </option>
                                 @endforeach
                             </select>
@@ -67,4 +63,4 @@ CIME | Halaman Keluar Barang
         });
     </script>
     @endpush
-@endsection 
+@endsection

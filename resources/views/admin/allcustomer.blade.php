@@ -34,7 +34,6 @@ CIME | Halaman Daftar Customer
                 <th style="text-align: center; font-weight: bold;">Nama Customer</th>
                 <th style="text-align: center; font-weight: bold;">Nomor Telepon</th>
                 <th style="text-align: center; font-weight: bold;">Email</th>
-                <th style="text-align: center; font-weight: bold;">Alamat</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
@@ -50,7 +49,7 @@ CIME | Halaman Daftar Customer
                         <td style="text-align: center;">{{ $item->nomor_telepon }}</td>
                         <td style="text-align: center;">{{ $item->email }}</td>
                         <td style="text-align: center;">
-                            {{ $item->defaultAddress ? $item->defaultAddress->full_address : '-' }}
+                            {{ $item->is_default ? $item->defaultAddress->full_address : '-' }}
                         </td>
                     </tr>
                 @endforeach

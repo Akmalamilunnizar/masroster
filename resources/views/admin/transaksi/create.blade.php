@@ -10,15 +10,15 @@
     .form-section {
         margin-bottom: 1.5rem;
     }
-    
+
     .form-row {
         margin-bottom: 1rem;
     }
-    
+
     .form-group {
         margin-bottom: 0.75rem;
     }
-    
+
     .product-row {
         background-color: #f8f9fa;
         padding: 1rem;
@@ -26,48 +26,48 @@
         margin-bottom: 1rem;
         border: 1px solid #e9ecef;
     }
-    
+
     .product-row .row {
         align-items: end;
     }
-    
+
     .btn-remove-product {
         margin-top: 1.5rem;
     }
-    
+
     .subtotal-display {
         background-color: #e9ecef;
         font-weight: 600;
     }
-    
+
     /* Fix input alignment */
     .form-control, .form-select {
         height: 38px;
     }
-    
+
     .form-label {
         font-weight: 600;
         color: #495057;
         margin-bottom: 0.25rem;
     }
-    
+
     /* Fix card spacing */
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         border: 1px solid #dee2e6;
     }
-    
+
     .card-header {
         background-color: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
     }
-    
+
     /* Fix textarea height */
     textarea.form-control {
         height: auto;
         min-height: 80px;
     }
-    
+
     /* Fix sidebar overlap issue */
     .container-xxl {
         margin-left: 0 !important;
@@ -75,14 +75,14 @@
         width: 100% !important;
         max-width: none !important;
     }
-    
+
     /* Ensure content is not hidden behind sidebar */
     .layout-page {
         margin-left: 280px !important;
         width: calc(100% - 280px) !important;
         padding-left: 0.5rem !important;
     }
-    
+
     /* Fix form container spacing */
     .container-xxl.flex-grow-1.container-p-y {
         padding-left: 1rem !important;
@@ -111,12 +111,12 @@
         <div class="card-body">
             <form action="{{ route('transaksi.store') }}" method="POST" id="transactionForm">
                 @csrf
-                
+
                 <!-- Basic Transaction Info -->
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="IdTransaksi" class="form-label">ID Transaksi (Invoice)</label>
-                        <input type="text" class="form-control @error('IdTransaksi') is-invalid @enderror" 
+                        <input type="text" class="form-control @error('IdTransaksi') is-invalid @enderror"
                                id="IdTransaksi" name="IdTransaksi" value="{{ $newId }}" readonly>
                         @error('IdTransaksi')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -272,8 +272,8 @@
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="text" class="form-control @error('GrandTotal') is-invalid @enderror"
-                                id="GrandTotal" name="GrandTotal" 
-                                placeholder="Masukkan total (contoh: 1,260,000)" 
+                                id="GrandTotal" name="GrandTotal"
+                                placeholder="Masukkan total (contoh: 1,260,000)"
                                 value="{{ old('GrandTotal') }}" required
                                 oninput="formatNumber(this)" onblur="validateNumber(this)">
                         </div>
@@ -282,55 +282,40 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                                         <div class="col-md-6">
-                         <label for="ongkir" class="form-label">Biaya Ongkir</label>
-                         <div class="input-group">
-                             <span class="input-group-text">Rp</span>
-                             <input type="text" class="form-control @error('ongkir') is-invalid @enderror"
-                                 id="ongkir" name="ongkir" 
-                                 placeholder="Masukkan biaya ongkir (contoh: 50,000)" 
-                                 value="{{ old('ongkir', '0') }}" required
-                                 oninput="formatNumber(this)" onblur="validateNumber(this)">
-                         </div>
-                         <small class="text-muted">Masukkan angka tanpa koma, akan otomatis diformat</small>
-                         @error('ongkir')
-                             <div class="invalid-feedback">{{ $message }}</div>
-                         @enderror
-                     </div>
-                 </div>
+                    <div class="col-md-6">
+                        <label for="Bayar" class="form-label">Jumlah Dibayar</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="text" class="form-control @error('Bayar') is-invalid @enderror"
+                                id="Bayar" name="Bayar"
+                                placeholder="Masukkan jumlah dibayar (contoh: 1,300,000)"
+                                value="{{ old('Bayar') }}" required
+                                oninput="formatNumber(this)" onblur="validateNumber(this)">
+                        </div>
+                        <small class="text-muted">Masukkan angka tanpa koma, akan otomatis diformat</small>
+                        @error('Bayar')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
 
-                 <!-- Payment Info -->
-                 <div class="row mb-3">
-                     <div class="col-md-6">
-                         <label for="GrandTotal" class="form-label">Total Grand</label>
-                         <div class="input-group">
-                             <span class="input-group-text">Rp</span>
-                             <input type="text" class="form-control @error('GrandTotal') is-invalid @enderror"
-                                 id="GrandTotal" name="GrandTotal" 
-                                 placeholder="Masukkan total (contoh: 1,260,000)" 
-                                 value="{{ old('GrandTotal') }}" required
-                                 oninput="formatNumber(this)" onblur="validateNumber(this)">
-                         </div>
-                         <small class="text-muted">Masukkan angka tanpa koma, akan otomatis diformat</small>
-                         @error('GrandTotal')
-                             <div class="invalid-feedback">{{ $message }}</div>
-                         @enderror
-                     </div>
-                     <div class="col-md-6">
-                         <label for="Bayar" class="form-label">Jumlah Dibayar</label>
-                         <div class="input-group">
-                             <span class="input-group-text">Rp</span>
-                             <input type="text" class="form-control @error('Bayar') is-invalid @enderror"
-                                 id="Bayar" name="Bayar" 
-                                 placeholder="Masukkan jumlah dibayar (contoh: 1,300,000)" 
-                                 value="{{ old('Bayar') }}" required
-                                 oninput="formatNumber(this)" onblur="validateNumber(this)">
-                         </div>
-                         <small class="text-muted">Masukkan angka tanpa koma, akan otomatis diformat</small>
-                         @error('Bayar')
-                             <div class="invalid-feedback">{{ $message }}</div>
-                         @enderror
-                     </div>
+                <!-- Shipping Cost -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="ongkir" class="form-label">Biaya Ongkir</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="text" class="form-control @error('ongkir') is-invalid @enderror"
+                                id="ongkir" name="ongkir"
+                                placeholder="Masukkan biaya ongkir (contoh: 50,000)"
+                                value="{{ old('ongkir', '0') }}" required
+                                oninput="formatNumber(this)" onblur="validateNumber(this)">
+                        </div>
+                        <small class="text-muted">Masukkan angka tanpa koma, akan otomatis diformat</small>
+                        @error('ongkir')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
 
                 <!-- Payment Status -->
@@ -366,7 +351,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="notes" class="form-label">Catatan</label>
-                        <textarea class="form-control @error('notes') is-invalid @enderror" 
+                        <textarea class="form-control @error('notes') is-invalid @enderror"
                                   id="notes" name="notes" rows="3">{{ old('notes') }}</textarea>
                         @error('notes')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -396,20 +381,20 @@ let productRowCount = 1;
 document.getElementById('add-product').addEventListener('click', function() {
     const container = document.getElementById('products-container');
     const newRow = document.querySelector('.product-row').cloneNode(true);
-    
+
     // Update row index
     newRow.dataset.row = productRowCount;
     newRow.querySelectorAll('select, input').forEach(element => {
         element.name = element.name.replace('[0]', `[${productRowCount}]`);
         element.value = '';
     });
-    
+
     // Show remove button
     newRow.querySelector('.remove-product').style.display = 'block';
-    
+
     container.appendChild(newRow);
     productRowCount++;
-    
+
     // Reattach event listeners
     attachProductRowListeners(newRow);
 });
@@ -429,12 +414,12 @@ function attachProductRowListeners(row) {
     const sizeSelect = row.querySelector('.size-select');
     const qtyInput = row.querySelector('.qty-input');
     const priceInput = row.querySelector('.price-input');
-    
+
     // Product selection
     productSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const sizes = JSON.parse(selectedOption.dataset.sizes || '[]');
-        
+
         // Clear and populate size options
         sizeSelect.innerHTML = '<option value="">Pilih Ukuran</option>';
         sizes.forEach(size => {
@@ -445,7 +430,7 @@ function attachProductRowListeners(row) {
             sizeSelect.appendChild(option);
         });
     });
-    
+
     // Size selection
     sizeSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
@@ -454,7 +439,7 @@ function attachProductRowListeners(row) {
             calculateSubtotal(row);
         }
     });
-    
+
     // Quantity and price changes
     qtyInput.addEventListener('input', () => calculateSubtotal(row));
     priceInput.addEventListener('input', () => calculateSubtotal(row));
@@ -465,7 +450,7 @@ function calculateSubtotal(row) {
     const qty = parseInt(row.querySelector('.qty-input').value) || 0;
     const price = parseInt(row.querySelector('.price-input').value) || 0;
     const subtotal = qty * price;
-    
+
     row.querySelector('.subtotal-display').value = subtotal.toLocaleString();
     calculateTotal();
 }
@@ -474,20 +459,20 @@ function calculateSubtotal(row) {
  function calculateTotal() {
      let total = 0;
      let totalQty = 0;
-     
+
      document.querySelectorAll('.subtotal-display').forEach(display => {
          total += parseInt(display.value.replace(/,/g, '')) || 0;
      });
-     
+
      // Calculate total quantity
      document.querySelectorAll('.qty-input').forEach(qtyInput => {
          totalQty += parseInt(qtyInput.value) || 0;
      });
-     
+
      // Auto-update shipping type based on quantity
      const shippingTypeSelect = document.getElementById('shipping_type');
      const ongkirInput = document.getElementById('ongkir');
-     
+
      if (totalQty > 100) {
          shippingTypeSelect.value = 'Free Ongkir';
          ongkirInput.value = '0';
@@ -496,11 +481,11 @@ function calculateSubtotal(row) {
          shippingTypeSelect.value = 'Ongkir';
          ongkirInput.disabled = false;
      }
-     
+
      // Add shipping cost to total
      const ongkirCost = parseInt(ongkirInput.value.replace(/[^\d]/g, '')) || 0;
      total += ongkirCost;
-     
+
      document.getElementById('GrandTotal').value = total;
  }
 
@@ -516,23 +501,30 @@ document.addEventListener('DOMContentLoaded', function() {
     if (shippingMethodSelect) {
         shippingMethodSelect.value = 'Offline';
         shippingMethodSelect.disabled = true; // Disable to prevent changes
+
+        // Add a hidden input to ensure the value is submitted
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'shipping_method';
+        hiddenInput.value = 'Offline';
+        shippingMethodSelect.parentNode.appendChild(hiddenInput);
     }
-    
+
     calculateTotal();
-    
+
     // Add customer selection listener for address loading
     const customerSelect = document.getElementById('id_customer');
     const addressSelect = document.getElementById('address_id');
     const addressPreview = document.getElementById('address_preview');
-    
+
     if (customerSelect && addressSelect && addressPreview) {
         customerSelect.addEventListener('change', function() {
             const customerId = this.value;
-            
+
             // Clear address dropdown and preview
             addressSelect.innerHTML = '<option value="">Pilih Alamat</option>';
             addressPreview.textContent = 'Pilih alamat customer untuk melihat preview';
-            
+
             if (customerId) {
                 // Fetch customer addresses
                 fetch(`/admin/get-customer-addresses/${customerId}`)
@@ -561,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
         });
-        
+
         // Add address selection listener
         addressSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
@@ -581,19 +573,19 @@ document.addEventListener('DOMContentLoaded', function() {
 function formatNumber(input) {
     // Remove all non-digit characters
     let value = input.value.replace(/[^\d]/g, '');
-    
+
     // Format with commas for display
     if (value !== '') {
         value = parseInt(value).toLocaleString('id-ID');
     }
-    
+
     // Update display
     input.value = value;
 }
 
 function validateNumber(input) {
     let value = input.value.replace(/[^\d]/g, '');
-    
+
     if (value === '') {
         input.setCustomValidity('Field ini harus diisi');
     } else if (parseInt(value) < 0) {
@@ -606,24 +598,24 @@ function validateNumber(input) {
  // Simple form submission - let the server handle validation
  document.querySelector('form').addEventListener('submit', function(e) {
      console.log('Form submission started...');
-     
+
      // Convert formatted values to raw numbers before submission
      const grandTotalInput = document.getElementById('GrandTotal');
      const bayarInput = document.getElementById('Bayar');
      const ongkirInput = document.getElementById('ongkir');
-     
+
      // Remove all non-digit characters from GrandTotal
      const grandTotalValue = grandTotalInput.value.replace(/[^\d]/g, '');
      grandTotalInput.value = grandTotalValue;
-     
+
      // Remove all non-digit characters from Bayar
      const bayarValue = bayarInput.value.replace(/[^\d]/g, '');
      bayarInput.value = bayarValue;
-     
+
      // Remove all non-digit characters from Ongkir
      const ongkirValue = ongkirInput.value.replace(/[^\d]/g, '');
      ongkirInput.value = ongkirValue;
-     
+
      console.log('Form validation passed, submitting...');
      console.log('GrandTotal (raw):', grandTotalValue);
      console.log('Bayar (raw):', bayarValue);

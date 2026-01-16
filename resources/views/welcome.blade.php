@@ -2,1769 +2,227 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <meta charset="utf-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sistem Cerdas Pengelolaan Pesanan dan Produksi Percetakan Berbasis Digital - CIME Citra Media">
 
-  <title>CIME | Website MAS Roster Malang</title>
-  <meta name="description" content="A SaaS landing page template." />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CIME | Citra Media - Sistem Manajemen Percetakan Digital</title>
 
   <!-- Favicon -->
-  <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png" />
-
-  <!-- CSS Files -->
-  <link rel="stylesheet" href="{{ asset('css/animate.css') }}" />
-  <!-- <link rel="stylesheet" href="{{ asset('css/tiny-slider.css') }}" /> -->
-  <link rel="stylesheet" href="{{ asset('css/glightbox.min.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
-  <link rel="stylesheet" href="https://cdn.lineicons.com/3.0/lineicons.css">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css">
-
-  <!-- Script JS Bootstrap -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>Laravel</title>
+    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.bunny.net">
-  <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-
-  <!-- Styles / Scripts -->
-  @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
-  @else
-  <style>
-    /*! tailwindcss v4.0.7 | MIT License | https://tailwindcss.com */
-    @layer theme {
-
-      :root,
-      :host {
-        --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-        --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-        --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        --color-red-50: oklch(.971 .013 17.38);
-        --color-red-100: oklch(.936 .032 17.717);
-        --color-red-200: oklch(.885 .062 18.334);
-        --color-red-300: oklch(.808 .114 19.571);
-        --color-red-400: oklch(.704 .191 22.216);
-        --color-red-500: oklch(.637 .237 25.331);
-        --color-red-600: oklch(.577 .245 27.325);
-        --color-red-700: oklch(.505 .213 27.518);
-        --color-red-800: oklch(.444 .177 26.899);
-        --color-red-900: oklch(.396 .141 25.723);
-        --color-red-950: oklch(.258 .092 26.042);
-        --color-orange-50: oklch(.98 .016 73.684);
-        --color-orange-100: oklch(.954 .038 75.164);
-        --color-orange-200: oklch(.901 .076 70.697);
-        --color-orange-300: oklch(.837 .128 66.29);
-        --color-orange-400: oklch(.75 .183 55.934);
-        --color-orange-500: oklch(.705 .213 47.604);
-        --color-orange-600: oklch(.646 .222 41.116);
-        --color-orange-700: oklch(.553 .195 38.402);
-        --color-orange-800: oklch(.47 .157 37.304);
-        --color-orange-900: oklch(.408 .123 38.172);
-        --color-orange-950: oklch(.266 .079 36.259);
-        --color-amber-50: oklch(.987 .022 95.277);
-        --color-amber-100: oklch(.962 .059 95.617);
-        --color-amber-200: oklch(.924 .12 95.746);
-        --color-amber-300: oklch(.879 .169 91.605);
-        --color-amber-400: oklch(.828 .189 84.429);
-        --color-amber-500: oklch(.769 .188 70.08);
-        --color-amber-600: oklch(.666 .179 58.318);
-        --color-amber-700: oklch(.555 .163 48.998);
-        --color-amber-800: oklch(.473 .137 46.201);
-        --color-amber-900: oklch(.414 .112 45.904);
-        --color-amber-950: oklch(.279 .077 45.635);
-        --color-yellow-50: oklch(.987 .026 102.212);
-        --color-yellow-100: oklch(.973 .071 103.193);
-        --color-yellow-200: oklch(.945 .129 101.54);
-        --color-yellow-300: oklch(.905 .182 98.111);
-        --color-yellow-400: oklch(.852 .199 91.936);
-        --color-yellow-500: oklch(.795 .184 86.047);
-        --color-yellow-600: oklch(.681 .162 75.834);
-        --color-yellow-700: oklch(.554 .135 66.442);
-        --color-yellow-800: oklch(.476 .114 61.907);
-        --color-yellow-900: oklch(.421 .095 57.708);
-        --color-yellow-950: oklch(.286 .066 53.813);
-        --color-lime-50: oklch(.986 .031 120.757);
-        --color-lime-100: oklch(.967 .067 122.328);
-        --color-lime-200: oklch(.938 .127 124.321);
-        --color-lime-300: oklch(.897 .196 126.665);
-        --color-lime-400: oklch(.841 .238 128.85);
-        --color-lime-500: oklch(.768 .233 130.85);
-        --color-lime-600: oklch(.648 .2 131.684);
-        --color-lime-700: oklch(.532 .157 131.589);
-        --color-lime-800: oklch(.453 .124 130.933);
-        --color-lime-900: oklch(.405 .101 131.063);
-        --color-lime-950: oklch(.274 .072 132.109);
-        --color-green-50: oklch(.982 .018 155.826);
-        --color-green-100: oklch(.962 .044 156.743);
-        --color-green-200: oklch(.925 .084 155.995);
-        --color-green-300: oklch(.871 .15 154.449);
-        --color-green-400: oklch(.792 .209 151.711);
-        --color-green-500: oklch(.723 .219 149.579);
-        --color-green-600: oklch(.627 .194 149.214);
-        --color-green-700: oklch(.527 .154 150.069);
-        --color-green-800: oklch(.448 .119 151.328);
-        --color-green-900: oklch(.393 .095 152.535);
-        --color-green-950: oklch(.266 .065 152.934);
-        --color-emerald-50: oklch(.979 .021 166.113);
-        --color-emerald-100: oklch(.95 .052 163.051);
-        --color-emerald-200: oklch(.905 .093 164.15);
-        --color-emerald-300: oklch(.845 .143 164.978);
-        --color-emerald-400: oklch(.765 .177 163.223);
-        --color-emerald-500: oklch(.696 .17 162.48);
-        --color-emerald-600: oklch(.596 .145 163.225);
-        --color-emerald-700: oklch(.508 .118 165.612);
-        --color-emerald-800: oklch(.432 .095 166.913);
-        --color-emerald-900: oklch(.378 .077 168.94);
-        --color-emerald-950: oklch(.262 .051 172.552);
-        --color-teal-50: oklch(.984 .014 180.72);
-        --color-teal-100: oklch(.953 .051 180.801);
-        --color-teal-200: oklch(.91 .096 180.426);
-        --color-teal-300: oklch(.855 .138 181.071);
-        --color-teal-400: oklch(.777 .152 181.912);
-        --color-teal-500: oklch(.704 .14 182.503);
-        --color-teal-600: oklch(.6 .118 184.704);
-        --color-teal-700: oklch(.511 .096 186.391);
-        --color-teal-800: oklch(.437 .078 188.216);
-        --color-teal-900: oklch(.386 .063 188.416);
-        --color-teal-950: oklch(.277 .046 192.524);
-        --color-cyan-50: oklch(.984 .019 200.873);
-        --color-cyan-100: oklch(.956 .045 203.388);
-        --color-cyan-200: oklch(.917 .08 205.041);
-        --color-cyan-300: oklch(.865 .127 207.078);
-        --color-cyan-400: oklch(.789 .154 211.53);
-        --color-cyan-500: oklch(.715 .143 215.221);
-        --color-cyan-600: oklch(.609 .126 221.723);
-        --color-cyan-700: oklch(.52 .105 223.128);
-        --color-cyan-800: oklch(.45 .085 224.283);
-        --color-cyan-900: oklch(.398 .07 227.392);
-        --color-cyan-950: oklch(.302 .056 229.695);
-        --color-sky-50: oklch(.977 .013 236.62);
-        --color-sky-100: oklch(.951 .026 236.824);
-        --color-sky-200: oklch(.901 .058 230.902);
-        --color-sky-300: oklch(.828 .111 230.318);
-        --color-sky-400: oklch(.746 .16 232.661);
-        --color-sky-500: oklch(.685 .169 237.323);
-        --color-sky-600: oklch(.588 .158 241.966);
-        --color-sky-700: oklch(.5 .134 242.749);
-        --color-sky-800: oklch(.443 .11 240.79);
-        --color-sky-900: oklch(.391 .09 240.876);
-        --color-sky-950: oklch(.293 .066 243.157);
-        --color-blue-50: oklch(.97 .014 254.604);
-        --color-blue-100: oklch(.932 .032 255.585);
-        --color-blue-200: oklch(.882 .059 254.128);
-        --color-blue-300: oklch(.809 .105 251.813);
-        --color-blue-400: oklch(.707 .165 254.624);
-        --color-blue-500: oklch(.623 .214 259.815);
-        --color-blue-600: oklch(.546 .245 262.881);
-        --color-blue-700: oklch(.488 .243 264.376);
-        --color-blue-800: oklch(.424 .199 265.638);
-        --color-blue-900: oklch(.379 .146 265.522);
-        --color-blue-950: oklch(.282 .091 267.935);
-        --color-indigo-50: oklch(.962 .018 272.314);
-        --color-indigo-100: oklch(.93 .034 272.788);
-        --color-indigo-200: oklch(.87 .065 274.039);
-        --color-indigo-300: oklch(.785 .115 274.713);
-        --color-indigo-400: oklch(.673 .182 276.935);
-        --color-indigo-500: oklch(.585 .233 277.117);
-        --color-indigo-600: oklch(.511 .262 276.966);
-        --color-indigo-700: oklch(.457 .24 277.023);
-        --color-indigo-800: oklch(.398 .195 277.366);
-        --color-indigo-900: oklch(.359 .144 278.697);
-        --color-indigo-950: oklch(.257 .09 281.288);
-        --color-violet-50: oklch(.969 .016 293.756);
-        --color-violet-100: oklch(.943 .029 294.588);
-        --color-violet-200: oklch(.894 .057 293.283);
-        --color-violet-300: oklch(.811 .111 293.571);
-        --color-violet-400: oklch(.702 .183 293.541);
-        --color-violet-500: oklch(.606 .25 292.717);
-        --color-violet-600: oklch(.541 .281 293.009);
-        --color-violet-700: oklch(.491 .27 292.581);
-        --color-violet-800: oklch(.432 .232 292.759);
-        --color-violet-900: oklch(.38 .189 293.745);
-        --color-violet-950: oklch(.283 .141 291.089);
-        --color-purple-50: oklch(.977 .014 308.299);
-        --color-purple-100: oklch(.946 .033 307.174);
-        --color-purple-200: oklch(.902 .063 306.703);
-        --color-purple-300: oklch(.827 .119 306.383);
-        --color-purple-400: oklch(.714 .203 305.504);
-        --color-purple-500: oklch(.627 .265 303.9);
-        --color-purple-600: oklch(.558 .288 302.321);
-        --color-purple-700: oklch(.496 .265 301.924);
-        --color-purple-800: oklch(.438 .218 303.724);
-        --color-purple-900: oklch(.381 .176 304.987);
-        --color-purple-950: oklch(.291 .149 302.717);
-        --color-fuchsia-50: oklch(.977 .017 320.058);
-        --color-fuchsia-100: oklch(.952 .037 318.852);
-        --color-fuchsia-200: oklch(.903 .076 319.62);
-        --color-fuchsia-300: oklch(.833 .145 321.434);
-        --color-fuchsia-400: oklch(.74 .238 322.16);
-        --color-fuchsia-500: oklch(.667 .295 322.15);
-        --color-fuchsia-600: oklch(.591 .293 322.896);
-        --color-fuchsia-700: oklch(.518 .253 323.949);
-        --color-fuchsia-800: oklch(.452 .211 324.591);
-        --color-fuchsia-900: oklch(.401 .17 325.612);
-        --color-fuchsia-950: oklch(.293 .136 325.661);
-        --color-pink-50: oklch(.971 .014 343.198);
-        --color-pink-100: oklch(.948 .028 342.258);
-        --color-pink-200: oklch(.899 .061 343.231);
-        --color-pink-300: oklch(.823 .12 346.018);
-        --color-pink-400: oklch(.718 .202 349.761);
-        --color-pink-500: oklch(.656 .241 354.308);
-        --color-pink-600: oklch(.592 .249 .584);
-        --color-pink-700: oklch(.525 .223 3.958);
-        --color-pink-800: oklch(.459 .187 3.815);
-        --color-pink-900: oklch(.408 .153 2.432);
-        --color-pink-950: oklch(.284 .109 3.907);
-        --color-rose-50: oklch(.969 .015 12.422);
-        --color-rose-100: oklch(.941 .03 12.58);
-        --color-rose-200: oklch(.892 .058 10.001);
-        --color-rose-300: oklch(.81 .117 11.638);
-        --color-rose-400: oklch(.712 .194 13.428);
-        --color-rose-500: oklch(.645 .246 16.439);
-        --color-rose-600: oklch(.586 .253 17.585);
-        --color-rose-700: oklch(.514 .222 16.935);
-        --color-rose-800: oklch(.455 .188 13.697);
-        --color-rose-900: oklch(.41 .159 10.272);
-        --color-rose-950: oklch(.271 .105 12.094);
-        --color-slate-50: oklch(.984 .003 247.858);
-        --color-slate-100: oklch(.968 .007 247.896);
-        --color-slate-200: oklch(.929 .013 255.508);
-        --color-slate-300: oklch(.869 .022 252.894);
-        --color-slate-400: oklch(.704 .04 256.788);
-        --color-slate-500: oklch(.554 .046 257.417);
-        --color-slate-600: oklch(.446 .043 257.281);
-        --color-slate-700: oklch(.372 .044 257.287);
-        --color-slate-800: oklch(.279 .041 260.031);
-        --color-slate-900: oklch(.208 .042 265.755);
-        --color-slate-950: oklch(.129 .042 264.695);
-        --color-gray-50: oklch(.985 .002 247.839);
-        --color-gray-100: oklch(.967 .003 264.542);
-        --color-gray-200: oklch(.928 .006 264.531);
-        --color-gray-300: oklch(.872 .01 258.338);
-        --color-gray-400: oklch(.707 .022 261.325);
-        --color-gray-500: oklch(.551 .027 264.364);
-        --color-gray-600: oklch(.446 .03 256.802);
-        --color-gray-700: oklch(.373 .034 259.733);
-        --color-gray-800: oklch(.278 .033 256.848);
-        --color-gray-900: oklch(.21 .034 264.665);
-        --color-gray-950: oklch(.13 .028 261.692);
-        --color-zinc-50: oklch(.985 0 0);
-        --color-zinc-100: oklch(.967 .001 286.375);
-        --color-zinc-200: oklch(.92 .004 286.32);
-        --color-zinc-300: oklch(.871 .006 286.286);
-        --color-zinc-400: oklch(.705 .015 286.067);
-        --color-zinc-500: oklch(.552 .016 285.938);
-        --color-zinc-600: oklch(.442 .017 285.786);
-        --color-zinc-700: oklch(.37 .013 285.805);
-        --color-zinc-800: oklch(.274 .006 286.033);
-        --color-zinc-900: oklch(.21 .006 285.885);
-        --color-zinc-950: oklch(.141 .005 285.823);
-        --color-neutral-50: oklch(.985 0 0);
-        --color-neutral-100: oklch(.97 0 0);
-        --color-neutral-200: oklch(.922 0 0);
-        --color-neutral-300: oklch(.87 0 0);
-        --color-neutral-400: oklch(.708 0 0);
-        --color-neutral-500: oklch(.556 0 0);
-        --color-neutral-600: oklch(.439 0 0);
-        --color-neutral-700: oklch(.371 0 0);
-        --color-neutral-800: oklch(.269 0 0);
-        --color-neutral-900: oklch(.205 0 0);
-        --color-neutral-950: oklch(.145 0 0);
-        --color-stone-50: oklch(.985 .001 106.423);
-        --color-stone-100: oklch(.97 .001 106.424);
-        --color-stone-200: oklch(.923 .003 48.717);
-        --color-stone-300: oklch(.869 .005 56.366);
-        --color-stone-400: oklch(.709 .01 56.259);
-        --color-stone-500: oklch(.553 .013 58.071);
-        --color-stone-600: oklch(.444 .011 73.639);
-        --color-stone-700: oklch(.374 .01 67.558);
-        --color-stone-800: oklch(.268 .007 34.298);
-        --color-stone-900: oklch(.216 .006 56.043);
-        --color-stone-950: oklch(.147 .004 49.25);
-        --color-black: #000;
-        --color-white: #fff;
-        --spacing: .25rem;
-        --breakpoint-sm: 40rem;
-        --breakpoint-md: 48rem;
-        --breakpoint-lg: 64rem;
-        --breakpoint-xl: 80rem;
-        --breakpoint-2xl: 96rem;
-        --container-3xs: 16rem;
-        --container-2xs: 18rem;
-        --container-xs: 20rem;
-        --container-sm: 24rem;
-        --container-md: 28rem;
-        --container-lg: 32rem;
-        --container-xl: 36rem;
-        --container-2xl: 42rem;
-        --container-3xl: 48rem;
-        --container-4xl: 56rem;
-        --container-5xl: 64rem;
-        --container-6xl: 72rem;
-        --container-7xl: 80rem;
-        --text-xs: .75rem;
-        --text-xs--line-height: calc(1/.75);
-        --text-sm: .875rem;
-        --text-sm--line-height: calc(1.25/.875);
-        --text-base: 1rem;
-        --text-base--line-height: 1.5;
-        --text-lg: 1.125rem;
-        --text-lg--line-height: calc(1.75/1.125);
-        --text-xl: 1.25rem;
-        --text-xl--line-height: calc(1.75/1.25);
-        --text-2xl: 1.5rem;
-        --text-2xl--line-height: calc(2/1.5);
-        --text-3xl: 1.875rem;
-        --text-3xl--line-height: 1.2;
-        --text-4xl: 2.25rem;
-        --text-4xl--line-height: calc(2.5/2.25);
-        --text-5xl: 3rem;
-        --text-5xl--line-height: 1;
-        --text-6xl: 3.75rem;
-        --text-6xl--line-height: 1;
-        --text-7xl: 4.5rem;
-        --text-7xl--line-height: 1;
-        --text-8xl: 6rem;
-        --text-8xl--line-height: 1;
-        --text-9xl: 8rem;
-        --text-9xl--line-height: 1;
-        --font-weight-thin: 100;
-        --font-weight-extralight: 200;
-        --font-weight-light: 300;
-        --font-weight-normal: 400;
-        --font-weight-medium: 500;
-        --font-weight-semibold: 600;
-        --font-weight-bold: 700;
-        --font-weight-extrabold: 800;
-        --font-weight-black: 900;
-        --tracking-tighter: -.05em;
-        --tracking-tight: -.025em;
-        --tracking-normal: 0em;
-        --tracking-wide: .025em;
-        --tracking-wider: .05em;
-        --tracking-widest: .1em;
-        --leading-tight: 1.25;
-        --leading-snug: 1.375;
-        --leading-normal: 1.5;
-        --leading-relaxed: 1.625;
-        --leading-loose: 2;
-        --radius-xs: .125rem;
-        --radius-sm: .25rem;
-        --radius-md: .375rem;
-        --radius-lg: .5rem;
-        --radius-xl: .75rem;
-        --radius-2xl: 1rem;
-        --radius-3xl: 1.5rem;
-        --radius-4xl: 2rem;
-        --shadow-2xs: 0 1px #0000000d;
-        --shadow-xs: 0 1px 2px 0 #0000000d;
-        --shadow-sm: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
-        --shadow-md: 0 4px 6px -1px #0000001a, 0 2px 4px -2px #0000001a;
-        --shadow-lg: 0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;
-        --shadow-xl: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
-        --shadow-2xl: 0 25px 50px -12px #00000040;
-        --inset-shadow-2xs: inset 0 1px #0000000d;
-        --inset-shadow-xs: inset 0 1px 1px #0000000d;
-        --inset-shadow-sm: inset 0 2px 4px #0000000d;
-        --drop-shadow-xs: 0 1px 1px #0000000d;
-        --drop-shadow-sm: 0 1px 2px #00000026;
-        --drop-shadow-md: 0 3px 3px #0000001f;
-        --drop-shadow-lg: 0 4px 4px #00000026;
-        --drop-shadow-xl: 0 9px 7px #0000001a;
-        --drop-shadow-2xl: 0 25px 25px #00000026;
-        --ease-in: cubic-bezier(.4, 0, 1, 1);
-        --ease-out: cubic-bezier(0, 0, .2, 1);
-        --ease-in-out: cubic-bezier(.4, 0, .2, 1);
-        --animate-spin: spin 1s linear infinite;
-        --animate-ping: ping 1s cubic-bezier(0, 0, .2, 1)infinite;
-        --animate-pulse: pulse 2s cubic-bezier(.4, 0, .6, 1)infinite;
-        --animate-bounce: bounce 1s infinite;
-        --blur-xs: 4px;
-        --blur-sm: 8px;
-        --blur-md: 12px;
-        --blur-lg: 16px;
-        --blur-xl: 24px;
-        --blur-2xl: 40px;
-        --blur-3xl: 64px;
-        --perspective-dramatic: 100px;
-        --perspective-near: 300px;
-        --perspective-normal: 500px;
-        --perspective-midrange: 800px;
-        --perspective-distant: 1200px;
-        --aspect-video: 16/9;
-        --default-transition-duration: .15s;
-        --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
-        --default-font-family: var(--font-sans);
-        --default-font-feature-settings: var(--font-sans--font-feature-settings);
-        --default-font-variation-settings: var(--font-sans--font-variation-settings);
-        --default-mono-font-family: var(--font-mono);
-        --default-mono-font-feature-settings: var(--font-mono--font-feature-settings);
-        --default-mono-font-variation-settings: var(--font-mono--font-variation-settings)
-      }
-    }
-
-    @layer base {
-
-      *,
-      :after,
-      :before,
-      ::backdrop {
-        box-sizing: border-box;
-        border: 0 solid;
-        margin: 0;
-        padding: 0
-      }
-
-      ::file-selector-button {
-        box-sizing: border-box;
-        border: 0 solid;
-        margin: 0;
-        padding: 0
-      }
-
-      html,
-      :host {
-        -webkit-text-size-adjust: 100%;
-        -moz-tab-size: 4;
-        tab-size: 4;
-        line-height: 1.5;
-        font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
-        font-feature-settings: var(--default-font-feature-settings, normal);
-        font-variation-settings: var(--default-font-variation-settings, normal);
-        -webkit-tap-highlight-color: transparent
-      }
-
-      body {
-        line-height: inherit
-      }
-
-      hr {
-        height: 0;
-        color: inherit;
-        border-top-width: 1px
-      }
-
-      abbr:where([title]) {
-        -webkit-text-decoration: underline dotted;
-        text-decoration: underline dotted
-      }
-
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6 {
-        font-size: inherit;
-        font-weight: inherit
-      }
-
-      a {
-        color: inherit;
-        -webkit-text-decoration: inherit;
-        text-decoration: inherit
-      }
-
-      b,
-      strong {
-        font-weight: bolder
-      }
-
-      code,
-      kbd,
-      samp,
-      pre {
-        font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
-        font-feature-settings: var(--default-mono-font-feature-settings, normal);
-        font-variation-settings: var(--default-mono-font-variation-settings, normal);
-        font-size: 1em
-      }
-
-      small {
-        font-size: 80%
-      }
-
-      sub,
-      sup {
-        vertical-align: baseline;
-        font-size: 75%;
-        line-height: 0;
-        position: relative
-      }
-
-      sub {
-        bottom: -.25em
-      }
-
-      sup {
-        top: -.5em
-      }
-
-      table {
-        text-indent: 0;
-        border-color: inherit;
-        border-collapse: collapse
-      }
-
-      :-moz-focusring {
-        outline: auto
-      }
-
-      progress {
-        vertical-align: baseline
-      }
-
-      summary {
-        display: list-item
-      }
-
-      ol,
-      ul,
-      menu {
-        list-style: none
-      }
-
-      img,
-      svg,
-      video,
-      canvas,
-      audio,
-      iframe,
-      embed,
-      object {
-        vertical-align: middle;
-        display: block
-      }
-
-      img,
-      video {
-        max-width: 100%;
-        height: auto
-      }
-
-      button,
-      input,
-      select,
-      optgroup,
-      textarea {
-        font: inherit;
-        font-feature-settings: inherit;
-        font-variation-settings: inherit;
-        letter-spacing: inherit;
-        color: inherit;
-        opacity: 1;
-        background-color: #0000;
-        border-radius: 0
-      }
-
-      ::file-selector-button {
-        font: inherit;
-        font-feature-settings: inherit;
-        font-variation-settings: inherit;
-        letter-spacing: inherit;
-        color: inherit;
-        opacity: 1;
-        background-color: #0000;
-        border-radius: 0
-      }
-
-      :where(select:is([multiple], [size])) optgroup {
-        font-weight: bolder
-      }
-
-      :where(select:is([multiple], [size])) optgroup option {
-        padding-inline-start: 20px
-      }
-
-      ::file-selector-button {
-        margin-inline-end: 4px
-      }
-
-      ::placeholder {
-        opacity: 1;
-        color: color-mix(in oklab, currentColor 50%, transparent)
-      }
-
-      textarea {
-        resize: vertical
-      }
-
-      ::-webkit-search-decoration {
-        -webkit-appearance: none
-      }
-
-      ::-webkit-date-and-time-value {
-        min-height: 1lh;
-        text-align: inherit
-      }
-
-      ::-webkit-datetime-edit {
-        display: inline-flex
-      }
-
-      ::-webkit-datetime-edit-fields-wrapper {
-        padding: 0
-      }
-
-      ::-webkit-datetime-edit {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-year-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-month-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-day-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-hour-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-minute-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-second-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-millisecond-field {
-        padding-block: 0
-      }
-
-      ::-webkit-datetime-edit-meridiem-field {
-        padding-block: 0
-      }
-
-      :-moz-ui-invalid {
-        box-shadow: none
-      }
-
-      button,
-      input:where([type=button], [type=reset], [type=submit]) {
-        -webkit-appearance: button;
-        -moz-appearance: button;
-        appearance: button
-      }
-
-      ::file-selector-button {
-        -webkit-appearance: button;
-        -moz-appearance: button;
-        appearance: button
-      }
-
-      ::-webkit-inner-spin-button {
-        height: auto
-      }
-
-      ::-webkit-outer-spin-button {
-        height: auto
-      }
-
-      [hidden]:where(:not([hidden=until-found])) {
-        display: none !important
-      }
-    }
-
-    @layer components;
-
-    @layer utilities {
-      .absolute {
-        position: absolute
-      }
-
-      .relative {
-        position: relative
-      }
-
-      .static {
-        position: static
-      }
-
-      .inset-0 {
-        inset: calc(var(--spacing)*0)
-      }
-
-      .-mt-\[4\.9rem\] {
-        margin-top: -4.9rem
-      }
-
-      .-mb-px {
-        margin-bottom: -1px
-      }
-
-      .mb-1 {
-        margin-bottom: calc(var(--spacing)*1)
-      }
-
-      .mb-2 {
-        margin-bottom: calc(var(--spacing)*2)
-      }
-
-      .mb-4 {
-        margin-bottom: calc(var(--spacing)*4)
-      }
-
-      .mb-6 {
-        margin-bottom: calc(var(--spacing)*6)
-      }
-
-      .-ml-8 {
-        margin-left: calc(var(--spacing)*-8)
-      }
-
-      .flex {
-        display: flex
-      }
-
-      .hidden {
-        display: none
-      }
-
-      .inline-block {
-        display: inline-block
-      }
-
-      .inline-flex {
-        display: inline-flex
-      }
-
-      .table {
-        display: table
-      }
-
-      .aspect-\[335\/376\] {
-        aspect-ratio: 335/376
-      }
-
-      .h-1 {
-        height: calc(var(--spacing)*1)
-      }
-
-      .h-1\.5 {
-        height: calc(var(--spacing)*1.5)
-      }
-
-      .h-2 {
-        height: calc(var(--spacing)*2)
-      }
-
-      .h-2\.5 {
-        height: calc(var(--spacing)*2.5)
-      }
-
-      .h-3 {
-        height: calc(var(--spacing)*3)
-      }
-
-      .h-3\.5 {
-        height: calc(var(--spacing)*3.5)
-      }
-
-      .h-14 {
-        height: calc(var(--spacing)*14)
-      }
-
-      .h-14\.5 {
-        height: calc(var(--spacing)*14.5)
-      }
-
-      .min-h-screen {
-        min-height: 100vh
-      }
-
-      .w-1 {
-        width: calc(var(--spacing)*1)
-      }
-
-      .w-1\.5 {
-        width: calc(var(--spacing)*1.5)
-      }
-
-      .w-2 {
-        width: calc(var(--spacing)*2)
-      }
-
-      .w-2\.5 {
-        width: calc(var(--spacing)*2.5)
-      }
-
-      .w-3 {
-        width: calc(var(--spacing)*3)
-      }
-
-      .w-3\.5 {
-        width: calc(var(--spacing)*3.5)
-      }
-
-      .w-\[448px\] {
-        width: 448px
-      }
-
-      .w-full {
-        width: 100%
-      }
-
-      .max-w-\[335px\] {
-        max-width: 335px
-      }
-
-      .max-w-none {
-        max-width: none
-      }
-
-      .flex-1 {
-        flex: 1
-      }
-
-      .shrink-0 {
-        flex-shrink: 0
-      }
-
-      .translate-y-0 {
-        --tw-translate-y: calc(var(--spacing)*0);
-        translate: var(--tw-translate-x)var(--tw-translate-y)
-      }
-
-      .transform {
-        transform: var(--tw-rotate-x)var(--tw-rotate-y)var(--tw-rotate-z)var(--tw-skew-x)var(--tw-skew-y)
-      }
-
-      .flex-col {
-        flex-direction: column
-      }
-
-      .flex-col-reverse {
-        flex-direction: column-reverse
-      }
-
-      .items-center {
-        align-items: center
-      }
-
-      .justify-center {
-        justify-content: center
-      }
-
-      .justify-end {
-        justify-content: flex-end
-      }
-
-      .gap-3 {
-        gap: calc(var(--spacing)*3)
-      }
-
-      .gap-4 {
-        gap: calc(var(--spacing)*4)
-      }
-
-      :where(.space-x-1>:not(:last-child)) {
-        --tw-space-x-reverse: 0;
-        margin-inline-start: calc(calc(var(--spacing)*1)*var(--tw-space-x-reverse));
-        margin-inline-end: calc(calc(var(--spacing)*1)*calc(1 - var(--tw-space-x-reverse)))
-      }
-
-      .overflow-hidden {
-        overflow: hidden
-      }
-
-      .rounded-full {
-        border-radius: 3.40282e38px
-      }
-
-      .rounded-sm {
-        border-radius: var(--radius-sm)
-      }
-
-      .rounded-t-lg {
-        border-top-left-radius: var(--radius-lg);
-        border-top-right-radius: var(--radius-lg)
-      }
-
-      .rounded-br-lg {
-        border-bottom-right-radius: var(--radius-lg)
-      }
-
-      .rounded-bl-lg {
-        border-bottom-left-radius: var(--radius-lg)
-      }
-
-      .border {
-        border-style: var(--tw-border-style);
-        border-width: 1px
-      }
-
-      .border-\[\#19140035\] {
-        border-color: #19140035
-      }
-
-      .border-\[\#e3e3e0\] {
-        border-color: #e3e3e0
-      }
-
-      .border-black {
-        border-color: var(--color-black)
-      }
-
-      .border-transparent {
-        border-color: #0000
-      }
-
-      .bg-\[\#1b1b18\] {
-        background-color: #1b1b18
-      }
-
-      .bg-\[\#FDFDFC\] {
-        background-color: #fdfdfc
-      }
-
-      .bg-\[\#dbdbd7\] {
-        background-color: #dbdbd7
-      }
-
-      .bg-\[\#fff2f2\] {
-        background-color: #fff2f2
-      }
-
-      .bg-white {
-        background-color: var(--color-white)
-      }
-
-      .p-6 {
-        padding: calc(var(--spacing)*6)
-      }
-
-      .px-5 {
-        padding-inline: calc(var(--spacing)*5)
-      }
-
-      .py-1 {
-        padding-block: calc(var(--spacing)*1)
-      }
-
-      .py-1\.5 {
-        padding-block: calc(var(--spacing)*1.5)
-      }
-
-      .py-2 {
-        padding-block: calc(var(--spacing)*2)
-      }
-
-      .pb-12 {
-        padding-bottom: calc(var(--spacing)*12)
-      }
-
-      .text-sm {
-        font-size: var(--text-sm);
-        line-height: var(--tw-leading, var(--text-sm--line-height))
-      }
-
-      .text-\[13px\] {
-        font-size: 13px
-      }
-
-      .leading-\[20px\] {
-        --tw-leading: 20px;
-        line-height: 20px
-      }
-
-      .leading-normal {
-        --tw-leading: var(--leading-normal);
-        line-height: var(--leading-normal)
-      }
-
-      .font-medium {
-        --tw-font-weight: var(--font-weight-medium);
-        font-weight: var(--font-weight-medium)
-      }
-
-      .text-\[\#1b1b18\] {
-        color: #1b1b18
-      }
-
-      .text-\[\#706f6c\] {
-        color: #706f6c
-      }
-
-      .text-\[\#F53003\],
-      .text-\[\#f53003\] {
-        color: #f53003
-      }
-
-      .text-white {
-        color: var(--color-white)
-      }
-
-      .underline {
-        text-decoration-line: underline
-      }
-
-      .underline-offset-4 {
-        text-underline-offset: 4px
-      }
-
-      .opacity-100 {
-        opacity: 1
-      }
-
-      .shadow-\[0px_0px_1px_0px_rgba\(0\,0\,0\,0\.03\)\,0px_1px_2px_0px_rgba\(0\,0\,0\,0\.06\)\] {
-        --tw-shadow: 0px 0px 1px 0px var(--tw-shadow-color, #00000008), 0px 1px 2px 0px var(--tw-shadow-color, #0000000f);
-        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)
-      }
-
-      .shadow-\[inset_0px_0px_0px_1px_rgba\(26\,26\,0\,0\.16\)\] {
-        --tw-shadow: inset 0px 0px 0px 1px var(--tw-shadow-color, #1a1a0029);
-        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)
-      }
-
-      .\!filter {
-        filter: var(--tw-blur, )var(--tw-brightness, )var(--tw-contrast, )var(--tw-grayscale, )var(--tw-hue-rotate, )var(--tw-invert, )var(--tw-saturate, )var(--tw-sepia, )var(--tw-drop-shadow, ) !important
-      }
-
-      .filter {
-        filter: var(--tw-blur, )var(--tw-brightness, )var(--tw-contrast, )var(--tw-grayscale, )var(--tw-hue-rotate, )var(--tw-invert, )var(--tw-saturate, )var(--tw-sepia, )var(--tw-drop-shadow, )
-      }
-
-      .transition-all {
-        transition-property: all;
-        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-        transition-duration: var(--tw-duration, var(--default-transition-duration))
-      }
-
-      .transition-opacity {
-        transition-property: opacity;
-        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-        transition-duration: var(--tw-duration, var(--default-transition-duration))
-      }
-
-      .delay-300 {
-        transition-delay: .3s
-      }
-
-      .duration-750 {
-        --tw-duration: .75s;
-        transition-duration: .75s
-      }
-
-      .not-has-\[nav\]\:hidden:not(:has(:is(nav))) {
-        display: none
-      }
-
-      .before\:absolute:before {
-        content: var(--tw-content);
-        position: absolute
-      }
-
-      .before\:top-0:before {
-        content: var(--tw-content);
-        top: calc(var(--spacing)*0)
-      }
-
-      .before\:top-1\/2:before {
-        content: var(--tw-content);
-        top: 50%
-      }
-
-      .before\:bottom-0:before {
-        content: var(--tw-content);
-        bottom: calc(var(--spacing)*0)
-      }
-
-      .before\:bottom-1\/2:before {
-        content: var(--tw-content);
-        bottom: 50%
-      }
-
-      .before\:left-\[0\.4rem\]:before {
-        content: var(--tw-content);
-        left: .4rem
-      }
-
-      .before\:border-l:before {
-        content: var(--tw-content);
-        border-left-style: var(--tw-border-style);
-        border-left-width: 1px
-      }
-
-      .before\:border-\[\#e3e3e0\]:before {
-        content: var(--tw-content);
-        border-color: #e3e3e0
-      }
-
-      @media (hover:hover) {
-        .hover\:border-\[\#1915014a\]:hover {
-          border-color: #1915014a
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4318FF',
+                        secondary: '#1D1E94',
+                        accent: '#F53003',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
         }
-
-        .hover\:border-\[\#19140035\]:hover {
-          border-color: #19140035
+    </script>
+    
+    <!-- Custom Styles -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-
-        .hover\:border-black:hover {
-          border-color: var(--color-black)
+        
+        .card-hover {
+            transition: all 0.3s ease;
         }
-
-        .hover\:bg-black:hover {
-          background-color: var(--color-black)
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-      }
-
-      @media (width>=64rem) {
-        .lg\:-mt-\[6\.6rem\] {
-          margin-top: -6.6rem
+        
+        html {
+            scroll-behavior: smooth;
         }
-
-        .lg\:mb-0 {
-          margin-bottom: calc(var(--spacing)*0)
-        }
-
-        .lg\:mb-6 {
-          margin-bottom: calc(var(--spacing)*6)
-        }
-
-        .lg\:-ml-px {
-          margin-left: -1px
-        }
-
-        .lg\:ml-0 {
-          margin-left: calc(var(--spacing)*0)
-        }
-
-        .lg\:block {
-          display: block
-        }
-
-        .lg\:aspect-auto {
-          aspect-ratio: auto
-        }
-
-        .lg\:w-\[438px\] {
-          width: 438px
-        }
-
-        .lg\:max-w-4xl {
-          max-width: var(--container-4xl)
-        }
-
-        .lg\:grow {
-          flex-grow: 1
-        }
-
-        .lg\:flex-row {
-          flex-direction: row
-        }
-
-        .lg\:justify-center {
-          justify-content: center
-        }
-
-        .lg\:rounded-t-none {
-          border-top-left-radius: 0;
-          border-top-right-radius: 0
-        }
-
-        .lg\:rounded-tl-lg {
-          border-top-left-radius: var(--radius-lg)
-        }
-
-        .lg\:rounded-r-lg {
-          border-top-right-radius: var(--radius-lg);
-          border-bottom-right-radius: var(--radius-lg)
-        }
-
-        .lg\:rounded-br-none {
-          border-bottom-right-radius: 0
-        }
-
-        .lg\:p-8 {
-          padding: calc(var(--spacing)*8)
-        }
-
-        .lg\:p-20 {
-          padding: calc(var(--spacing)*20)
-        }
-      }
-
-      @media (prefers-color-scheme:dark) {
-        .dark\:block {
-          display: block
-        }
-
-        .dark\:hidden {
-          display: none
-        }
-
-        .dark\:border-\[\#3E3E3A\] {
-          border-color: #3e3e3a
-        }
-
-        .dark\:border-\[\#eeeeec\] {
-          border-color: #eeeeec
-        }
-
-        .dark\:bg-\[\#0a0a0a\] {
-          background-color: #0a0a0a
-        }
-
-        .dark\:bg-\[\#1D0002\] {
-          background-color: #1d0002
-        }
-
-        .dark\:bg-\[\#3E3E3A\] {
-          background-color: #3e3e3a
-        }
-
-        .dark\:bg-\[\#161615\] {
-          background-color: #161615
-        }
-
-        .dark\:bg-\[\#eeeeec\] {
-          background-color: #eeeeec
-        }
-
-        .dark\:text-\[\#1C1C1A\] {
-          color: #1c1c1a
-        }
-
-        .dark\:text-\[\#A1A09A\] {
-          color: #a1a09a
-        }
-
-        .dark\:text-\[\#EDEDEC\] {
-          color: #ededec
-        }
-
-        .dark\:text-\[\#F61500\] {
-          color: #f61500
-        }
-
-        .dark\:text-\[\#FF4433\] {
-          color: #f43
-        }
-
-        .dark\:shadow-\[inset_0px_0px_0px_1px_\#fffaed2d\] {
-          --tw-shadow: inset 0px 0px 0px 1px var(--tw-shadow-color, #fffaed2d);
-          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)
-        }
-
-        .dark\:before\:border-\[\#3E3E3A\]:before {
-          content: var(--tw-content);
-          border-color: #3e3e3a
-        }
-
-        @media (hover:hover) {
-          .dark\:hover\:border-\[\#3E3E3A\]:hover {
-            border-color: #3e3e3a
-          }
-
-          .dark\:hover\:border-\[\#62605b\]:hover {
-            border-color: #62605b
-          }
-
-          .dark\:hover\:border-white:hover {
-            border-color: var(--color-white)
-          }
-
-          .dark\:hover\:bg-white:hover {
-            background-color: var(--color-white)
-          }
-        }
-      }
-
-      @starting-style {
-        .starting\:translate-y-4 {
-          --tw-translate-y: calc(var(--spacing)*4);
-          translate: var(--tw-translate-x)var(--tw-translate-y)
-        }
-      }
-
-      @starting-style {
-        .starting\:translate-y-6 {
-          --tw-translate-y: calc(var(--spacing)*6);
-          translate: var(--tw-translate-x)var(--tw-translate-y)
-        }
-      }
-
-      @starting-style {
-        .starting\:opacity-0 {
-          opacity: 0
-        }
-      }
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    @keyframes ping {
-
-      75%,
-      to {
+        
+        @keyframes fadeInUp {
+            from {
         opacity: 0;
-        transform: scale(2)
-      }
-    }
-
-    @keyframes pulse {
-      50% {
-        opacity: .5
-      }
-    }
-
-    @keyframes bounce {
-
-      0%,
-      to {
-        animation-timing-function: cubic-bezier(.8, 0, 1, 1);
-        transform: translateY(-25%)
-      }
-
-      50% {
-        animation-timing-function: cubic-bezier(0, 0, .2, 1);
-        transform: none
-      }
-    }
-
-    @property --tw-translate-x {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0
-    }
-
-    @property --tw-translate-y {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0
-    }
-
-    @property --tw-translate-z {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0
-    }
-
-    @property --tw-rotate-x {
-      syntax: "*";
-      inherits: false;
-      initial-value: rotateX(0)
-    }
-
-    @property --tw-rotate-y {
-      syntax: "*";
-      inherits: false;
-      initial-value: rotateY(0)
-    }
-
-    @property --tw-rotate-z {
-      syntax: "*";
-      inherits: false;
-      initial-value: rotateZ(0)
-    }
-
-    @property --tw-skew-x {
-      syntax: "*";
-      inherits: false;
-      initial-value: skewX(0)
-    }
-
-    @property --tw-skew-y {
-      syntax: "*";
-      inherits: false;
-      initial-value: skewY(0)
-    }
-
-    @property --tw-space-x-reverse {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0
-    }
-
-    @property --tw-border-style {
-      syntax: "*";
-      inherits: false;
-      initial-value: solid
-    }
-
-    @property --tw-leading {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-font-weight {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-shadow {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0 0 #0000
-    }
-
-    @property --tw-shadow-color {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-inset-shadow {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0 0 #0000
-    }
-
-    @property --tw-inset-shadow-color {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-ring-color {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-ring-shadow {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0 0 #0000
-    }
-
-    @property --tw-inset-ring-color {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-inset-ring-shadow {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0 0 #0000
-    }
-
-    @property --tw-ring-inset {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-ring-offset-width {
-      syntax: "<length>";
-      inherits: false;
-      initial-value: 0
-    }
-
-    @property --tw-ring-offset-color {
-      syntax: "*";
-      inherits: false;
-      initial-value: #fff
-    }
-
-    @property --tw-ring-offset-shadow {
-      syntax: "*";
-      inherits: false;
-      initial-value: 0 0 #0000
-    }
-
-    @property --tw-blur {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-brightness {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-contrast {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-grayscale {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-hue-rotate {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-invert {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-opacity {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-saturate {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-sepia {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-drop-shadow {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-duration {
-      syntax: "*";
-      inherits: false
-    }
-
-    @property --tw-content {
-      syntax: "*";
-      inherits: false;
-      initial-value: ""
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
     }
   </style>
-  @endif
 </head>
 
-<body>
-
-  <div class="preloader">
-    <div class="loader">
-      <div class="spinner">
-        <div class="spinner-container">
-          <div class="spinner-rotator">
-            <div class="spinner-left">
-              <div class="spinner-circle"></div>
-            </div>
-            <div class="spinner-right">
-              <div class="spinner-circle"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<body class="font-sans antialiased bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="#" class="flex items-center space-x-3">
+                        <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="CIME Logo" class="h-8 w-8">
+                        <span class="text-xl font-bold text-gray-900">CIME</span>
+                        <span class="text-sm text-gray-500">Citra Media</span>
+                    </a>
   </div>
 
-
-  <header class="header-area">
-    <div class="navbar-area">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-12">
-            <nav class="navbar navbar-expand-lg">
-              <style>
-                @keyframes pulse {
-                  0% {
-                    transform: scale(1);
-                  }
-
-                  50% {
-                    transform: scale(1.1);
-                  }
-
-                  100% {
-                    transform: scale(1);
-                  }
-                }
-
-                .pulse {
-                  display: inline-block;
-                  /* supaya transform work */
-                  animation: pulse 2s ease-in-out infinite;
-                }
-              </style>
-
-              <a class="logo pulse" href="javascript:void(0)">
-                <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="Logo" />
-              </a>
-
-
-
-              </a>
-              <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="toggler-icon"> </span>
-                <span class="toggler-icon"> </span>
-                <span class="toggler-icon"> </span>
-              </button>
-              <div class="collapse navbar-collapse sub-menu-bar" id="navbarSupportedContent">
-                <ul id="nav" class="navbar-nav ms-auto">
-                  <li class="nav-item">
-                    <a class="page-scroll active" href="#home">Home</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="page-scroll active" href="#catalog">Catalog</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="page-scroll" href="#features">Features</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="page-scroll" href="#about">About</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="page-scroll" href="#location">Location</a>
-                  </li>
-                </ul>
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="text-gray-700 hover:text-blue-600 transition-colors">Home</a>
+                    <a href="#features" class="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
+                    <a href="#about" class="text-gray-700 hover:text-blue-600 transition-colors">About</a>
+                    <a href="#contact" class="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
               </div>
-              @if(Auth::check())
-              <p class="welcome-text" style="margin: 0; margin-right: 15px; padding: 8px 15px; background-color: #4318FF; color: white; border-radius: 20px; font-size: 14px; display: inline-block;">
-                <i class="lni lni-user" style="margin-right: 5px;"></i>
-                Welcome, {{ Auth::user()->f_name ?? Auth::user()->username }}!
-              </p>
-              @else
-              <p class="welcome-text" style="margin: 0; margin-right: 15px; padding: 8px 15px; background-color: #4318FF; color: white; border-radius: 20px; font-size: 14px; display: inline-block;">
-                <i class="lni lni-user" style="margin-right: 5px;"></i>
-                Welcome, Guest!
-              </p>
-              @endif
+
+                <!-- Auth Section -->
+                <div class="flex items-center space-x-4">
               @auth
+                        <!-- Welcome Message -->
+                        <div class="hidden sm:flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+                            <i class="fas fa-user text-blue-600 text-sm"></i>
+                            <span class="text-sm text-blue-800 font-medium">
+                                {{ Auth::user()->f_name ?? Auth::user()->username }}
+                            </span>
+                        </div>
+
+                        <!-- Dashboard Button -->
               @if(auth()->user()->hasRole('admin'))
-              <a href="{{ url('/admin/dashboard') }}" class="main-btn wow fadeInUp" data-wow-duration="1s" style="margin-right: 10px;">
+                            <a href="{{ url('/admin/dashboard') }}" 
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                 Dashboard
               </a>
               @else
-              <a href="{{ url('/tokodashboard') }}" class="main-btn wow fadeInUp" data-wow-duration="1s" style="margin-right: 10px;">
+                            <a href="{{ url('/tokodashboard') }}" 
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                 Dashboard
               </a>
               @endif
-              <form id="logout-form" method="POST" action="{{ route('logout') }}" class="d-inline">
+
+                        <!-- Logout Button -->
+                        <form id="logout-form" method="POST" action="{{ route('logout') }}" class="inline">
                 @csrf
-                <button type="button" id="logout-button" class="main-btn wow fadeInUp" data-wow-duration="1s">
+                            <button type="button" id="logout-button" 
+                                    class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
                   Logout
                 </button>
               </form>
-
-              <script>
-                document.getElementById('logout-button').addEventListener('click', function(event) {
-                  event.preventDefault(); // Mencegah form disubmit langsung
-
-                  Swal.fire({
-                    title: 'Konfirmasi Logout',
-                    text: "Anda yakin ingin keluar?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Logout!',
-                    cancelButtonText: 'Batal'
-                  }).then((result) => {
-                    if (result.isConfirmed) {
-                      document.getElementById('logout-form').submit(); // Submit form jika dikonfirmasi
-                    }
-                  })
-                });
-              </script>
               @else
-              <a href="{{ url('/login')}}" class="main-btn wow fadeInUp" data-wow-duration="1s" style="margin-right: 10px;">
+                        <a href="{{ route('login') }}" 
+                           class="text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium">
                 Login
               </a>
-              <div class="navbar-btn d-none d-sm-inline-block">
-                <a href="{{ url('/register')}}" class="main-btn wow fadeInUp" data-wow-duration="1s">
+                        <a href="{{ route('register') }}" 
+                           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                   Register
                 </a>
-              </div>
               @endauth
-            </nav>
+
+                    <!-- Mobile menu button -->
+                    <button class="md:hidden p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100">
+                        <i class="fas fa-bars"></i>
+                    </button>
+            </div>
+          </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="gradient-bg py-20 lg:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                        Sistem Cerdas
+                        <span class="block text-blue-200">Manajemen Percetakan</span>
+                    </h1>
+                    <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+                        Optimasi manajemen stok di industri percetakan roster menggunakan prediksi penjualan. 
+                        Kelola pesanan, produksi, dan inventori dengan efisien.
+                    </p>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        @auth
+                            @if(auth()->user()->hasRole('admin'))
+                                <a href="{{ url('/admin/dashboard') }}" 
+                                   class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>
+                                    Admin Dashboard
+                                </a>
+                            @else
+                                <a href="{{ url('/tokodashboard') }}" 
+                                   class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>
+                                    Dashboard
+                                </a>
+                            @endif
+                        @else
+                            <a href="{{ route('register') }}" 
+                               class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
+                                <i class="fas fa-rocket mr-2"></i>
+                                Get Started
+                            </a>
+                            <a href="{{ route('login') }}" 
+                               class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+                                <i class="fas fa-sign-in-alt mr-2"></i>
+                                Login
+                            </a>
+                        @endauth
           </div>
         </div>
+
+                <!-- Hero Image -->
+                <div class="mt-16 text-center">
+                    <div class="inline-block p-8 bg-white/10 backdrop-blur-sm rounded-2xl">
+                        <img src="{{ asset('dashboard2/assets/img/imgtoko/print2.png') }}" 
+                             alt="Printing System" 
+                             class="h-64 w-auto mx-auto">
       </div>
     </div>
-
-    <div id="home" class="header-hero bg_cover" style="background-image: url(assets/images/header/header.svg)">
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-lg-10">
-            <div class="header-hero-content text-center">
-              <h2 class="header-title wow fadeInUp" data-wow-duration="1.3s" data-wow-delay="0.5s"
-                style="font-size: 35px;">
-                Optimasi Manajemen Stok di Industri Percetakan Roster Menggunakan Prediksi Penjualan
-              </h2>
-            </div>
-
           </div>
-        </div>
+        </section>
 
-        <div class="row">
-          <div class="col-lg-12">
-            <style>
-              @keyframes swing {
-                0% {
-                  transform: translateX(0px);
-                }
-
-                50% {
-                  transform: translateX(15px);
-                }
-
-                100% {
-                  transform: translateX(0px);
-                }
-              }
-
-              .swinging {
-                animation: swing 4s ease-in-out infinite;
-              }
-            </style>
-            <div class="header-hero-image text-center wow fadeIn swinging" data-wow-duration="1.3s" data-wow-delay="1.4s">
-              <img src="{{ asset('dashboard2/assets/img/imgtoko/print2.png') }}" alt="print" />
-            </div>
-
-
-          </div>
-        </div>
-
+        <!-- Product Catalog Section -->
+        <section id="catalog" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        Katalog <span class="text-blue-600">Produk</span>
+                    </h2>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Jelajahi berbagai produk percetakan berkualitas tinggi dengan harga yang kompetitif
+                    </p>
       </div>
 
-      <div id="particles-1" class="particles"></div>
-    </div>
-
-  </header>
-
-  <!-- katalog produk bagian landing page -->
-  <section id="catalog" class="about-area pt-120">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-10">
-          <div class="section-title text-center pb-40">
-            <div class="line m-auto"></div>
-            <h3 class="title">
-              Katalog <span> Produk</span>
-            </h3>
-          </div>
-        </div>
-      </div>
-
-      <div class="d-flex justify-content-end mb-3">
-        <a
-          class="btn btn-sm" style="color: #4318FF; font-size: 20px;">
-          Lihat Semua <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
-
-      <div class="position-relative">
-        {{-- Tombol Panah --}}
-        <button id="prev" class="position-absolute" style="left: -30px; top: 45%; z-index: 10; background: none; border: none; font-size: 2rem; color: #4318FF;">&#8249;</button>
-        <button id="next" class="position-absolute" style="right: -30px; top: 45%; z-index: 10; background: none; border: none; font-size: 2rem; color: #4318FF;">&#8250;</button>
-
-        {{-- Carousel --}}
-        <div id="carousel" class="d-flex overflow-hidden" style="gap: 20px; scroll-behavior: smooth; max-width: 100%;">
+                <!-- Product Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           @foreach ($produk as $item)
           @php
                 $minHarga = null;
@@ -1777,591 +235,393 @@
                     $minHarga = $item->custom_harga;
                 }
             @endphp
-          <div class="card shadow-sm border-0 p-3 flex-shrink-0"
-            style="min-width: 300px; max-width: 300px; background-color: #f5f5f5; border-radius: 15px;">
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                            <div class="aspect-w-16 aspect-h-12">
             <img src="{{ asset('storage/' . ($item->Img ?? 'assets/images/poster1.jpeg')) }}"
-              class="img-fluid"
               alt="{{ $item->NamaProduk }}"
-              style="height: 280px; width: 100%; object-fit: cover; border-radius: 15px;"
+                                     class="w-full h-48 object-cover"
               onerror="this.onerror=null; this.src='{{ asset('assets/images/poster1.jpeg') }}';">
-            <div class="card-body" style="padding: 15px;">
-              <h5 class="fw-bold mb-1" style="color: #2B3674;">{{$item->NamaProduk}}</h5>
-              <p class="text-muted mb-2">Digital Printing</p>
-              <div class="d-flex justify-content-between align-items-center mt-3">
-              <span class="fw-bold" style="color: #4318FF;">Rp {{ number_format($minHarga, 0, ',', '.') }}</span>
-                <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}" class="btn" style="background-color: #1D1E94; color: white; border-radius: 30px; padding: 5px 20px;">Pesan</a>
+                            </div>
+                            <div class="p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ $item->NamaProduk }}</h3>
+                                <p class="text-gray-600 text-sm mb-4">Digital Printing</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xl font-bold text-blue-600">
+                                        Rp {{ number_format($minHarga, 0, ',', '.') }}
+                                    </span>
+                                    <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}" 
+                                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                        Pesan
+                                    </a>
               </div>
             </div>
           </div>
           @endforeach
         </div>
+
+                <!-- View All Button -->
+                <div class="text-center mt-12">
+                    <a href="#" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+                        Lihat Semua Produk
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
       </div>
     </div>
   </section>
 
+        <!-- Features Section -->
+        <section id="features" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        Keunggulan Utama <span class="text-blue-600">Sistem CIME</span>
+                    </h2>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Solusi lengkap untuk manajemen percetakan digital yang efisien dan modern
+                    </p>
+                </div>
 
-
-  <section id="features" class="services-area pt-120">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-10">
-          <div class="section-title text-center pb-40">
-            <div class="line m-auto"></div>
-            <h3 class="title">
-              Keunggulan Utama <span> dari Sistem CIME - Citra Media</span>
-            </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Feature 1 -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-shopping-cart text-blue-600 text-2xl"></i>
           </div>
-        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Pemesanan Online Praktis</h3>
+                        <p class="text-gray-600">
+                            Pelanggan dapat memesan produk percetakan kapan saja dan di mana saja melalui website
+                        </p>
       </div>
 
-      <div class="row justify-content-center">
-        <!-- Pemesanan Online yang Praktis -->
-        <div class="col-lg-2 col-md-4 col-sm-6"> <!-- Ubah dari col-lg-3 menjadi col-lg-2 untuk 5 kolom -->
-          <div class="single-services text-center mt-30 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.2s">
-            <div class="services-icon">
-              <img class="shape" src="{{ asset('assets/images/services/services-shape.svg') }}" alt="shape" />
-              <img class="shape-1" src="{{ asset('assets/images/services/services-shape-1.svg') }}" alt="shape" />
-              <i class="lni lni-cart"></i>
+                    <!-- Feature 2 -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-box text-green-600 text-2xl"></i>
             </div>
-            <div class="services-content mt-30">
-              <h4 class="services-title" style="font-size: 19px;">Pemesanan Online yang Praktis</h4>
-              <p class="text" style="font-size: 16px;">Pelanggan dapat memesan produk percetakan kapan saja dan di mana saja melalui website</p>
-            </div>
-          </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Katalog Produk Lengkap</h3>
+                        <p class="text-gray-600">
+                            Menampilkan berbagai produk percetakan dengan informasi harga dan deskripsi yang jelas
+                        </p>
         </div>
 
-        <!-- Katalog Produk Lengkap & Terupdate -->
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <div class="single-services text-center mt-30 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.5s">
-            <div class="services-icon">
-              <img class="shape" src="{{ asset('assets/images/services/services-shape.svg') }}" alt="shape" />
-              <img class="shape-1" src="{{ asset('assets/images/services/services-shape-2.svg') }}" alt="shape" />
-              <i class="lni lni-package"></i>
+                    <!-- Feature 3 -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-check-circle text-purple-600 text-2xl"></i>
             </div>
-            <div class="services-content mt-30">
-              <h4 class="services-title" style="font-size: 19px;">Katalog Produk Lengkap & Terupdate</h4>
-              <p class="text" style="font-size: 16px;">Menampilkan berbagai produk percetakan dengan informasi harga dan deskripsi yang jelas.</p>
-            </div>
-          </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Status Real-time</h3>
+                        <p class="text-gray-600">
+                            Pelanggan bisa memantau status pesanan secara langsung dari proses desain hingga pengiriman
+                        </p>
         </div>
 
-        <!-- Status Pesanan Real-time -->
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <div class="single-services text-center mt-30 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.8s">
-            <div class="services-icon">
-              <img class="shape" src="{{ asset('assets/images/services/services-shape.svg') }}" alt="shape" />
-              <img class="shape-1" src="{{ asset('assets/images/services/services-shape-3.svg') }}" alt="shape" />
-              <i class="lni lni-checkmark-circle"></i>
+                    <!-- Feature 4 -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-cogs text-orange-600 text-2xl"></i>
             </div>
-            <div class="services-content mt-30">
-              <h4 class="services-title" style="font-size: 19px;">Status Pesanan Real-time</h4>
-              <p class="text" style="font-size: 16px;">Pelanggan bisa memantau status pesanan secara langsung, mulai dari proses desain hingga cetak dan pengiriman</p>
-            </div>
-          </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Manajemen Admin Efisien</h3>
+                        <p class="text-gray-600">
+                            Admin dapat dengan mudah mengelola pesanan, produk, stok, dan data pelanggan
+                        </p>
         </div>
 
-        <!-- Manajemen Admin yang Efisien -->
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <div class="single-services text-center mt-30 wow fadeIn" data-wow-duration="1s" data-wow-delay="1.1s">
-            <div class="services-icon">
-              <img class="shape" src="{{ asset('assets/images/services/services-shape.svg') }}" alt="shape" />
-              <img class="shape-1" src="{{ asset('assets/images/services/services-shape-3.svg') }}" alt="shape" />
-              <i class="lni lni-cog"></i>
+                    <!-- Feature 5 -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-mobile-alt text-red-600 text-2xl"></i>
             </div>
-            <div class="services-content mt-30">
-              <h4 class="services-title" style="font-size: 19px;">Manajemen Admin yang Efisien</h4>
-              <p class="text" style="font-size: 16px;">Admin dapat dengan mudah mengelola pesanan, produk, stok, dan data pelanggan</p>
-            </div>
-          </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Antarmuka Ramah Pengguna</h3>
+                        <p class="text-gray-600">
+                            Tampilan sistem yang responsif dan mudah digunakan untuk semua kalangan pelanggan
+                        </p>
         </div>
 
-        <!-- Antarmuka Ramah Pengguna -->
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <div class="single-services text-center mt-30 wow fadeIn" data-wow-duration="1s" data-wow-delay="1.4s">
-            <div class="services-icon">
-              <img class="shape" src="{{ asset('assets/images/services/services-shape.svg') }}" alt="shape" />
-              <img class="shape-1" src="{{ asset('assets/images/services/services-shape-2.svg') }}" alt="shape" />
-              <i class="lni lni-android"></i>
+                    <!-- Feature 6 -->
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
             </div>
-            <div class="services-content mt-30">
-              <h4 class="services-title" style="font-size: 19px;">Antarmuka Ramah Pengguna</h4>
-              <p class="text" style="font-size: 16px;">Tampilan sistem yang responsif dan mudah digunakan dapat memudahkan semua kalangan pelanggan</p>
-            </div>
-          </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Analisis & Prediksi</h3>
+                        <p class="text-gray-600">
+                            Sistem prediksi penjualan untuk optimasi manajemen stok dan perencanaan produksi
+                        </p>
         </div>
       </div>
     </div>
   </section>
 
-
-
-  <section id="about">
-    <div class="about-area pt-70">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-6">
-            <div class="about-content mt-50 wow fadeInLeftBig" data-wow-duration="1s" data-wow-delay="0.5s">
-              <div class="section-title">
-                <div class="line"></div>
-                <h3 class="title">
-                  Mengenal Sistem Cerdas <span>Pengelolaan Pesanan dan Produksi Percetakan Berbasis Digital</span>
-                </h3>
-              </div>
-              <p class="text">
+        <!-- About Section -->
+        <section id="about" class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                            Mengenal Sistem Cerdas
+                            <span class="text-blue-600">Manajemen Percetakan</span>
+                        </h2>
+                        <p class="text-lg text-gray-600 mb-6 leading-relaxed">
                 Sistem Cerdas Pengelolaan Pesanan dan Produksi Percetakan Berbasis Digital adalah sistem yang mengintegrasikan
                 teknologi untuk mengelola dan memonitor pesanan serta proses produksi percetakan secara otomatis.
+                        </p>
+                        <p class="text-lg text-gray-600 mb-8 leading-relaxed">
                 Sistem ini dapat mengoptimalkan alur kerja dari pemesanan produk percetakan, pengaturan jadwal produksi,
-                hingga pengiriman, dengan pemantauan status pesanan secara real-time. Selain itu, sistem ini juga memberikan
-                peringatan jika ada masalah atau keterlambatan dalam produksi, serta memungkinkan pengaturan stok dan bahan baku secara efisien.
-              </p>
-              <!-- Tombol untuk membuka modal -->
-              <a href="#" class="main-btn" data-bs-toggle="modal" data-bs-target="#exampleModal">Selengkapnya</a>
+                            hingga pengiriman, dengan pemantauan status pesanan secara real-time dan prediksi penjualan untuk
+                            optimasi manajemen stok.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            @auth
+                                @if(auth()->user()->hasRole('admin'))
+                                    <a href="{{ url('/admin/dashboard') }}" 
+                                       class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                        <i class="fas fa-tachometer-alt mr-2"></i>
+                                        Admin Dashboard
+                                    </a>
+                                @else
+                                    <a href="{{ url('/tokodashboard') }}" 
+                                       class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                        <i class="fas fa-tachometer-alt mr-2"></i>
+                                        Dashboard
+                                    </a>
+                                @endif
+                            @else
+                                <a href="{{ route('register') }}" 
+                                   class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                    <i class="fas fa-rocket mr-2"></i>
+                                    Mulai Sekarang
+                                </a>
+                            @endauth
+                            <a href="#contact" 
+                               class="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-semibold">
+                                <i class="fas fa-phone mr-2"></i>
+                                Hubungi Kami
+                            </a>
             </div>
           </div>
-          <div class="col-lg-6">
-            <style>
-              @keyframes swing {
-                0% {
-                  transform: translateX(0px);
-                }
-
-                50% {
-                  transform: translateX(15px);
-                }
-
-                100% {
-                  transform: translateX(0px);
-                }
-              }
-
-              .swinging {
-                animation: swing 4s ease-in-out infinite;
-              }
-            </style>
-            <div class="header-hero-image text-center wow fadeIn swinging" data-wow-duration="1.3s" data-wow-delay="1.4s">
-              <img src="{{ asset('dashboard2/assets/img/imgtoko/print3.png') }}" alt="print" />
+                    <div class="text-center">
+                        <div class="inline-block p-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
+                            <img src="{{ asset('dashboard2/assets/img/imgtoko/print3.png') }}" 
+                                 alt="Printing System" 
+                                 class="h-80 w-auto mx-auto">
             </div>
-
           </div>
         </div>
       </div>
-    </div>
+        </section>
 
-    <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Informasi Lengkap</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Location Section -->
+        <section id="location" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div class="order-2 lg:order-1">
+                        <div class="text-center">
+                            <img src="{{ asset('assets/images/about/cimelocations.png') }}" 
+                                 alt="CIME Location" 
+                                 class="h-80 w-auto mx-auto rounded-xl shadow-lg">
           </div>
-          <div class="modal-body">
-            Sistem Intelijen untuk Manajemen Percetakan adalah platform berbasis web yang dirancang untuk membantu pengelolaan
-            proses operasional di bisnis percetakan. Sistem ini mendukung pemantauan status pesanan, pengelolaan data pelanggan,
-            pengaturan stok bahan, hingga pembuatan laporan secara efisien. Dengan fitur-fitur ini,
-            pemilik percetakan dapat lebih mudah mengontrol alur kerja, mempercepat pelayanan, dan meningkatkan kepuasan pelanggan.
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="about-shape-1">
-      <img src="{{ asset('assets/images/about/about-shape-1.svg') }}" alt="shape" />
-    </div>
-    </div>
-
-    <section id="location">
-      <div class="about-area pt-70">
-        <div class="about-shape-2">
-          <img src="{{ asset('assets/images/about/about-shape-2.svg') }}" alt="shape" />
-        </div>
-        <div class="container">
-          <div class="row align-items-center">
-            <div class="col-lg-6 order-lg-last">
-              <div class="about-content ms-lg-auto mt-50 wow fadeInLeftBig" data-wow-duration="1s" data-wow-delay="0.5s">
-                <div class="section-title">
-                  <div class="line"></div>
-                  <h3 class="title">
-                    Lokasi Kami <span> - Percetakan Citra Media </span>
-                  </h3>
-                </div>
-
-                <p class="text">
-                  Citra Media adalah usaha percetakan di Jember yang melayani berbagai kebutuhan cetak seperti undangan, brosur, banner, dan kartu nama. Kami hadir untuk memberikan hasil cetak berkualitas dengan harga bersahabat dan pelayanan cepat.
-                  <br><br>
-                  Sekarputih, Laden, Kec. Pamekasan, Kabupaten Pamekasan, Jawa Timur 69317
-                </p>
-                <a href="https://www.google.com/maps/place/Percetakan+Citra+Media/@-7.1693678,113.4758272,17z/data=!4m14!1m7!3m6!1s0x2dd77e7512343c49:0x82e78bef3d99a4fc!2sPercetakan+Citra+Media!8m2!3d-7.169467!4d113.4758246!16s%2Fg%2F11g9jgjf93!3m5!1s0x2dd77e7512343c49:0x82e78bef3d99a4fc!8m2!3d-7.169467!4d113.4758246!16s%2Fg%2F11g9jgjf93?entry=ttu&g_ep=EgoyMDI1MDUxNS4xIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D" target="_blank" class="main-btn">Temukan Lokasi
-                  Kami</a>
-
+                    <div class="order-1 lg:order-2">
+                        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                            Lokasi Kami
+                            <span class="text-blue-600">Percetakan Citra Media</span>
+                        </h2>
+                        <p class="text-lg text-gray-600 mb-6 leading-relaxed">
+                            Citra Media adalah usaha percetakan di Pamekasan yang melayani berbagai kebutuhan cetak seperti 
+                            undangan, brosur, banner, dan kartu nama. Kami hadir untuk memberikan hasil cetak berkualitas 
+                            dengan harga bersahabat dan pelayanan cepat.
+                        </p>
+                        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-map-marker-alt text-blue-600"></i>
               </div>
-
-            </div>
-            <div class="col-lg-6 order-lg-first">
-              <div class="about-image text-center mt-50 wow fadeInRightBig" data-wow-duration="1s" data-wow-delay="0.5s">
-                <img src="{{ asset('assets/images/about/cimelocations.png') }}" alt="about" />
-              </div>
-
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 mb-2">Alamat</h3>
+                                    <p class="text-gray-600">
+                                        Sekarputih, Laden, Kec. Pamekasan,<br>
+                                        Kabupaten Pamekasan, Jawa Timur 69317
+                                    </p>
             </div>
           </div>
-
-        </div>
-
-      </div>
-    </section>
-
-
-    <!-- <div class="about-area pt-70">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-6">
-            <div class="about-content mt-50 wow fadeInLeftBig" data-wow-duration="1s" data-wow-delay="0.5s">
-              <div class="section-title">
-                <div class="line"></div>
-                <h3 class="title">
-                  <span>Mobile Dirancang untuk</span> Monitoring Kualitas Air Ikan Koi
-                </h3>
-              </div>
-
-              <p class="text">
-                Aplikasi mobile ini dirancang khusus untuk membantu Anda memantau kualitas air di kolam ikan koi Anda
-                dengan mudah.
-                Anda dapat memeriksa parameter penting seperti pH, suhu, oksigen, amonia, dan lainnya secara real-time,
-                sehingga Anda selalu dapat memastikan kesehatan ikan koi Anda.
-                Memberikan kemudahan akses informasi langsung di perangkat Anda.
-
-              </p>
-              <a href="javascript:void(0)" class="main-btn">Unduh Aplikasi</a>
             </div>
-
-          </div>
-          <div class="col-lg-6">
-            <div class="about-image text-center mt-50 wow fadeInRightBig" data-wow-duration="1s" data-wow-delay="0.5s">
-              <img src="{{ asset('assets/images/about/handphone2.svg') }}" alt="about" />
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      <div class="about-shape-1">
-        <img src="{{ asset('assets/images/about/about-shape-1.svg') }}" alt="shape" />
-      </div>
-    </div> -->
-
-    <!-- </section>
-
-  <section id="facts" class="video-counter pt-70">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-6 order-lg-last">
-          <div class="counter-wrapper mt-50 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.8s">
-            <div class="counter-content">
-              <div class="section-title">
-                <div class="line"></div>
-                <h3 class="title">Tonton Video Tutorial <span> tentang Sistem Informasi ini</span></h3>
-
-              </div>
-
-              <p class="text">
-                Dengan Sistem Informasi SANKE, Anda dapat mengakses video tutorial yang menjelaskan cara
-                menggunakan fitur monitoring kualitas air untuk ikan koi. Pelajari cara mengatur kran
-                kolam otomatis dan memantau parameter penting seperti pH, suhu, dan amonia secara efektif.
-              </p>
-            </div>
-
-            <div class="row no-gutters">
-              <div class="col-4">
-                <div class="
-                      single-counter
-                      counter-color-1
-                      d-flex
-                      align-items-center
-                      justify-content-center
-                    ">
-                  <div class="counter-items text-center">
-                    <span class="count countup text-uppercase" cup-end="125"></span>
-
-                  </div>
-                </div>
-
-              </div>
-              <div class="col-4">
-                <div class="
-                      single-counter
-                      counter-color-2
-                      d-flex
-                      align-items-center
-                      justify-content-center
-                    ">
-                  <div class="counter-items text-center">
-                    <span class="count countup text-uppercase" cup-end="87"></span>
-                    <p class="text">Active Users</p>
-                  </div>
-                </div>
-
-              </div>
-              <div class="col-4">
-                <div class="
-                      single-counter
-                      counter-color-3
-                      d-flex
-                      align-items-center
-                      justify-content-center
-                    ">
-                  <div class="counter-items text-center">
-                    <span class="count countup text-uppercase" cup-end="59"></span>
-                    <p class="text">User Rating</p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-        <div class="col-lg-6">
-          <div class="video-content mt-50 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.5s">
-            <img class="dots" src="{{ asset('assets/images/video/dots.svg') }}" alt="dots" />
-            <div class="video-wrapper">
-              <div class="video-image">
-                <img src="{{ asset('assets/images/video/video.png') }}" alt="video" />
-              </div>
-              <div class="video-icon">
-                <a href="https://www.youtube.com/watch?v=r44RKWyfcFw" class="video-popup glightbox">
-                  <i class="fas fa-play"> </i>
+                        <a href="https://www.google.com/maps/place/Percetakan+Citra+Media/@-7.1693678,113.4758272,17z/data=!4m14!1m7!3m6!1s0x2dd77e7512343c49:0x82e78bef3d99a4fc!2sPercetakan+Citra+Media!8m2!3d-7.169467!4d113.4758246!16s%2Fg%2F11g9jgjf93!3m5!1s0x2dd77e7512343c49:0x82e78bef3d99a4fc!8m2!3d-7.169467!4d113.4758246!16s%2Fg%2F11g9jgjf93?entry=ttu&g_ep=EgoyMDI1MDUxNS4xIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D" 
+                           target="_blank" 
+                           class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            Temukan Lokasi Kami
                 </a>
               </div>
             </div>
-
           </div>
+        </section>
+    </main>
 
+    <!-- Footer -->
+    <footer id="contact" class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="CIME Logo" class="h-10 w-10">
+                        <div>
+                            <h3 class="text-xl font-bold">CIME</h3>
+                            <p class="text-gray-400 text-sm">Citra Media</p>
         </div>
       </div>
-
-    </div>
-
-  </section> -->
-
-    <footer id="footer" class="footer-area pt-100">
-      <div class="container">
-        <div class="subscribe-area wow fadeIn" data-wow-duration="1s" data-wow-delay="0.5s">
-          <div class="row">
-            <div class="col-lg-6">
-              <div class="subscribe-content mt-45">
-
+                    <p class="text-gray-300 mb-6 leading-relaxed">
+                        Citra Media adalah usaha percetakan di Pamekasan yang melayani berbagai kebutuhan cetak seperti 
+                        undangan, brosur, banner, dan kartu nama. Kami hadir untuk memberikan hasil cetak berkualitas 
+                        dengan harga bersahabat dan pelayanan cepat.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="https://www.instagram.com/genks.the/" 
+                           class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.instagram.com/genks.the/" 
+                           class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://www.instagram.com/genks.the/" 
+                           class="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://www.instagram.com/genks.the/" 
+                           class="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center hover:bg-blue-800 transition-colors">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
               </div>
             </div>
-            <div class="col-lg-6">
-              <div class="subscribe-form mt-45">
 
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="footer-widget pb-100">
-          <div class="row">
-            <div class="col-lg-4 col-md-6 col-sm-8">
-              <div class="footer-about mt-50 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.2s">
-                <style>
-                  @keyframes pulse {
-                    0% {
-                      transform: scale(1);
-                    }
-
-                    50% {
-                      transform: scale(1.1);
-                    }
-
-                    100% {
-                      transform: scale(1);
-                    }
-                  }
-
-                  .pulse {
-                    display: inline-block;
-                    /* supaya transform work */
-                    animation: pulse 2s ease-in-out infinite;
-                  }
-                </style>
-
-                <a class="logo pulse" href="javascript:void(0)">
-                  <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="Logo" />
-                </a>
-
-                <p class="text">
-                  Citra Media adalah usaha percetakan di Jember yang melayani berbagai kebutuhan cetak seperti undangan,
-                  brosur, banner, dan kartu nama. Kami hadir untuk memberikan hasil cetak berkualitas dengan harga bersahabat dan pelayanan cepat.
-                </p>
-                <ul class="social">
-                  <li>
-                    <a href="https://www.instagram.com/genks.the/">
-                      <i class="lni lni-facebook-filled"> </i>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://www.instagram.com/genks.the/">
-                      <i class="lni lni-twitter-filled"> </i>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://www.instagram.com/genks.the/">
-                      <i class="lni lni-instagram-filled"> </i>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://www.instagram.com/genks.the/">
-                      <i class="lni lni-linkedin-original"> </i>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-            </div>
-
-            <div class="col-lg-3 col-md-5 col-sm-12" style="margin-left: 550px;">
-              <div class="footer-contact mt-50 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.8s" id="contact-us">
-                <div class="footer-title">
-                  <h4 class="title">Contact Us</h4>
+                <!-- Contact Info -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-6">Contact Us</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-phone text-blue-400 mt-1"></i>
+                            <div>
+                                <p class="text-gray-300">0896 2716 0919</p>
                 </div>
-                <ul class="contact">
-                  <li>0896 2716 0919</li>
-                  <li>
-                  <li>Citramedia@gmail.com</li>
-                  <li>
-                    Kabupaten Pamekasan, Jawa Timur 68121<br />
-                    Indonesia
-                  </li>
-                </ul>
               </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-envelope text-blue-400 mt-1"></i>
+                            <div>
+                                <p class="text-gray-300">Citramedia@gmail.com</p>
             </div>
           </div>
-        </div>
-
-        <div class="footer-copyright">
-          <div class="row">
-            <div class="col-lg-12">
-              <div class="copyright d-sm-flex justify-content-between">
-                <div class="copyright-content">
-                  <p class="text">
-                    Percetakan Citra Media |
-                    <a href="" rel="nofollow">Kabupaten Pamekasan</a>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-map-marker-alt text-blue-400 mt-1"></i>
+                            <div>
+                                <p class="text-gray-300">
+                                    Kabupaten Pamekasan,<br>
+                                    Jawa Timur 68121<br>
+                                    Indonesia
                   </p>
                 </div>
-
               </div>
-
             </div>
           </div>
 
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-6">Quick Links</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-gray-300 hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#features" class="text-gray-300 hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#about" class="text-gray-300 hover:text-white transition-colors">About</a></li>
+                        <li><a href="#location" class="text-gray-300 hover:text-white transition-colors">Location</a></li>
+                        @guest
+                            <li><a href="{{ route('login') }}" class="text-gray-300 hover:text-white transition-colors">Login</a></li>
+                            <li><a href="{{ route('register') }}" class="text-gray-300 hover:text-white transition-colors">Register</a></li>
+                        @endguest
+                    </ul>
         </div>
-
       </div>
 
-      <div id="particles-2"></div>
+            <!-- Copyright -->
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 text-sm">
+                        © {{ date('Y') }} Percetakan Citra Media. All rights reserved.
+                    </p>
+                    <p class="text-gray-400 text-sm mt-2 md:mt-0">
+                        Kabupaten Pamekasan, Jawa Timur
+                    </p>
+                </div>
+            </div>
+        </div>
     </footer>
 
+    <!-- Back to Top Button -->
+    <a href="#" id="back-to-top" class="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors opacity-0 pointer-events-none">
+        <i class="fas fa-chevron-up"></i>
+    </a>
 
-    <a href="#" class="back-to-top"> <i class="lni lni-chevron-up"> </i> </a>
-
-
-    <script src="{{ asset('/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('js/wow.min.js') }}"></script>
-    <script src="{{ asset('js/glightbox.min.js') }}"></script>
-    <script src="{{ asset('js/tiny-slider.js') }}"></script>
-    <script src="{{ asset('js/count-up.min.js') }}"></script>
-    <script src="{{ asset('js/particles.min.js') }}"></script>
-    <script src="{{ asset('js/main.js') }}"></script>
+    <!-- Scripts -->
     <script>
-      (function() {
-        function c() {
-          var b = a.contentDocument || a.contentWindow.document;
-          if (b) {
-            var d = b.createElement('script');
-            d.innerHTML = "window.__CF$cv$params={r:'8d17ebe3beab5fe5',t:'MTcyODc0NDgyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/js/maind41d.js';document.getElementsByTagName('head')[0].appendChild(a);";
-            b.getElementsByTagName('head')[0].appendChild(d);
-          }
-        }
-        if (document.body) {
-          var a = document.createElement('iframe');
-          a.height = 1;
-          a.width = 1;
-          a.style.position = 'absolute';
-          a.style.top = 0;
-          a.style.left = 0;
-          a.style.border = 'none';
-          a.style.visibility = 'hidden';
-          document.body.appendChild(a);
-          if ('loading' !== document.readyState) c();
-          else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c);
-          else {
-            var e = document.onreadystatechange || function() {};
-            document.onreadystatechange = function(b) {
-              e(b);
-              'loading' !== document.readyState && (document.onreadystatechange = e, c());
-            };
-          }
-        }
-      })();
-    </script>
-    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015"
-      integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ=="
-      data-cf-beacon='{"rayId":"8d17ebe3beab5fe5","version":"2024.10.1","r":1,"serverTiming":{"name":{"cfExtPri":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"token":"9a6015d415bb4773a0bff22543062d3b","b":1}'
-      crossorigin="anonymous"></script>
-    <script src="{{ asset('js/maind41d.js') }}"></script>
+        // Logout functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    
+                    Swal.fire({
+                        title: 'Konfirmasi Logout',
+                        text: "Anda yakin ingin keluar?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, Logout!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('logout-form').submit();
+                        }
+                    });
+                });
+            }
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const carousel = document.getElementById('carousel');
-        const nextBtn = document.getElementById('next');
-        const prevBtn = document.getElementById('prev');
+            // Back to top functionality
+            const backToTopButton = document.getElementById('back-to-top');
+            
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.classList.remove('opacity-0', 'pointer-events-none');
+                    backToTopButton.classList.add('opacity-100');
+                } else {
+                    backToTopButton.classList.add('opacity-0', 'pointer-events-none');
+                    backToTopButton.classList.remove('opacity-100');
+                }
+            });
 
-        const cardWidth = 320;
-
-        // Manual controls
-        nextBtn.addEventListener('click', () => {
-          carousel.scrollBy({
-            left: cardWidth,
+            backToTopButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.scrollTo({
+                    top: 0,
             behavior: 'smooth'
           });
         });
 
-        prevBtn.addEventListener('click', () => {
-          carousel.scrollBy({
-            left: -cardWidth,
-            behavior: 'smooth'
-          });
-        });
-
-        // Auto scroll loop
-        setInterval(() => {
-          const maxScrollLeft = carousel.scrollWidth - carousel.clientWidth;
-
-          // Jika sudah sampai ujung kanan, reset ke awal
-          if (carousel.scrollLeft + cardWidth >= maxScrollLeft) {
-            carousel.scrollTo({
-              left: 0,
-              behavior: 'smooth'
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
             });
-          } else {
-            carousel.scrollBy({
-              left: cardWidth,
-              behavior: 'smooth'
-            });
-          }
-        }, 3000); // ganti delay di sini sesuai kecepatan
       });
     </script>
 
-
-
 </body>
-
 </html>
+
+

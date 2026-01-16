@@ -48,7 +48,7 @@ CIME | Halaman Edit Barang
                         {{-- <div class="row mb-3">
                             <label class="col-sm-2 col-form-label">Jumlah Stok </label>
                             <div class="col-sm-10">
-                                <input type="number" class="form-control" value="{{ $iteminfo->JumlahStok }}" readonly />
+                                <input type="number" class="form-control" value="{{ $iteminfo->stock }}" readonly />
                             </div>
                         </div> --}}                        
 

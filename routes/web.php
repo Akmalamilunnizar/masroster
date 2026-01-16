@@ -35,7 +35,6 @@ use App\Http\Controllers\Api\V1\DeliveryShoppingController;
 use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\ForecastController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\PesananController;
 // use App\Http\Controllers\Api\V1\PaymentController;
@@ -74,7 +73,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
     Route::get('/admin/all-ukuran', [SizeController::class, 'index'])->name('allukuran');
-    
+
     // Customer routes
     Route::get('/admin/all-customer', [CustomerController::class, 'Index'])->name('allcustomer');
     Route::get('/admin/get-customer-addresses/{id}', [CustomerController::class, 'getCustomerAddresses'])->name('getCustomerAddresses');
@@ -92,7 +91,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Route::delete('/admin/delete-diskon/{id}', [DiskonController::class, 'destroy'])->name('deletediskon');
 
     Route::post('/admin/store-produk', [ProdukController::class, 'storeProduk'])->name('storeproduk');
-}); 
+});
 
 
 Route::controller(DetailProdukController::class)->group(function () {
@@ -108,7 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/test-ajax', function() {
         return response()->json(['message' => 'AJAX test successful']);
     })->name('test.ajax');
-    
+
     // Quick add routes for modals
     Route::post('/admin/quick-add-jenis', [TypeItemsController::class, 'quickAddJenis'])->name('quick.add.jenis');
     Route::post('/admin/quick-add-tipe', [TipeRosterController::class, 'quickAddTipe'])->name('quick.add.tipe');
@@ -135,7 +134,7 @@ Route::controller(ItemsController::class)->group(function () {
     Route::get('/admin/all-item/exportpdf', 'exportPdf')->name('allitems.exportpdf');
     Route::delete('/admin/batch-delete-items', 'batchDelete')->name('batch.delete.items');
     Route::get('/admin/all-item/detail/{id}', 'detail')->name('admin.detail_allitems');
-    Route::get('/admin/all-item/exportpdf/{id}', 'exportPdfDetail')->name('allitems.exportpdf.detail'); 
+    Route::get('/admin/all-item/exportpdf/{id}', 'exportPdfDetail')->name('allitems.exportpdf.detail');
     Route::get('/admin/manage-item', 'ManageItems')->name('manageitems');
     Route::get('/admin/all-item/search', 'SearchItem')->name('searchitem');
     Route::get('/admin/add-items', 'AddItems')->name('additems');
@@ -164,18 +163,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('/admin/all-transaksi/{id}/tolak', 'tolakOrderan')->name('tolakOrderan');
         Route::post('/admin/all-transaksi/{id}/update-invoice', 'updateInvoice')->name('transaksi.updateInvoice');
         Route::get('/admin/view-order/{id}', 'ViewOrder')->name('vieworder');
-        
+        Route::get('/admin/print-invoice/{id}', 'printInvoice')->name('print.invoice');
+
         // Manual CRUD routes
         Route::get('/admin/transaksi/create', 'create')->name('transaksi.create');
         Route::post('/admin/transaksi', 'store')->name('transaksi.store');
         Route::get('/admin/transaksi/{id}/edit', 'edit')->name('transaksi.edit');
         Route::put('/admin/transaksi/{id}', 'update')->name('transaksi.update');
         Route::delete('/admin/transaksi/{id}', 'destroy')->name('transaksi.destroy');
-        
+
         // Export routes for forecasting
         Route::get('/export-lstm', 'exportLstm')->name('export.lstm');
         Route::get('/export-prophet', 'exportProphet')->name('export.prophet');
-        
+
         // Test route for ID generation
         Route::get('/admin/test-id-generation', function() {
             $lastTransaksi = \App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first();
@@ -446,7 +446,7 @@ Route::get('/routes', function () {
 
 
 
-Route::get('/userprofile', [DashboardController::class, 'Index']);
+Route::get('/userprofile', [DashboardController::class, 'Index'])->name('userprofile');
 Route::middleware('auth')->group(function () {
     Route::get('resources/admin/logout', [DashboardController::class, 'AdminLogout'])->name('adminlogout');
     // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -477,7 +477,7 @@ Auth::routes();
 Route::get('/checkout', [DeliveryShoppingController::class, 'index'])->name('checkout');
 
 
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
+Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
 // Midtrans Payment Routes
 /*

@@ -215,7 +215,7 @@ class ItemsController extends Controller
             'IdRoster' => $request->IdRoster,
             'NamaBarang' => $request->NamaBarang,
             'IdJenisBarang' => $request->IdJenisBarang,
-            'JumlahStok' => 0, // Tidak perlu diisi karena udah ada trigger sql
+            'stock' => 0, // Tidak perlu diisi karena udah ada trigger sql
             'IdSatuan' => $request->IdSatuan,
         ]);
 
@@ -413,7 +413,7 @@ class ItemsController extends Controller
 
         // Check if stock is sufficient
         $item = Items::findOrFail($request->IdRoster);
-        if ($item->JumlahStok < $request->QtyKeluar) {
+        if ($item->stock < $request->QtyKeluar) {
             return redirect()->back()->with('error', 'Stok tidak mencukupi!');
         }
 

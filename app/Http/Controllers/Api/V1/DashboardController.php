@@ -27,14 +27,14 @@ class DashboardController extends Controller
             ->get();
 
         // Get items with low stock (less than 10)
-        $lowStockItems = Produk::where('JumlahStok', '<', 10)->get();
+        $lowStockItems = Produk::where('stock', '<', 10)->get();
 
         // Get total items count
         $totalItems = Produk::count();
 
         // Get items with highest stock (only products with stock > 0)
-        $topStockRoster = Produk::where('JumlahStok', '>', 0)
-            ->orderBy('JumlahStok', 'desc')
+        $topStockRoster = Produk::where('stock', '>', 0)
+            ->orderBy('stock', 'desc')
             ->take(5)
             ->get();
 

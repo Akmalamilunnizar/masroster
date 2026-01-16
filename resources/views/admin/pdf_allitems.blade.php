@@ -96,7 +96,7 @@
                     <td>{{ $item->NamaBarang ?? '-' }}</td>
                     <td>{{ $item->jenisBarang->JenisBarang ?? '-' }}</td>
                     <td>{{ $item->latestDetailMasuk?->HargaSatuan ? 'Rp ' . number_format($item->latestDetailMasuk->HargaSatuan, 0, ',', '.') : '-' }}</td>
-                    <td >{{ $item->JumlahStok }}</td>
+                    <td >{{ $item->stock }}</td>
                     <td>{{ $item->latestDetailMasuk?->supplier?->NamaSupplier ?? '-' }}</td>
                     <td>{{ $item->latestDetailMasuk?->created_at ? \Carbon\Carbon::parse($item->latestDetailMasuk->created_at)->format('d-m-Y H:i') : '-' }}</td>
                 </tr>

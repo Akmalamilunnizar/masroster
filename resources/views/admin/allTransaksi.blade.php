@@ -75,32 +75,82 @@ CIME | Daftar Transaksi
     }
 
     .table-enhanced thead th {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        font-weight: 600;
+        background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
         border: none;
-        padding: 0.5rem 0.375rem;
+        padding: 0.75rem 0.5rem !important;
         text-align: center;
         vertical-align: middle;
-        font-size: 0.8rem;
+        font-size: 0.875rem !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        letter-spacing: 0.5px;
     }
 
     .table-enhanced tbody td {
-        padding: 0.5rem 0.375rem;
+        padding: 0.75rem 0.5rem !important;
         vertical-align: middle;
-        border-bottom: 1px solid #f1f3f4;
+        border-bottom: 1px solid #e9ecef;
         font-size: 0.875rem;
+        color: #212529 !important;
+        background-color: #ffffff;
+    }
+
+    .table-enhanced tbody tr {
+        transition: background-color 0.2s ease;
     }
 
     .table-enhanced tbody tr:hover {
+        background-color: #f0f4f8 !important;
+    }
+
+    .table-enhanced tbody tr:nth-child(even) {
         background-color: #f8f9fa;
+    }
+
+    .table-enhanced tbody tr:nth-child(even):hover {
+        background-color: #e9ecef !important;
     }
 
     .status-badge {
         padding: 0.375rem 0.75rem;
         border-radius: 6px;
-        font-weight: 500;
+        font-weight: 600 !important;
         font-size: 0.75rem;
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Ensure badge text is always white for better contrast */
+    .status-badge.bg-warning {
+        color: #000000 !important;
+        font-weight: 700 !important;
+        background-color: #ffc107 !important;
+    }
+    
+    .status-badge.bg-success {
+        background-color: #198754 !important;
+        color: #ffffff !important;
+    }
+    
+    .status-badge.bg-danger {
+        background-color: #dc3545 !important;
+        color: #ffffff !important;
+    }
+    
+    .status-badge.bg-info {
+        background-color: #0dcaf0 !important;
+        color: #ffffff !important;
+    }
+    
+    .status-badge.bg-primary {
+        background-color: #0d6efd !important;
+        color: #ffffff !important;
+    }
+    
+    .status-badge.bg-secondary {
+        background-color: #6c757d !important;
+        color: #ffffff !important;
     }
 
     .action-buttons-cell {
@@ -123,20 +173,25 @@ CIME | Daftar Transaksi
     }
 
     .transaction-link {
-        color: #007bff;
+        color: #0d6efd !important;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
         transition: color 0.2s ease;
     }
 
     .transaction-link:hover {
-        color: #0056b3;
+        color: #0056b3 !important;
         text-decoration: underline;
     }
 
     .amount-cell {
+        font-weight: 700 !important;
+        color: #198754 !important;
+    }
+    
+    .table-enhanced tbody td strong {
+        color: #212529 !important;
         font-weight: 600;
-        color: #28a745;
     }
 
     .page-header {
@@ -365,18 +420,7 @@ CIME | Daftar Transaksi
     </div>
 
     {{-- Pesan sukses atau error --}}
-    @if (session()->has('message'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>{{ session()->get('message') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
-    @if (session()->has('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>{{ session()->get('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
+    {{-- Session messages are automatically displayed via CustomModal --}}
 
     <!-- Enhanced Filter Card -->
     <div class="card filter-card mb-4">

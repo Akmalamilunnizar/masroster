@@ -13,7 +13,7 @@ class DetailProdukController extends Controller
 {
     public function show(string $id): View
     {
-        $produk = Produk::with(['sizes', 'jenisRoster', 'motif'])->findOrFail($id);
+        $produk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->findOrFail($id);
 
         // Get description from database
         $description = $produk->deskripsi ?? 'Produk berkualitas dengan hasil cetak yang memukau. Tersedia dalam berbagai ukuran dan finishing.';
@@ -26,7 +26,7 @@ class DetailProdukController extends Controller
             $userPhone = $user->nomor_telepon ?? '';
         }
 
-        return view('admin.DetailProduk', [
+        return view('toko.detail-produk', [
             'produk' => $produk,
             'userPhone' => $userPhone,
             'description' => $description,

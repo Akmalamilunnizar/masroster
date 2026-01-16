@@ -29,9 +29,10 @@ class Produk extends Model
         'id_jenis',
         'id_tipe',
         'id_motif',
-        'JumlahStok',
+        'stock',
         'Img',
-        'deskripsi'
+        'deskripsi',
+        'NamaProduk'
     ];
 
     // Kalau tidak pakai timestamps (created_at, updated_at)
@@ -77,6 +78,53 @@ class Produk extends Model
             ->withPivot(['QtyProduk', 'SubTotal'])
             ->withTimestamps()
         ;
+    }
+
+    /**
+     * Generate combined product name from jenis, tipe, and motif
+     */
+    public function generateNamaProduk()
+    {
+        $parts = [];
+
+        // Add jenis (jenisbarang)
+        if ($this->jenisRoster) {
+            $parts[] = $this->jenisRoster->JenisBarang;
+        }
+
+        // Add tipe (tipe_roster)
+        if ($this->tipeRoster) {
+            $parts[] = $this->tipeRoster->namaTipe;
+        }
+
+        // Add motif (motif_roster)
+        if ($this->motif) {
+            $parts[] = $this->motif->nama_motif;
+        }
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * Boot method to auto-generate NamaProduk when creating/updating
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($produk) {
+            if (empty($produk->NamaProduk)) {
+                $produk->NamaProduk = $produk->generateNamaProduk();
+            }
+        });
+
+        static::updating(function ($produk) {
+            // Only auto-generate if NamaProduk is empty or if related fields changed
+            if (empty($produk->NamaProduk) ||
+                $produk->isDirty(['id_jenis', 'id_tipe', 'id_motif'])) {
+                $produk->NamaProduk = $produk->generateNamaProduk();
+            }
+        });
     }
 
 }

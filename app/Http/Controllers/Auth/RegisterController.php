@@ -28,7 +28,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/tokodashboard';
 
     /**
      * Create a new controller instance.
@@ -51,6 +51,7 @@ class RegisterController extends Controller
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'nomor_telepon' => ['required', 'string', 'min:11', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -63,10 +64,30 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
+        // Generate username from name (remove spaces, lowercase)
+        $baseUsername = strtolower(str_replace(' ', '', $data['name']));
+        $username = $baseUsername;
+
+        // Ensure username is unique by appending number if needed
+        $counter = 1;
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername . $counter;
+            $counter++;
+        }
+
+        $user = User::create([
+            'f_name' => $data['name'],
             'email' => $data['email'],
+            'nomor_telepon' => $data['nomor_telepon'],
+            'username' => $username,
             'password' => Hash::make($data['password']),
+            'user' => 'User', // Set default role
+            'img' => 'default-avatar.png'
         ]);
+
+        // Assign role using Laratrust
+        $user->addRole('user');
+
+        return $user;
     }
 }
