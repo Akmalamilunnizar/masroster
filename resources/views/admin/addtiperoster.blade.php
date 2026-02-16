@@ -108,7 +108,7 @@
 
     <div class="mt-4">
         <a href="{{ route('alltiperoster') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar Tipe Roster
+            <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar Tipe Produk
         </a>
     </div>
 </div>

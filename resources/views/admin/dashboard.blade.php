@@ -7,7 +7,7 @@ CIME | Halaman Dashboard
 <link rel="stylesheet" href="{{ asset('assets/apexcharts/dist/apexcharts.css') }}" />
 
 <!-- Favicon -->
-  <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png" />
+  <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png" />
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 

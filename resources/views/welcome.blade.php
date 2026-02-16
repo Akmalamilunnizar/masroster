@@ -4,26 +4,26 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Sistem Cerdas Pengelolaan Pesanan dan Produksi Percetakan Berbasis Digital - CIME Citra Media">
+    <meta name="description" content="Sistem Manajemen Roster Digital - Menara Alam Surya Roster Malang, Produsen Roster Berkualitas di Malang">
 
-    <title>CIME | Citra Media - Sistem Manajemen Percetakan Digital</title>
+    <title>Menara Alam Surya | Roster Malang - Produsen Roster Berkualitas</title>
 
   <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png">
-    
+    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet">
-    
+
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <!-- Custom Tailwind Config -->
     <script>
         tailwind.config = {
@@ -41,26 +41,26 @@
             }
         }
     </script>
-    
+
     <!-- Custom Styles -->
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        
+
         .card-hover {
             transition: all 0.3s ease;
         }
-        
+
         .card-hover:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
+
         html {
             scroll-behavior: smooth;
         }
-        
+
         @keyframes fadeInUp {
             from {
         opacity: 0;
@@ -71,7 +71,7 @@
                 transform: translateY(0);
             }
         }
-        
+
         .animate-fade-in-up {
             animation: fadeInUp 0.6s ease-out;
     }
@@ -86,9 +86,9 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="#" class="flex items-center space-x-3">
-                        <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="CIME Logo" class="h-8 w-8">
-                        <span class="text-xl font-bold text-gray-900">CIME</span>
-                        <span class="text-sm text-gray-500">Citra Media</span>
+                        <img src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" alt="Menara Alam Surya Logo" class="h-24 w-36">
+                        {{-- <span class="text-xl font-bold text-gray-900">Menara Alam Surya</span>
+                        <span class="text-sm text-gray-500">Roster Malang</span> --}}
                     </a>
   </div>
 
@@ -113,12 +113,12 @@
 
                         <!-- Dashboard Button -->
               @if(auth()->user()->hasRole('admin'))
-                            <a href="{{ url('/admin/dashboard') }}" 
+                            <a href="{{ url('/admin/dashboard') }}"
                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                 Dashboard
               </a>
               @else
-                            <a href="{{ url('/tokodashboard') }}" 
+                            <a href="{{ url('/tokodashboard') }}"
                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                 Dashboard
               </a>
@@ -127,17 +127,17 @@
                         <!-- Logout Button -->
                         <form id="logout-form" method="POST" action="{{ route('logout') }}" class="inline">
                 @csrf
-                            <button type="button" id="logout-button" 
+                            <button type="button" id="logout-button"
                                     class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
                   Logout
                 </button>
               </form>
               @else
-                        <a href="{{ route('login') }}" 
+                        <a href="{{ route('login') }}"
                            class="text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium">
                 Login
               </a>
-                        <a href="{{ route('register') }}" 
+                        <a href="{{ route('register') }}"
                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                   Register
                 </a>
@@ -159,37 +159,37 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                        Sistem Cerdas
-                        <span class="block text-blue-200">Manajemen Percetakan</span>
+                        Menara Alam Surya
+                        <span class="block text-blue-200">Produsen Roster Malang</span>
                     </h1>
                     <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-                        Optimasi manajemen stok di industri percetakan roster menggunakan prediksi penjualan. 
-                        Kelola pesanan, produksi, dan inventori dengan efisien.
+                        Produsen roster berkualitas tinggi di Malang dengan sistem manajemen digital.
+                        Menyediakan berbagai jenis roster untuk kebutuhan bangunan Anda dengan harga terjangkau.
                     </p>
-                    
+
                     <!-- CTA Buttons -->
                     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                         @auth
                             @if(auth()->user()->hasRole('admin'))
-                                <a href="{{ url('/admin/dashboard') }}" 
+                                <a href="{{ url('/admin/dashboard') }}"
                                    class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
                                     <i class="fas fa-tachometer-alt mr-2"></i>
                                     Admin Dashboard
                                 </a>
                             @else
-                                <a href="{{ url('/tokodashboard') }}" 
+                                <a href="{{ url('/tokodashboard') }}"
                                    class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
                                     <i class="fas fa-tachometer-alt mr-2"></i>
                                     Dashboard
                                 </a>
                             @endif
                         @else
-                            <a href="{{ route('register') }}" 
+                            <a href="{{ route('register') }}"
                                class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
                                 <i class="fas fa-rocket mr-2"></i>
                                 Get Started
                             </a>
-                            <a href="{{ route('login') }}" 
+                            <a href="{{ route('login') }}"
                                class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
                                 <i class="fas fa-sign-in-alt mr-2"></i>
                                 Login
@@ -201,8 +201,8 @@
                 <!-- Hero Image -->
                 <div class="mt-16 text-center">
                     <div class="inline-block p-8 bg-white/10 backdrop-blur-sm rounded-2xl">
-                        <img src="{{ asset('dashboard2/assets/img/imgtoko/print2.png') }}" 
-                             alt="Printing System" 
+                        <img src="{{ asset('dashboard2/assets/img/imgtoko/print2.png') }}"
+                             alt="Printing System"
                              class="h-64 w-auto mx-auto">
       </div>
     </div>
@@ -217,7 +217,7 @@
                         Katalog <span class="text-blue-600">Produk</span>
                     </h2>
                     <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Jelajahi berbagai produk percetakan berkualitas tinggi dengan harga yang kompetitif
+                        Jelajahi berbagai produk roster berkualitas tinggi dengan harga yang kompetitif
                     </p>
       </div>
 
@@ -249,7 +249,7 @@
                                     <span class="text-xl font-bold text-blue-600">
                                         Rp {{ number_format($minHarga, 0, ',', '.') }}
                                     </span>
-                                    <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}" 
+                                    <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}"
                                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                                         Pesan
                                     </a>
@@ -274,10 +274,10 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                        Keunggulan Utama <span class="text-blue-600">Sistem CIME</span>
+                        Keunggulan <span class="text-blue-600">Menara Alam Surya</span>
                     </h2>
                     <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Solusi lengkap untuk manajemen percetakan digital yang efisien dan modern
+                        Produsen roster terpercaya di Malang dengan kualitas terbaik dan pelayanan profesional
                     </p>
                 </div>
 
@@ -289,7 +289,7 @@
           </div>
                         <h3 class="text-xl font-semibold text-gray-900 mb-4">Pemesanan Online Praktis</h3>
                         <p class="text-gray-600">
-                            Pelanggan dapat memesan produk percetakan kapan saja dan di mana saja melalui website
+                            Pelanggan dapat memesan produk roster kapan saja dan di mana saja melalui website
                         </p>
       </div>
 
@@ -300,7 +300,7 @@
             </div>
                         <h3 class="text-xl font-semibold text-gray-900 mb-4">Katalog Produk Lengkap</h3>
                         <p class="text-gray-600">
-                            Menampilkan berbagai produk percetakan dengan informasi harga dan deskripsi yang jelas
+                            Menampilkan berbagai produk roster dengan informasi harga dan deskripsi yang jelas
                         </p>
         </div>
 
@@ -357,41 +357,41 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <div>
                         <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                            Mengenal Sistem Cerdas
-                            <span class="text-blue-600">Manajemen Percetakan</span>
+                            Tentang
+                            <span class="text-blue-600">Menara Alam Surya</span>
                         </h2>
                         <p class="text-lg text-gray-600 mb-6 leading-relaxed">
-                Sistem Cerdas Pengelolaan Pesanan dan Produksi Percetakan Berbasis Digital adalah sistem yang mengintegrasikan
-                teknologi untuk mengelola dan memonitor pesanan serta proses produksi percetakan secara otomatis.
+                Menara Alam Surya adalah produsen roster terkemuka di Malang yang telah berpengalaman dalam
+                memproduksi berbagai jenis roster berkualitas tinggi untuk kebutuhan konstruksi dan bangunan.
                         </p>
                         <p class="text-lg text-gray-600 mb-8 leading-relaxed">
-                Sistem ini dapat mengoptimalkan alur kerja dari pemesanan produk percetakan, pengaturan jadwal produksi,
-                            hingga pengiriman, dengan pemantauan status pesanan secara real-time dan prediksi penjualan untuk
-                            optimasi manajemen stok.
+                Kami menyediakan roster dengan berbagai ukuran dan desain, diproduksi dengan standar kualitas terbaik
+                            dan harga yang kompetitif. Sistem pemesanan digital kami memudahkan pelanggan untuk memesan
+                            dan memantau status produksi secara real-time.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-4">
                             @auth
                                 @if(auth()->user()->hasRole('admin'))
-                                    <a href="{{ url('/admin/dashboard') }}" 
+                                    <a href="{{ url('/admin/dashboard') }}"
                                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
                                         <i class="fas fa-tachometer-alt mr-2"></i>
                                         Admin Dashboard
                                     </a>
                                 @else
-                                    <a href="{{ url('/tokodashboard') }}" 
+                                    <a href="{{ url('/tokodashboard') }}"
                                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
                                         <i class="fas fa-tachometer-alt mr-2"></i>
                                         Dashboard
                                     </a>
                                 @endif
                             @else
-                                <a href="{{ route('register') }}" 
+                                <a href="{{ route('register') }}"
                                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
                                     <i class="fas fa-rocket mr-2"></i>
                                     Mulai Sekarang
                                 </a>
                             @endauth
-                            <a href="#contact" 
+                            <a href="#contact"
                                class="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-semibold">
                                 <i class="fas fa-phone mr-2"></i>
                                 Hubungi Kami
@@ -400,8 +400,8 @@
           </div>
                     <div class="text-center">
                         <div class="inline-block p-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
-                            <img src="{{ asset('dashboard2/assets/img/imgtoko/print3.png') }}" 
-                                 alt="Printing System" 
+                            <img src="{{ asset('dashboard2/assets/img/imgtoko/print3.png') }}"
+                                 alt="Printing System"
                                  class="h-80 w-auto mx-auto">
             </div>
           </div>
@@ -415,20 +415,20 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <div class="order-2 lg:order-1">
                         <div class="text-center">
-                            <img src="{{ asset('assets/images/about/cimelocations.png') }}" 
-                                 alt="CIME Location" 
+                            <img src="{{ asset('assets/images/about/cimelocations.png') }}"
+                                 alt="CIME Location"
                                  class="h-80 w-auto mx-auto rounded-xl shadow-lg">
           </div>
           </div>
                     <div class="order-1 lg:order-2">
                         <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
                             Lokasi Kami
-                            <span class="text-blue-600">Percetakan Citra Media</span>
+                            <span class="text-blue-600">Menara Alam Surya Roster</span>
                         </h2>
                         <p class="text-lg text-gray-600 mb-6 leading-relaxed">
-                            Citra Media adalah usaha percetakan di Pamekasan yang melayani berbagai kebutuhan cetak seperti 
-                            undangan, brosur, banner, dan kartu nama. Kami hadir untuk memberikan hasil cetak berkualitas 
-                            dengan harga bersahabat dan pelayanan cepat.
+                            Menara Alam Surya adalah produsen roster di Malang yang melayani berbagai kebutuhan roster untuk
+                            konstruksi bangunan. Kami hadir untuk memberikan produk roster berkualitas tinggi
+                            dengan harga terjangkau dan pelayanan profesional.
                         </p>
                         <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
                             <div class="flex items-start space-x-4">
@@ -438,14 +438,14 @@
                                 <div>
                                     <h3 class="font-semibold text-gray-900 mb-2">Alamat</h3>
                                     <p class="text-gray-600">
-                                        Sekarputih, Laden, Kec. Pamekasan,<br>
-                                        Kabupaten Pamekasan, Jawa Timur 69317
+                                        Jl. Raya Malang,<br>
+                                        Kota Malang, Jawa Timur 65141
                                     </p>
             </div>
           </div>
             </div>
-                        <a href="https://www.google.com/maps/place/Percetakan+Citra+Media/@-7.1693678,113.4758272,17z/data=!4m14!1m7!3m6!1s0x2dd77e7512343c49:0x82e78bef3d99a4fc!2sPercetakan+Citra+Media!8m2!3d-7.169467!4d113.4758246!16s%2Fg%2F11g9jgjf93!3m5!1s0x2dd77e7512343c49:0x82e78bef3d99a4fc!8m2!3d-7.169467!4d113.4758246!16s%2Fg%2F11g9jgjf93?entry=ttu&g_ep=EgoyMDI1MDUxNS4xIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D" 
-                           target="_blank" 
+                        <a href="#"
+                           target="_blank"
                            class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
                             <i class="fas fa-external-link-alt mr-2"></i>
                             Temukan Lokasi Kami
@@ -463,31 +463,31 @@
                 <!-- Company Info -->
                 <div class="lg:col-span-2">
                     <div class="flex items-center space-x-3 mb-6">
-                        <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="CIME Logo" class="h-10 w-10">
+                        <img src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" alt="Menara Alam Surya Logo" class="h-10 w-10">
                         <div>
-                            <h3 class="text-xl font-bold">CIME</h3>
-                            <p class="text-gray-400 text-sm">Citra Media</p>
+                            <h3 class="text-xl font-bold">Menara Alam Surya</h3>
+                            <p class="text-gray-400 text-sm">Roster Malang</p>
         </div>
       </div>
                     <p class="text-gray-300 mb-6 leading-relaxed">
-                        Citra Media adalah usaha percetakan di Pamekasan yang melayani berbagai kebutuhan cetak seperti 
-                        undangan, brosur, banner, dan kartu nama. Kami hadir untuk memberikan hasil cetak berkualitas 
-                        dengan harga bersahabat dan pelayanan cepat.
+                        Menara Alam Surya adalah produsen roster terpercaya di Malang yang melayani berbagai kebutuhan roster
+                        untuk konstruksi bangunan. Kami hadir untuk memberikan produk roster berkualitas tinggi
+                        dengan harga terjangkau dan pelayanan profesional.
                     </p>
                     <div class="flex space-x-4">
-                        <a href="https://www.instagram.com/genks.the/" 
+                        <a href="https://www.instagram.com/genks.the/"
                            class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
                             <i class="fab fa-facebook-f"></i>
                         </a>
-                        <a href="https://www.instagram.com/genks.the/" 
+                        <a href="https://www.instagram.com/genks.the/"
                            class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
                             <i class="fab fa-twitter"></i>
                         </a>
-                        <a href="https://www.instagram.com/genks.the/" 
+                        <a href="https://www.instagram.com/genks.the/"
                            class="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors">
                             <i class="fab fa-instagram"></i>
                         </a>
-                        <a href="https://www.instagram.com/genks.the/" 
+                        <a href="https://www.instagram.com/genks.the/"
                            class="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center hover:bg-blue-800 transition-colors">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
@@ -507,15 +507,15 @@
                         <div class="flex items-start space-x-3">
                             <i class="fas fa-envelope text-blue-400 mt-1"></i>
                             <div>
-                                <p class="text-gray-300">Citramedia@gmail.com</p>
+                                <p class="text-gray-300">menaraas.roster@gmail.com</p>
             </div>
           </div>
                         <div class="flex items-start space-x-3">
                             <i class="fas fa-map-marker-alt text-blue-400 mt-1"></i>
                             <div>
                                 <p class="text-gray-300">
-                                    Kabupaten Pamekasan,<br>
-                                    Jawa Timur 68121<br>
+                                    Kota Malang,<br>
+                                    Jawa Timur 65141<br>
                                     Indonesia
                   </p>
                 </div>
@@ -543,10 +543,10 @@
             <div class="border-t border-gray-800 mt-12 pt-8">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <p class="text-gray-400 text-sm">
-                        © {{ date('Y') }} Percetakan Citra Media. All rights reserved.
+                        © {{ date('Y') }} Menara Alam Surya Roster Malang. All rights reserved.
                     </p>
                     <p class="text-gray-400 text-sm mt-2 md:mt-0">
-                        Kabupaten Pamekasan, Jawa Timur
+                        Kota Malang, Jawa Timur
                     </p>
                 </div>
             </div>
@@ -566,7 +566,7 @@
             if (logoutButton) {
                 logoutButton.addEventListener('click', function(event) {
                     event.preventDefault();
-                    
+
                     Swal.fire({
                         title: 'Konfirmasi Logout',
                         text: "Anda yakin ingin keluar?",
@@ -586,7 +586,7 @@
 
             // Back to top functionality
             const backToTopButton = document.getElementById('back-to-top');
-            
+
             window.addEventListener('scroll', function() {
                 if (window.pageYOffset > 300) {
                     backToTopButton.classList.remove('opacity-0', 'pointer-events-none');

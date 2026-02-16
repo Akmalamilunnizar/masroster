@@ -346,12 +346,12 @@ Route::controller(AdminProfileController::class)->group(function () {
 
 
 // Forecast routes
-Route::get('/admin/forecast', [ForecastController::class, 'showForm'])->name('forecast.form');
-Route::post('/admin/forecast/predict', [ForecastController::class, 'predict'])->name('predict');
-// Forecast routes
-Route::get('/admin/forecast', [ForecastController::class, 'showForm'])->name('forecast.form');
+Route::get('/admin/forecast', [ForecastController::class, 'stockForecast'])->name('forecast.stock');
+Route::get('/admin/forecast/stock', [ForecastController::class, 'showForm'])->name('forecast.form');
 Route::post('/admin/forecast/predict', [ForecastController::class, 'predict'])->name('predict');
 Route::get('/admin/forecast/get-sales-data', [ForecastController::class, 'getSalesData'])->name('forecast.get-sales-data');
+
+
 
 Route::get('/routes', function () {
     $routeCollection = Route::getRoutes();
@@ -430,11 +430,6 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-
-
-// Forecast routes
-Route::get('/admin/forecast', [ForecastController::class, 'showForm'])->name('forecast.form');
-Route::post('/admin/forecast/predict', [ForecastController::class, 'predict'])->name('predict');
 
 Route::get('/routes', function () {
     $routeCollection = Route::getRoutes();

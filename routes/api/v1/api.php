@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\Api\V1\Auth\CustomerAuthController;
 // use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\DaftarKoiController;
+use App\Http\Controllers\Api\V1\ProdukController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\V1\DaftarKoiController;
 
 // API MOBILE
 Route::group(['namespace' => 'Api\V1'], function () {
+    Route::put('/admin/all-produk/{code}/update', [ProdukController::class, 'updateProduk']);
 
     // get products - commented out due to missing ProductController
     // Route::group(['prefix' => 'products'], function () {
@@ -85,3 +87,4 @@ Route::group(['namespace' => 'Api\V1'], function () {
     //     Route::get('place-api-autocomplete', 'ConfigController@place_api_autocomplete');
     //     Route::get('distance-api', 'ConfigController@distance_api');
     //     Route::get('place-api
+// routes/api.php

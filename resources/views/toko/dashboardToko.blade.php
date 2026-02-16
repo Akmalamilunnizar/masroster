@@ -10,7 +10,7 @@ CIME | Halaman Dashboard E-Commerce
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
          <!-- Favicon -->
-        <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png" />
+        <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png" />
 
         <!-- Load ApexCharts setelahnya -->
         <script src="{{ asset('assets/apexcharts/dist/apexcharts.js') }}"></script>

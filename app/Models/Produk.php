@@ -32,7 +32,13 @@ class Produk extends Model
         'stock',
         'Img',
         'deskripsi',
-        'NamaProduk'
+        'NamaProduk',
+        // Forecast columns
+        'forecasted_demand',
+        'forecast_model',
+        'safety_stock',
+        'forecast_status',
+        'last_forecast_at'
     ];
 
     // Kalau tidak pakai timestamps (created_at, updated_at)

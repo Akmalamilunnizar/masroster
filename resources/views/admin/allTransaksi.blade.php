@@ -4,6 +4,16 @@
 CIME | Daftar Transaksi
 @endsection
 
+@section('search')
+<div class="navbar-nav align-items-center">
+    <div class="nav-item d-flex align-items-center">
+        <i class="bx bx-search fs-4 lh-0"></i>
+        <input type="text" id="transaksiSearchInput" class="form-control border-0 shadow-none ps-1 ps-sm-2 w-100"
+            placeholder="Cari ID transaksi atau nama customer..." aria-label="Cari..." />
+    </div>
+</div>
+@endsection
+
 @section('content')
 <style>
     /* Enhanced styling for better visual hierarchy and alignment */
@@ -170,6 +180,46 @@ CIME | Daftar Transaksi
 
     .btn-action:hover {
         transform: scale(1.05);
+    }
+
+    /* Stack buttons vertically on Desktop (sidebar open) and Mobile */
+    @media (min-width: 1200px), (max-width: 768px) {
+        .action-buttons-cell {
+            flex-direction: column !important;
+            flex-wrap: nowrap !important;
+            gap: 0.35rem !important;
+            align-items: center
+        }
+        .btn-action {
+            width: 40px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px !important;
+        }
+        /* Hide labels on desktop/mobile to maximize table space */
+        .btn-action span {
+            display: none !important;
+        }
+        .btn-action i {
+            margin-right: 0 !important;
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Horizontal layout with labels for tablets where sidebar is hidden */
+    @media (min-width: 769px) and (max-width: 1199.98px) {
+        .action-buttons-cell {
+            flex-direction: row !important;
+        }
+        .btn-action {
+            width: 100px !important;
+            padding: 0.5rem 0 !important;
+            display: inline-flex !important;
+            justify-content: center;
+        }
     }
 
     .transaction-link {
@@ -571,12 +621,12 @@ CIME | Daftar Transaksi
                         <td>
                             <div class="action-buttons-cell">
                                 {{-- KONDISIONAL UNTUK TOMBOL AKSI --}}
-                                @if (strtoupper($item->StatusPesanan) == 'MENUNGGU KONFIRMASI')
+                                @if (strtoupper($item->StatusPesanan) == 'PENDING')
                                 <form id="terimaForm{{ $item->IdTransaksi }}" action="{{ route('terimaOrderan', $item->IdTransaksi) }}" method="POST" style="display:inline;">
                                     @csrf
                                     <button type="button" class="btn btn-success btn-action"
                                         onclick="confirmAction('terima', 'terimaForm{{ $item->IdTransaksi }}');" title="Terima Order">
-                                        <i class="fas fa-check"></i>
+                                        <i class="bx bx-check me-1"></i> <span>Terima</span>
                                     </button>
                                 </form>
 
@@ -584,21 +634,21 @@ CIME | Daftar Transaksi
                                     @csrf
                                     <button type="button" class="btn btn-danger btn-action"
                                         onclick="confirmAction('tolak', 'tolakForm{{ $item->IdTransaksi }}');" title="Tolak Order">
-                                        <i class="fas fa-times"></i>
+                                        <i class="bx bx-x me-1"></i> <span>Tolak</span>
                                     </button>
                                 </form>
                                 @endif
 
                                 {{-- Manual CRUD Actions --}}
                                 <a href="{{ route('transaksi.edit', $item->IdTransaksi) }}" class="btn btn-warning btn-action">
-                                    <i class="bx bxs-edit me-1"></i> Edit Transaksi
+                                    <i class="bx bxs-edit me-1"></i> <span>Edit</span>
                                 </a>
                                 <form id="deleteForm{{ $item->IdTransaksi }}" action="{{ route('transaksi.destroy', $item->IdTransaksi) }}" method="POST" style="display:inline;">
                                     @csrf
                                     @method('DELETE')
                                     <button type="button" class="btn btn-danger btn-action"
                                         onclick="confirmDelete('{{ $item->IdTransaksi }}')">
-                                        <i class="bx bxs-trash me-1"></i>Hapus Transaksi
+                                        <i class="bx bxs-trash me-1"></i> <span>Hapus</span>
                                     </button>
                                 </form>
                             </div>
@@ -688,6 +738,29 @@ CIME | Daftar Transaksi
         window.open(url, '_blank');
         $('#exportExcelModal').modal('hide');
     }
+
+    // Real-time search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('transaksiSearchInput');
+        const tableRows = document.querySelectorAll('.table-enhanced tbody tr');
+
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                tableRows.forEach(row => {
+                    const idCell = row.cells[0]; // ID Transaksi
+                    const nameCell = row.cells[2]; // Nama Customer is index 2
+                    
+                    let combinedText = '';
+                    if (idCell) combinedText += idCell.textContent.toLowerCase() + ' ';
+                    if (nameCell) combinedText += nameCell.textContent.toLowerCase();
+                    
+                    row.style.display = combinedText.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+    });
 </script>
 @endpush
 

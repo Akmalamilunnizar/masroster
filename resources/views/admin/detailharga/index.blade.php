@@ -4,155 +4,100 @@
 CIME | Halaman Detail Harga
 @endsection
 
+@section('search')
+<div class="col-md-4">
+                    <div class="position-relative search-box-wrapper">
+                        <i class="bx bx-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted fs-5" style="z-index: 5;"></i>
+                        <input type="text" id="priceSearchInput" class="form-control border-0 bg-light ps-5 rounded-3" 
+                            style="height: 42px;" placeholder="Cari data harga...">
+                    </div>
+                </div>
+
+@endsection
+
 @section('content')
 <style>
-    /* Enhanced styling for better visual hierarchy and alignment */
-    .page-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        border: 1px solid #dee2e6;
-    }
-    
-    .page-title {
-        color: #495057;
-        font-weight: 700;
-        margin: 0;
-    }
-    
-    .page-subtitle {
-        color: #6c757d;
-        font-size: 0.875rem;
-        margin: 0.25rem 0 0 0;
-    }
-
-    .table-enhanced {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    
-    .table-enhanced thead th {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        font-weight: 600;
-        border: none;
-        padding: 1rem 0.75rem;
-        text-align: center;
-        vertical-align: middle;
-    }
-    
-    .table-enhanced tbody td {
-        padding: 0.75rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #f1f3f4;
-    }
-    
-    .table-enhanced tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .status-badge {
-        padding: 0.375rem 0.75rem;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 0.75rem;
-    }
-
+    /* Default row layout for tablets (769px to 1199px) where sidebar is hidden */
     .action-buttons-cell {
         display: flex;
-        gap: 0.25rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .btn-action {
-        padding: 0.25rem 0.5rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        border: none;
-        transition: all 0.2s ease;
-    }
-    
-    .btn-action:hover {
-        transform: scale(1.05);
-    }
-
-    .btn-enhanced {
-        border-radius: 8px;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        transition: all 0.3s ease;
-        border: none;
-    }
-    
-    .btn-enhanced:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .bulk-actions {
-        display: flex;
         gap: 0.5rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .selection-notification {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border: 1px solid #2196f3;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    /* Enhanced styling for disabled action buttons */
-    .btn-warning.disabled-bulk,
-    .btn-info.disabled-bulk {
-        opacity: 0.5 !important;
-        pointer-events: none !important;
-        cursor: not-allowed !important;
-        position: relative;
-    }
-
-    .btn-warning.disabled-bulk::after,
-    .btn-info.disabled-bulk::after {
-        content: "⛔";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 12px;
-        color: #dc3545;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: center;
     }
 
-    /* Enhanced batch delete button */
-    #batchDeleteBtn {
-        transition: all 0.3s ease;
-        position: relative;
+    /* Stack buttons vertically on Desktop (sidebar open) and Mobile */
+    @media (min-width: 1200px), (max-width: 768px) {
+        .action-buttons-cell {
+            flex-direction: column !important;
+            gap: 0.35rem !important;
+        }
+        .btn-action {
+            width: 40px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            border-radius: 6px !important;
+        }
+        /* Hide labels on desktop/mobile to maximize table space */
+        .btn-action span {
+            display: none !important;
+        }
+        .btn-action i {
+            margin-right: 0 !important;
+            font-size: 1.1rem;
+        }
     }
 
-    #batchDeleteBtn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-    }
-
-    /* Selection indicator */
-    .selection-active {
-        background-color: rgba(13, 110, 253, 0.1) !important;
-        border-left: 4px solid #0d6efd !important;
+    /* Horizontal layout with labels only for tablets */
+    @media (min-width: 769px) and (max-width: 1199.98px) {
+        .btn-action {
+            width: 130px !important;
+            display: inline-flex !important;
+        }
     }
 </style>
-
 <div class="container-xxl flex-grow-1 container-p-y">
+    <!-- Advanced Filter Section -->
+    <div class="card shadow-sm mb-4 border-0" style="border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small">Filter Jenis</label>
+                    <select id="filterJenis" class="form-select border-0 bg-light">
+                        <option value="">Semua Jenis</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small">Filter Tipe</label>
+                    <select id="filterTipe" class="form-select border-0 bg-light">
+                        <option value="">Semua Tipe</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small">Filter Ukuran</label>
+                    <select id="filterUkuran" class="form-select border-0 bg-light">
+                        <option value="">Semua Ukuran</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small">Filter Motif</label>
+                    <select id="filterMotif" class="form-select border-0 bg-light">
+                        <option value="">Semua Motif</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small">Filter Pembeli</label>
+                    <select id="filterPembeli" class="form-select border-0 bg-light">
+                        <option value="">Semua Pembeli</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button id="resetFilters" class="btn btn-secondary w-100 btn-sm" style="height: 38px;">
+                        <i class="bx bx-undo me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Enhanced Page Header -->
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-center">
@@ -198,11 +143,12 @@ CIME | Halaman Detail Harga
     @endif
 
     <!-- Enhanced Price Table -->
-    <div class="card">
-        <div class="card-header bg-transparent border-bottom">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-list me-2 text-primary"></i>Data Harga Roster
+    <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden;">
+        <div class="card-header bg-primary py-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);">
+            <h5 class="card-title mb-0 text-white">
+                <i class="fas fa-list me-2"></i>Data Harga Roster
             </h5>
+            <span class="badge bg-white text-primary px-3 py-2 rounded-pill" id="itemCounter">0 Konten</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover table-enhanced">
@@ -259,15 +205,16 @@ CIME | Halaman Detail Harga
                             <div class="action-buttons-cell">
                                 <a href="{{ route('detailharga.edit', [$harga->id_roster, $harga->id_user, $harga->id_ukuran]) }}"
                                     class="btn btn-warning btn-action action-btn" title="Edit Harga">
-                                    <i class="fas fa-edit"></i>
+                                    <i class="bx bxs-edit me-1"></i> <span>Edit Harga</span>
                                 </a>
-                                <form action="{{ route('detailharga.destroy', [$harga->id_roster, $harga->id_user, $harga->id_ukuran]) }}"
+                                <form id="deleteForm{{ $harga->id_roster }}_{{ $harga->id_user }}_{{ $harga->id_ukuran }}" 
+                                      action="{{ route('detailharga.destroy', [$harga->id_roster, $harga->id_user, $harga->id_ukuran]) }}"
                                     method="POST" style="display: inline;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-action"
-                                        onclick="return confirm('Yakin ingin menghapus data ini?')" title="Hapus Harga">
-                                        <i class="fas fa-trash-alt"></i>
+                                    <button type="button" class="btn btn-danger btn-action"
+                                        onclick="confirmDelete('{{ $harga->id_roster }}_{{ $harga->id_user }}_{{ $harga->id_ukuran }}')" title="Hapus Harga">
+                                        <i class="bx bxs-trash me-1"></i> <span>Hapus Harga</span>
                                     </button>
                                 </form>
                             </div>
@@ -483,6 +430,115 @@ CIME | Halaman Detail Harga
                     setTimeout(() => toast.remove(), 3000);
                 }
             }
+        });
+
+        // Individual row delete confirmation
+        window.confirmDelete = function(id) {
+            Swal.fire({
+                title: 'Konfirmasi Hapus Harga',
+                text: 'Apakah Anda yakin ingin menghapus data harga ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`deleteForm${id}`).submit();
+                }
+            });
+        };
+
+        // Search & Filter functionality
+        const searchInput = document.getElementById('priceSearchInput');
+        const filterJenis = document.getElementById('filterJenis');
+        const filterTipe = document.getElementById('filterTipe');
+        const filterUkuran = document.getElementById('filterUkuran');
+        const filterMotif = document.getElementById('filterMotif');
+        const filterPembeli = document.getElementById('filterPembeli');
+        const resetBtn = document.getElementById('resetFilters');
+        const tableRows = document.querySelectorAll('.table-enhanced tbody tr:not(.empty-row)');
+        const counter = document.getElementById('itemCounter');
+
+        function updateCount() {
+            const visible = Array.from(tableRows).filter(r => r.style.display !== 'none').length;
+            counter.textContent = visible + ' Konten';
+        }
+        updateCount();
+
+        // Populate dynamic filters
+        const jenisSet = new Set();
+        const tipeSet = new Set();
+        const ukuranSet = new Set();
+        const motifSet = new Set();
+        const pembeliSet = new Set();
+        tableRows.forEach(row => {
+            const j = row.cells[2]?.textContent.trim();
+            const t = row.cells[3]?.textContent.trim();
+            const m = row.cells[4]?.textContent.trim();
+            const u = row.cells[5]?.textContent.trim();
+            const p = row.cells[6]?.textContent.trim();
+            if (j && j !== '-') jenisSet.add(j);
+            if (t && t !== '-') tipeSet.add(t);
+            if (m && m !== '-') motifSet.add(m);
+            if (u && u !== '-') ukuranSet.add(u);
+            if (p && p !== '-') pembeliSet.add(p);
+        });
+        jenisSet.forEach(v => filterJenis.add(new Option(v, v)));
+        tipeSet.forEach(v => filterTipe.add(new Option(v, v)));
+        ukuranSet.forEach(v => filterUkuran.add(new Option(v, v)));
+        motifSet.forEach(v => filterMotif.add(new Option(v, v)));
+        pembeliSet.forEach(v => filterPembeli.add(new Option(v, v)));
+
+        function applyAdvancedFilters() {
+            const term = searchInput.value.toLowerCase();
+            const selJ = filterJenis.value;
+            const selT = filterTipe.value;
+            const selU = filterUkuran.value;
+            const selM = filterMotif.value;
+            const selP = filterPembeli.value;
+
+            tableRows.forEach(row => {
+                const jenis = row.cells[2]?.textContent.trim();
+                const tipe = row.cells[3]?.textContent.trim();
+                const motif = row.cells[4]?.textContent.trim();
+                const ukuran = row.cells[5]?.textContent.trim();
+                const pembeli = row.cells[6]?.textContent.trim();
+                
+                // Get all text content from data cells (index 1 to 7) for the general search
+                const searchContent = Array.from(row.cells)
+                    .slice(1, 8)
+                    .map(cell => cell.textContent.trim())
+                    .join(' ')
+                    .toLowerCase();
+
+                const matchesSearch = searchContent.includes(term);
+                const matchesJ = !selJ || jenis === selJ;
+                const matchesT = !selT || tipe === selT;
+                const matchesU = !selU || ukuran === selU;
+                const matchesM = !selM || motif === selM;
+                const matchesP = !selP || pembeli === selP;
+
+                row.style.display = (matchesSearch && matchesJ && matchesT && matchesU && matchesM && matchesP) ? '' : 'none';
+            });
+            updateCount();
+        }
+
+        if (searchInput) searchInput.addEventListener('keyup', applyAdvancedFilters);
+        filterJenis.addEventListener('change', applyAdvancedFilters);
+        filterTipe.addEventListener('change', applyAdvancedFilters);
+        filterUkuran.addEventListener('change', applyAdvancedFilters);
+        filterMotif.addEventListener('change', applyAdvancedFilters);
+        filterPembeli.addEventListener('change', applyAdvancedFilters);
+        resetBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            filterJenis.value = '';
+            filterTipe.value = '';
+            filterUkuran.value = '';
+            filterMotif.value = '';
+            filterPembeli.value = '';
+            applyAdvancedFilters();
         });
     });
 </script>

@@ -7,7 +7,7 @@
   <title>@yield('page_title') | Toko Percetakan</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png" />
+    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png" />
     <!-- CSS Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
@@ -310,7 +310,7 @@
     <div class="container">
       <!-- Brand Logo -->
       <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
-        <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="Logo" width="120" height="auto">
+        <img src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" alt="Logo" width="120" height="auto">
       </a>
 
       <!-- Mobile Toggle Button -->

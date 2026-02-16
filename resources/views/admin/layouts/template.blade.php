@@ -17,7 +17,7 @@
     <meta name="description" content="" />
 
 
-    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png" />
+    <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -68,11 +68,12 @@
 
         .layout-navbar {
             flex-shrink: 0;
-            height: 65px;
+            height: 56px;
             z-index: 10;
             position: sticky;
             top: 0;
             width: 100%;
+            padding: 0 1.2rem !important;
         }
 
         .content-wrapper {
@@ -98,35 +99,45 @@
             height: 100vh;
             background-color: #f0f4f8;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-            width: 280px !important;
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            z-index: 1000 !important;
+            z-index: 1100 !important;
             overflow-y: auto !important;
             margin: 0 !important;
             padding: 0 !important;
+            transition: transform 0.3s ease-in-out;
         }
 
-        #layout-menu .menu-inner {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-left: 10px;
-            padding-right: 10px;
+        @media (min-width: 1200px) {
+            #layout-menu {
+                width: 280px !important;
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+            }
+            .layout-page {
+                margin-left: 280px !important;
+                width: calc(100% - 280px) !important;
+                position: relative !important;
+                z-index: 1 !important;
+                min-height: 100vh !important;
+            }
         }
 
-        /* Essential layout fixes */
-        .layout-page {
-            margin-left: 280px !important;
-            width: calc(100% - 280px) !important;
-            position: relative !important;
-            z-index: 1 !important;
-            min-height: 100vh !important;
-            background-color: rgb(240, 246, 250) !important;
-            margin-top: 0 !important;
-            margin-right: 0 !important;
-            margin-bottom: 0 !important;
-            padding: 0 !important;
+        @media (max-width: 1199.98px) {
+            #layout-menu {
+                width: 280px !important;
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                transform: translateX(-100%);
+            }
+            .layout-menu-expanded #layout-menu {
+                transform: translateX(0);
+            }
+            .layout-page {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+            
         }
 
         /* Ensure content is not hidden */
@@ -183,10 +194,26 @@
         /* Fix navbar positioning */
         .layout-navbar {
             position: sticky !important;
-            top: 0 !important;
-            z-index: 100 !important;
-            background: linear-gradient(135deg,rgb(255, 255, 255),rgb(255, 255, 255)) !important;
-            border-bottom: 1px solid #e9ecef !important;
+            top: 10px !important;
+            margin: 0 1rem !important;
+            z-index: 1000 !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(233, 236, 239, 0.5) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+            width: auto !important;
+        }
+
+        .layout-navbar .navbar-nav {
+            position: relative;
+            z-index: 1102 !important;
+        }
+
+        .avatar img {
+            width: 38px !important;
+            height: 38px !important;
+            object-fit: cover;
         }
 
         /* Fix content wrapper */
@@ -297,13 +324,30 @@
             padding-right: 0.75rem !important;
         }
 
-        /* CRITICAL: Fix sidebar overlap for transaction pages */
+        /* Layout background color */
         .layout-page {
-            margin-left: 280px !important;
-            width: calc(100% - 280px) !important;
-            padding-left: 0.5rem !important;
+            background-color: rgb(240, 246, 250) !important;
         }
 
+        .layout-overlay {
+            z-index: 1050 !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            display: none;
+        }
+
+        @media (max-width: 1199.98px) {
+            .layout-menu-expanded .layout-overlay {
+                display: block;
+            }
+        }
+        
+        #layout-overlay .layout-menu-toggle {
+            z-index: 1 !important;
+        }
         .container-xxl.flex-grow-1.container-p-y {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
@@ -397,7 +441,7 @@
                 <div class="main-sidebar sidebar-style-2" style="padding: 20px; display: flex; justify-content: center; border-bottom: 1px solid #d1d9e6;">
                     <a href="http://127.0.0.1:8000" class="app-brand-link" style="display: flex; justify-content: center; width: 100%;">
                         <img
-                            src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}"
+                            src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}"
                             alt="Logo"
                             class="logo-zoom-out"
                             style="width: 140px; height: auto; border-radius: 8px;" />
@@ -455,7 +499,7 @@
                         </a>
                     </li>
                     <li class="menu-item {{ request()->is('admin/forecast*') ? 'active' : '' }}">
-                        <a href="{{ route('forecast.form') }}" class="menu-link">
+                        <a href="{{ route('forecast.stock') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-line-chart'></i>
                             <div>Forecasting</div>
                         </a>
@@ -510,43 +554,55 @@
                 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
                     id="layout-navbar">
                     <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-                        <div class="dropdown">
-                            <a class="nav-item nav-link px-0 me-xl-4 dropdown-toggle" href="javascript:void(0)" data-bs-toggle="dropdown">
-                                <i class="bx bx-menu bx-sm"></i>
-                            </a>
-                        </div>
+                        <a class="nav-item nav-link px-0 me-xl-4 layout-menu-toggle" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
                     </div>
 
-                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-                        @yield('search')
+                    <div class="navbar-nav-right d-flex align-items-center w-100" id="navbar-collapse">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            @yield('search')
+                        </div>
 
                         <ul class="navbar-nav flex-row align-items-center ms-auto">
                             <li class="nav-item navbar-dropdown dropdown-user dropdown">
-                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
+                                <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);"
                                     data-bs-toggle="dropdown">
                                     <div class="avatar avatar-online">
-                                        <img src="{{ Auth::user() ? asset('uploads/users/' . Auth::user()->img) : asset('dashboard2/assets/img/avatars/default-avatar.png') }}" alt="user-avatar"
-                                            class="d-block rounded" height="100" width="100" id="uploadedAvatar" />
+                                        <img src="{{ Auth::user() ? asset('uploads/users/' . Auth::user()->img) : asset('dashboard2/assets/img/avatars/default-avatar.png') }}" 
+                                             alt="user-avatar" class="rounded-circle" id="uploadedAvatar" />
                                     </div>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('profile') }}">
-                                            <div class="d-flex">
+                                        <a class="dropdown-item py-2" href="{{ route('profile') }}">
+                                            <div class="d-flex align-items-center">
                                                 <div class="flex-shrink-0 me-3">
                                                     <div class="avatar avatar-online">
                                                         <img src="{{ Auth::user() ? asset('uploads/users/' . Auth::user()->img) : asset('dashboard2/assets/img/avatars/default-avatar.png') }}"
-                                                            alt="user-avatar" class="d-block rounded" height="100"
-                                                            width="100" id="uploadedAvatar" />
+                                                            alt="user-avatar" class="rounded-circle" />
                                                     </div>
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     @auth
-                                                    <span class="fw-medium d-block">{{ Auth::user()->f_name }}</span>
+                                                    <span class="fw-bold d-block">{{ Auth::user()->f_name }}</span>
                                                     @endauth
-                                                    <small class="text-muted">Admin</small>
+                                                    <small class="text-muted">Administrator</small>
                                                 </div>
                                             </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('profile') }}">
+                                            <i class="bx bx-user me-2"></i>
+                                            <span class="align-middle">My Profile</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="confirmLogout()">
+                                            <i class="bx bx-power-off me-2 text-danger"></i>
+                                            <span class="align-middle">Log Out</span>
                                         </a>
                                     </li>
                                 </ul>

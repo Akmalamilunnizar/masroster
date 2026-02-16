@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
    <!-- Favicon -->
-  <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" type="image/png" />
+  <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png" />
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans&display=swap" rel="stylesheet" />
@@ -155,7 +155,7 @@
 
   <!-- Logo Tengah -->
   <div class="logo">
-    <img src="{{ asset('dashboard2/assets/img/icons/logocime.png') }}" alt="Logo">
+    <img src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" alt="Logo">
   </div>
 
   <!-- Card Register -->
