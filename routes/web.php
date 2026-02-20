@@ -42,12 +42,18 @@ use App\Http\Controllers\Api\V1\DetailProdukController;
 use App\Http\Controllers\Api\V1\DetailHargaController;
 use App\Http\Controllers\Api\V1\SizeController;
 // use App\Http\Controllers\Api\V1\DiskonController;
-
+use Illuminate\Support\Facades\Artisan;
 
 
 // Route::get('/', function () {
 //     return view('welcome');
 // });
+Route::get('/optimize-kebut', function() {
+    Artisan::call('config:cache');
+    Artisan::call('route:cache');
+    Artisan::call('view:cache');
+    return "Kecepatan maksimal diaktifkan! Config, Route, dan View berhasil di-cache.";
+});
 
 Route::get('/customer/{id}', [CustomerController::class, 'customerDetails'])->name('customerDetails');
 
@@ -65,11 +71,6 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('admin/dashboard', 'Index')->name('admindashboard');
-    });
-
-    Route::controller(AdminProfileController::class)->group(function () {
-        Route::get('/admin/admin-profile', 'Index')->name('profile');
-        Route::post('/admin/store-profile', 'StoreProfile')->name('storeprofile');
     });
 
     Route::get('/admin/all-ukuran', [SizeController::class, 'index'])->name('allukuran');
@@ -209,29 +210,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-Route::controller(ItemsController::class)->group(function () { /* */
-    Route::get('/admin/daftar-barang', 'index')->name('daftarbarang');
-    Route::get('/admin/daftar-barang/add-daftar-barang', 'addDaftarBarang')->name('adddaftarbarang');
-    Route::post('/admin/daftar-barang/add-daftar-barang', 'addDaftarBarang')->name('adddaftarbarang');
-    // GET request untuk menampilkan form tambah barang
-    Route::get('/admin/daftar-barang/add-daftar-barang', 'addDaftarBarang')->name('adddaftarbarang');
-    // POST request untuk memproses form tambah barang
-    Route::post('/admin/daftar-barang/add-daftar-barang', 'addDaftarBarang')->name('adddaftarbarang'); // Ubah ke store, bukan addDaftarBarang
-    // Rute untuk tambah jenis barang baru
-    Route::post('/admin/jenis-barang/add', [TypeItems::class, 'addDaftarBarang'])->name('addTypeItems');
-    // Route untuk detail barang
-    Route::get('/admin/daftar-barang/barang/{id}/detail', 'show')->name('barang.detail');
-    // Route untuk edit barang
-    Route::get('/admin/daftar-barang/barang/{id}/edit', 'edit')->name('barang.edit');
-    // Route untuk update barang
-    Route::put('/admin/daftar-barang/barang/{id}/update', 'update')->name('barang.update'); // Perbaiki route untuk update
-    // Route untuk delete barang
-    Route::delete('/admin/daftar-barang/barang/{id}', 'destroy')->name('barang.delete');
-
-    Route::post('/add-jenis-barang', [ItemsController::class, 'addTypeItems'])->name('addTypeItems'); /* */
-    Route::delete('/delete-jenis-barang/{id}', [ItemsController::class, 'deleteTypeItems'])->name('deleteTypeItems'); /* */
-});
-
 Route::controller(TokoController::class)->group(function () {
     Route::get('/tokodashboard', function () {return view('toko.dashboardToko');})->name('tokodashboard');
     Route::get('/tokodashboard', [TokoController::class, 'tokodashboard'])->name('tokodashboard');
@@ -270,13 +248,6 @@ Route::controller(ProdukController::class)->group(function () {
     Route::get('/api/produk', 'get_produk_list')->name('getproduk');
 });
 
-Route::controller(TransaksiController::class)->group(function () {
-    Route::get('/admin/all-transaksi', 'index')->name('alltransaksi');
-    Route::get('/admin/all-transaksi/exportpdf', 'exportPdf')->name('alltransaksi.exportpdf');
-    Route::get('/admin/all-transaksi/exportexcel', 'exportExcel')->name('alltransaksi.exportexcel');
-    Route::get('/admin/all-transaksi/{id}/terima', 'terimaOrderan')->name('terimaOrderan');
-    Route::post('/admin/all-transaksi/{id}/tolak', 'tolakOrderan')->name('tolakOrderan');
-});
 
 Route::controller(SupplierController::class)->group(function () {
     // Tampilkan semua supplier
@@ -291,9 +262,6 @@ Route::controller(SupplierController::class)->group(function () {
     Route::delete('/admin/daftar-supplier/{id}', 'deleteSupplier')->name('deletesupplier');
     Route::get('/admin/search-supplier', 'searchSupplier')->name('searchsupplier');
     Route::get('/api/suppliers', 'get_supplier_list')->name('getsuppliers');
-    Route::delete('/supplier/{id}', 'destroy')->name('deletesupplier');
-
-    Route::delete('/supplier/{id}', 'destroy')->name('deletesupplier');
 
 });
 
@@ -341,7 +309,7 @@ Route::controller(AdminProfileController::class)->group(function () {
     Route::get('/admin/pending-order/search', 'SearchPending')->name('searchorder');
     Route::get('/admin/history-order', 'IndexHistory')->name('historyorder');
 
-    Route::post('/admin/profile', [AdminProfileController::class, 'StoreProfile'])->name('storeprofile');
+
 });
 
 
