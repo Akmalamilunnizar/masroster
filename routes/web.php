@@ -480,3 +480,4 @@ Route::post('/set-selected-address', [AddressController::class, 'setSelectedAddr
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
