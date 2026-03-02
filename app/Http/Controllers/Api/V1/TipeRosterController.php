@@ -130,19 +130,19 @@ class TipeRosterController extends Controller
     {
         try {
             $request->validate([
-                'namaTipe' => 'required|string|max:40|unique:tipe_roster,namaTipe',
+                'namaTipe' => 'required|string|max:40',
                 'id_jenis' => 'required|exists:jenisbarang,IdJenisBarang'
             ]);
 
             DB::beginTransaction();
             
             // Create the tipe
-            $tipe = TipeRoster::create([
-                'namaTipe' => $request->namaTipe
+            $tipe = TipeRoster::firstOrCreate([
+                'namaTipe' => strtoupper(trim($request->namaTipe))
             ]);
 
             // Create the connection in detail_tipe
-            DetailTipe::create([
+            DetailTipe::updateOrInsert([
                 'id_jenis' => $request->id_jenis,
                 'id_tipe' => $tipe->IdTipe
             ]);

@@ -195,7 +195,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 });
 
-
+// ini Jenis roster bukan tipe roster
 Route::middleware(['auth'])->group(function () {
     Route::controller(TypeItemsController::class)->group(function () {
     Route::get('/admin/all-type', 'Index')->name('alltype');

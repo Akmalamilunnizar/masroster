@@ -8,9 +8,10 @@
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom Modal CSS -->
     <link rel="stylesheet" href="{{ asset('css/custom-modal.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <title>@yield('page_title')</title>
 
@@ -38,8 +39,7 @@
     <link rel="stylesheet" href="{{ asset('dashboard2/assets/vendor/libs/apex-charts/apex-charts.css') }}" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/sass/style.scss'])
-    <script src="{{ asset('dashboard2/assets/vendor/js/helpers.js') }}"></script>
-    <script src="{{ asset('dashboard2/assets/js/config.js') }}"></script>
+
 
     {{-- Kustom CSS untuk Layout dan Scrolling --}}
     <style>
@@ -99,7 +99,7 @@
             height: 100vh;
             background-color: #f0f4f8;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-            z-index: 1100 !important;
+            z-index: 1040 !important;
             overflow-y: auto !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -113,11 +113,11 @@
                 left: 0 !important;
                 top: 0 !important;
             }
+
             .layout-page {
                 margin-left: 280px !important;
                 width: calc(100% - 280px) !important;
                 position: relative !important;
-                z-index: 1 !important;
                 min-height: 100vh !important;
             }
         }
@@ -130,14 +130,16 @@
                 top: 0 !important;
                 transform: translateX(-100%);
             }
+
             .layout-menu-expanded #layout-menu {
                 transform: translateX(0);
             }
+
             .layout-page {
                 margin-left: 0 !important;
                 width: 100% !important;
             }
-            
+
         }
 
         /* Ensure content is not hidden */
@@ -173,7 +175,8 @@
         }
 
         /* Fix for form elements */
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             width: 100% !important;
             box-sizing: border-box !important;
         }
@@ -185,7 +188,18 @@
             width: 100% !important;
         }
 
-        .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
+        .col-md-1,
+        .col-md-2,
+        .col-md-3,
+        .col-md-4,
+        .col-md-5,
+        .col-md-6,
+        .col-md-7,
+        .col-md-8,
+        .col-md-9,
+        .col-md-10,
+        .col-md-11,
+        .col-md-12 {
             padding-left: 0.75rem !important;
             padding-right: 0.75rem !important;
             box-sizing: border-box !important;
@@ -266,7 +280,18 @@
             width: 100% !important;
         }
 
-        .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
+        .col-md-1,
+        .col-md-2,
+        .col-md-3,
+        .col-md-4,
+        .col-md-5,
+        .col-md-6,
+        .col-md-7,
+        .col-md-8,
+        .col-md-9,
+        .col-md-10,
+        .col-md-11,
+        .col-md-12 {
             padding-left: 0.375rem !important;
             padding-right: 0.375rem !important;
             box-sizing: border-box !important;
@@ -288,7 +313,8 @@
             font-weight: 500 !important;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             margin-bottom: 0.5rem !important;
         }
 
@@ -304,7 +330,8 @@
         }
 
         /* Fix table spacing */
-        .table th, .table td {
+        .table th,
+        .table td {
             padding: 0.5rem 0.375rem !important;
             vertical-align: middle !important;
         }
@@ -330,7 +357,7 @@
         }
 
         .layout-overlay {
-            z-index: 1050 !important;
+            z-index: 1035 !important;
             position: fixed;
             top: 0;
             left: 0;
@@ -344,10 +371,11 @@
                 display: block;
             }
         }
-        
+
         #layout-overlay .layout-menu-toggle {
             z-index: 1 !important;
         }
+
         .container-xxl.flex-grow-1.container-p-y {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
@@ -431,20 +459,22 @@
             animation: zoomOut 1.5s ease-in-out infinite alternate;
         }
     </style>
+    <script src="{{ asset('dashboard2/assets/vendor/js/helpers.js') }}"></script>
+    <script src="{{ asset('dashboard2/assets/js/config.js') }}"></script>
 </head>
 
 <body>
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">
 
-            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme" style="background-color: #f0f4f8; box-shadow: 2px 0 5px rgba(0,0,0,0.05); height: 100vh;">
-                <div class="main-sidebar sidebar-style-2" style="padding: 20px; display: flex; justify-content: center; border-bottom: 1px solid #d1d9e6;">
-                    <a href="http://127.0.0.1:8000" class="app-brand-link" style="display: flex; justify-content: center; width: 100%;">
-                        <img
-                            src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}"
-                            alt="Logo"
-                            class="logo-zoom-out"
-                            style="width: 140px; height: auto; border-radius: 8px;" />
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme"
+                style="background-color: #f0f4f8; box-shadow: 2px 0 5px rgba(0,0,0,0.05); height: 100vh;">
+                <div class="main-sidebar sidebar-style-2"
+                    style="padding: 20px; display: flex; justify-content: center; border-bottom: 1px solid #d1d9e6;">
+                    <a href="http://127.0.0.1:8000" class="app-brand-link"
+                        style="display: flex; justify-content: center; width: 100%;">
+                        <img src="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" alt="Logo"
+                            class="logo-zoom-out" style="width: 140px; height: auto; border-radius: 8px;" />
                     </a>
                 </div>
 
@@ -455,37 +485,43 @@
                             <div>Dashboard</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->is('admin/all-produk*') || request()->is('admin/add-produk*') || request()->is('admin/edit-produk') ? 'active' : '' }}">
+                    <li
+                        class="menu-item {{ request()->is('admin/all-produk*') || request()->is('admin/add-produk*') || request()->is('admin/edit-produk') ? 'active' : '' }}">
                         <a href="{{ route('allproduk') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-package'></i>
                             <div>Daftar Roster</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->is('admin/all-type*') || request()->is('admin/edit-type*') || request()->is('admin/add-type') ? 'active' : '' }}">
+                    <li
+                        class="menu-item {{ request()->is('admin/all-type*') || request()->is('admin/edit-type*') || request()->is('admin/add-type') ? 'active' : '' }}">
                         <a href="{{ route('alltype') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-package'></i>
                             <div>Daftar Jenis Produk</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->is('admin/all-tipe-roster*') || request()->is('admin/edit-tipe-roster*') || request()->is('admin/add-tipe-roster') ? 'active' : '' }}">
+                    <li
+                        class="menu-item {{ request()->is('admin/all-tipe-roster*') || request()->is('admin/edit-tipe-roster*') || request()->is('admin/add-tipe-roster') ? 'active' : '' }}">
                         <a href="{{ route('alltiperoster') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-package'></i>
                             <div>Daftar Tipe Produk</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->is('admin/all-motif*') || request()->is('admin/edit-motif*') || request()->is('admin/add-motif') ? 'active' : '' }}">
+                    <li
+                        class="menu-item {{ request()->is('admin/all-motif*') || request()->is('admin/edit-motif*') || request()->is('admin/add-motif') ? 'active' : '' }}">
                         <a href="{{ route('allmotif') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-package'></i>
                             <div>Daftar Motif Produk</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->is('admin/all-ukuran*') || request()->is('admin/edit-ukuran*') || request()->is('admin/add-ukuran') ? 'active' : '' }}">
+                    <li
+                        class="menu-item {{ request()->is('admin/all-ukuran*') || request()->is('admin/edit-ukuran*') || request()->is('admin/add-ukuran') ? 'active' : '' }}">
                         <a href="{{ route('allukuran') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-ruler'></i>
                             <div>Daftar Ukuran</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->is('admin/all-customer*') || request()->is('customer*') ? 'active' : '' }}">
+                    <li
+                        class="menu-item {{ request()->is('admin/all-customer*') || request()->is('customer*') ? 'active' : '' }}">
                         <a href="{{ route('allcustomer') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-group"></i>
                             <div>Daftar Customer</div>
@@ -513,7 +549,8 @@
 
                 </ul>
                 <!-- Tombol Logout di bagian bawah sidebar -->
-                <div style="position: fixed; bottom: 20px; left: 0; width: 280px; padding: 0 20px; background-color: #f0f4f8;">
+                <div
+                    style="position: fixed; bottom: 20px; left: 0; width: 280px; padding: 0 20px; background-color: #f0f4f8;">
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf
                     </form>
@@ -569,8 +606,8 @@
                                 <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);"
                                     data-bs-toggle="dropdown">
                                     <div class="avatar avatar-online">
-                                        <img src="{{ Auth::user() ? asset('uploads/users/' . Auth::user()->img) : asset('dashboard2/assets/img/avatars/default-avatar.png') }}" 
-                                             alt="user-avatar" class="rounded-circle" id="uploadedAvatar" />
+                                        <img src="{{ Auth::user() ? asset('uploads/users/' . Auth::user()->img) : asset('dashboard2/assets/img/avatars/default-avatar.png') }}"
+                                            alt="user-avatar" class="rounded-circle" id="uploadedAvatar" />
                                     </div>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
@@ -585,14 +622,16 @@
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     @auth
-                                                    <span class="fw-bold d-block">{{ Auth::user()->f_name }}</span>
+                                                        <span class="fw-bold d-block">{{ Auth::user()->f_name }}</span>
                                                     @endauth
                                                     <small class="text-muted">Administrator</small>
                                                 </div>
                                             </div>
                                         </a>
                                     </li>
-                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <div class="dropdown-divider"></div>
+                                    </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('profile') }}">
                                             <i class="bx bx-user me-2"></i>
@@ -637,7 +676,7 @@
 
     <!-- Session Flash Messages Handler -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             @if(session()->has('message'))
                 CustomModal.success('{{ session()->get("message") }}', 'Berhasil!');
             @endif
@@ -656,10 +695,13 @@
         });
     </script>
 
-    @stack('scripts')
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('modals')
+    @stack('scripts')
+
+</body>
 
 
 
