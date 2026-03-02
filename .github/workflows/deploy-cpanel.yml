@@ -1,0 +1,49 @@
+name: Deploy Laravel to cPanel 🚀
+
+# Kapan aksi ini dijalankan? Setiap kali ada push ke branch main
+on:
+  push:
+    branches:
+      - main # (Ganti menjadi 'master' jika branch utama Anda bernama master)
+
+jobs:
+  build-and-deploy:
+    name: 🏗️ Build & Deploy
+    runs-on: ubuntu-latest # Menggunakan server virtual Linux milik GitHub
+
+    steps:
+      - name: 🚚 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # Sesuaikan dengan versi PHP di cPanel Anda
+
+      - name: 📦 Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+        # --no-dev memastikan fitur testing tidak ikut terinstall agar ringan
+
+      - name: 🎨 Build Frontend Assets (Node.js)
+        run: |
+          npm install
+          npm run build
+        # Ini akan mengcompile file Vite/Mix Anda sehingga cPanel tidak perlu kerja keras
+
+      - name: 🚀 Upload ke cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ./ 
+          
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .env
+            storage/logs/**
+            storage/framework/sessions/**
+            storage/framework/views/**
+            storage/app/public/**
