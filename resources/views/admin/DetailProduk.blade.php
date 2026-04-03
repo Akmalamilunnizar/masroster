@@ -59,7 +59,7 @@
                             onerror="this.onerror=null; this.src='{{ asset('assets/images/poster1.jpeg') }}';">
                     </div>
                     <div class="thumbnail-scroll-wrapper mt-3" id="thumbnailScrollWrapper">
-                        
+
                     </div>
                     @if(auth()->check() && $user)
                         <div class="mt-4">
@@ -97,7 +97,7 @@
                             <h5 style="margin-top: 25px;"><b style="font-size: 1.5em; color: black; color:rgb(104, 59, 187)">Deskripsi Produk </b></h5>
                             <p style="margin-top: 20px; white-space: pre-line;">{{ $produk->deskripsi ?? ($description ?? '-') }}</p>
                         </div>
-                        
+
 
 
                             <h5 class="mt-4">Pemesanan</h5>
@@ -122,8 +122,8 @@
 
 
                                     </div>
-                                    
-                                    
+
+
                                     <div class="row mb-3 align-items-center">
                                         <div class="col-md-4">
                                             <label for="jumlahOrderInput" class="form-label fw-bold"><i
@@ -162,7 +162,7 @@
                                             <span id="hargaSatuanOriginal" class="text-decoration-line-through ms-2 text-muted"></span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="row mb-2">
                                         <div class="col-6">Jumlah Order</div>
                                         <div class="col-6 text-end" id="summaryJumlahOrder">1</div>
@@ -270,7 +270,7 @@ $(document).ready(function () {
                 if (response.success) {
                     // Tutup modal konfirmasi pembelian
                     $('#beliSekarangModal').removeClass("show");
-                    
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Berhasil!',
@@ -478,7 +478,7 @@ $(document).ready(function () {
             }
         });
     }
-         
+
 </script>
 
 <script>
@@ -1375,29 +1375,29 @@ $(document).ready(function () {
         if (!beliSekarangBtn || !sizeSelect) {
             return;
         }
-        
+
         // Initially disable the button
         beliSekarangBtn.disabled = true;
-        
+
         // Function to check if all required fields are filled
         function validateForm() {
             const isSizeSelected = sizeSelect && sizeSelect.value !== '';
             beliSekarangBtn.disabled = !isSizeSelected;
-            
+
             // Add visual feedback
             if (!isSizeSelected) {
                 sizeSelect.classList.add('is-invalid');
             } else {
                 sizeSelect.classList.remove('is-invalid');
             }
-            
+
         }
-        
+
         // Add event listeners for validation
         if (sizeSelect) {
             sizeSelect.addEventListener('change', validateForm);
         }
-        
+
         // Add click handler for the button
         beliSekarangBtn.addEventListener('click', function() {
             // Validate again before proceeding
@@ -1410,7 +1410,7 @@ $(document).ready(function () {
                 });
                 return;
             }
-            
+
             // Get product details
             const productId = '{{ $produk->IdRoster }}';
                             const productName = '{{ $produk->NamaRoster }}';
@@ -1418,10 +1418,10 @@ $(document).ready(function () {
             const productImg = '{{ $produk->Img }}';
             const quantity = document.getElementById('jumlahOrderInput').value;
             const size = sizeSelect.value;
-            
+
             // Calculate subtotal
             var subtotal = productPrice * quantity;
-            
+
             // Create form data
             var formData = new FormData();
             formData.append('_token', '{{ csrf_token() }}');
@@ -1433,11 +1433,11 @@ $(document).ready(function () {
             formData.append('ukuran', size);
             formData.append('ukuran_label', sizeSelect.options[sizeSelect.selectedIndex].text);
             formData.append('subtotal', subtotal);
-            
+
             // Show loading state
             beliSekarangBtn.disabled = true;
             beliSekarangBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
-            
+
             // Add to cart via AJAX
             fetch('{{ route("cart.add") }}', {
                 method: 'POST',

@@ -103,7 +103,7 @@ class DashboardController extends Controller
                 $query->whereRaw('DATE_FORMAT(tglTransaksi, "%Y-%m") = ?', [$month]);
             }
             $revenue = $query->sum('GrandTotal') ?? 0;
-            
+
             $revenueByMonth->push([
                 'ym' => $month,
                 'total' => (int) $revenue

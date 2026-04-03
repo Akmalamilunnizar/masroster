@@ -44,11 +44,11 @@ class OrderController extends Controller
                 'user' => $user->username,
                 'request' => $request->all()
             ]);
-            
+
             // Get cart data from session
             $cart = session('cart');
             Log::info('Cart data:', ['cart' => $cart]);
-            
+
             if (!$cart || empty($cart)) {
                 Log::warning('Cart is empty');
                 return response()->json([
@@ -112,7 +112,7 @@ class OrderController extends Controller
             $transaction->tglUpdate = now();
             $transaction->StatusPesanan = 'Menunggu Konfirmasi';
             $transaction->save();
-            
+
             Log::info('Transaction created:', ['transaction' => $transaction->toArray()]);
 
             // Create transaction details
@@ -179,4 +179,4 @@ class OrderController extends Controller
 
         return view('toko.review', compact('cart', 'orderNotes', 'selectedAddress', 'shippingCost', 'subtotal', 'grandTotal'));
     }
-} 
+}

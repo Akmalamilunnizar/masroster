@@ -77,4 +77,4 @@ CIME | Detail Transaksi
         </div>
     </div>
 </div>
-@endsection 
+@endsection

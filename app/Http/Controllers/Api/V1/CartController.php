@@ -36,7 +36,7 @@ class CartController extends Controller
 
             $quantity = $request->quantity ?? 1;
             $subtotal = $request->subtotal ?? ($request->harga * $quantity);
-            
+
             if (isset($cart[$cartKey])) {
                 // Jika produk+ukuran sudah ada, tambahkan jumlah
                 $cart[$cartKey]['quantity'] += $quantity;
@@ -210,7 +210,7 @@ class CartController extends Controller
 
         // Get the selected address ID from session
         $selectedAddressId = session('selected_address_id');
-        
+
         // Get the address details
         $selectedAddress = null;
         if ($selectedAddressId) {

@@ -34,4 +34,4 @@ class DetailTransaksi extends Model
     {
         return $this->belongsTo(Size::class, 'id_ukuran', 'id_ukuran');
     }
-} 
+}

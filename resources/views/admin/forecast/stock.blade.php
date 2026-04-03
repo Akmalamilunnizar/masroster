@@ -17,7 +17,7 @@
             <a href="{{ route('forecast.form') }}" class="btn btn-success">
                 <i class="bx bx-chart me-1"></i> Forecast Spesifik Produk
             </a>
-            
+
             @if($needsUpdate || !$hasForecasts)
                 <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#runForecastModal">
                     <i class="bx bx-refresh"></i> Update Required
@@ -25,7 +25,7 @@
             @endif
         </div>
     </div>
-    
+
     @if($needsUpdate)
         <div class="alert alert-warning d-flex align-items-center" role="alert">
             <i class="bx bx-time fs-4 me-2"></i>
@@ -34,7 +34,7 @@
             </div>
         </div>
     @endif
-    
+
     @if(!$hasForecasts)
         <div class="alert alert-info d-flex align-items-center" role="alert">
             <i class="bx bx-info-circle fs-4 me-2"></i>
@@ -43,7 +43,7 @@
             </div>
         </div>
     @endif
-    
+
     <div class="row">
         <div class="col-md-12">
             <!-- Summary Cards -->
@@ -54,7 +54,7 @@
                     $overStock = collect($forecastData)->where('status', 'overstock')->count();
                     $safeStock = collect($forecastData)->where('status', 'safe')->count();
                 @endphp
-                
+
                 <div class="col-md-3">
                     <div class="card border-danger mb-3">
                         <div class="card-body">
@@ -88,7 +88,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-3">
                     <div class="card border-success mb-3">
                         <div class="card-body">
@@ -105,7 +105,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-3">
                     <div class="card border-info mb-3">
                         <div class="card-body">
@@ -123,7 +123,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Forecast Table -->
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-bottom">
@@ -201,7 +201,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Info Alert -->
             <div class="alert alert-info border-left-info d-flex align-items-center mt-4" role="alert">
                 <i class="bx bx-info-circle fs-4 me-2"></i>

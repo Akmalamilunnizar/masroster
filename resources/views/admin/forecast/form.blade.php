@@ -10,7 +10,7 @@ CIME | Halaman Forecasting
                 <i class="bx bx-chevron-left"></i> Kembali ke Form
             </a>
     </div>
-    
+
     <div class="row">
         <div class="col-md-12">
             <div class="card mb-4 shadow-sm">
@@ -82,7 +82,7 @@ CIME | Halaman Forecasting
                                     @endfor
                                 </tbody>
                             </table>
-                        </div>                        
+                        </div>
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <button type="submit" class="btn btn-primary px-5 shadow-sm">
                                 <i class="bx bxs-magic-wand me-1"></i> Mulai Prediksi
@@ -152,7 +152,7 @@ function generateSampleData() {
     const tbody = document.getElementById('dataTableBody');
     tbody.innerHTML = '';
     rowCount = 0;
-    
+
     const today = new Date();
     // Use last 12 months excluding current month
     for (let i = 12; i >= 1; i--) {
@@ -160,7 +160,7 @@ function generateSampleData() {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const sales = Math.floor(Math.random() * 100) + 50;
-        
+
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="ps-4"><input type="text" class="form-control" name="bulan[]" value="${year}-${month}" required></td>
@@ -199,7 +199,7 @@ function loadFromDatabase(productId) {
     })
     .then(response => {
         if (response.status !== 'success') throw new Error(response.message || 'Unknown error');
-        
+
         const data = response.data;
         tbody.innerHTML = '';
         rowCount = 0;

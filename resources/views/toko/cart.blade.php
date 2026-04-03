@@ -62,7 +62,7 @@
           @if(session('cart') && count(session('cart')) > 0)
             @php $total = 0; @endphp
             @foreach (session('cart') as $id => $details)
-              @php 
+              @php
                   $itemSubtotal = isset($details['subtotal']) ? $details['subtotal'] : ($details['harga'] * $details['quantity']);
                   $total += $itemSubtotal;
               @endphp
@@ -73,8 +73,8 @@
                     $imagePath = $details['img'] ?? 'default.jpg';
                     $fullPath = asset('storage/' . $imagePath);
                   @endphp
-                  <img src="{{ $fullPath }}" 
-                       alt="{{ $details['nama'] }}" 
+                  <img src="{{ $fullPath }}"
+                       alt="{{ $details['nama'] }}"
                        style="width: 220px; height: 220px; object-fit: cover; border-radius: 10px;"
                        loading="lazy">
                 </div>
@@ -95,7 +95,7 @@
                   <!-- Harga -->
                   <span class="fw-bold text-primary mt-2 item-subtotal" style="font-size: 24px;" data-id="{{ $id }}">Rp {{ number_format($itemSubtotal, 0, ',', '.') }}</span>
                   <span class="fw-bold text-primary mt-2 item-price d-none" data-id="{{ $id }}" data-price="{{ $details['harga'] }}"></span>
-                  
+
                 </div>
 
                 <!-- Jumlah & Hapus -->
@@ -106,7 +106,7 @@
                     <input type="number" class="form-control form-control-sm text-center item-qty" value="{{ $details['quantity'] }}" min="1" data-id="{{ $id }}" readonly>
                     <button type="button" class="btn btn-outline-secondary btn-sm btn-plus" data-id="{{ $id }}">+</button>
                   </div>
-                  
+
 
                   <!-- Trigger button -->
                   <button type="button" class="btn btn-link text-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ $id }}">

@@ -31,7 +31,7 @@
         form.addEventListener('submit', function(e) {
           e.preventDefault();
           console.log('Form submitted to:', this.action);
-          
+
           // Show loading state
           const submitButton = this.querySelector('button[type="submit"]');
           const originalText = submitButton.innerHTML;
@@ -78,7 +78,7 @@
             console.error('Error:', error);
             submitButton.disabled = false;
             submitButton.innerHTML = originalText;
-            
+
             // Show error message
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
