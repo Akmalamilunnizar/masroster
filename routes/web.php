@@ -150,7 +150,6 @@ Route::controller(ItemsController::class)->group(function () {
     // New route for updating stock
     Route::post('/admin/update-stock-item', 'UpdateStockItem')->name('update-stock-item'); /* */
     Route::post('/barang/tambah-qty', [ItemsController::class, 'tambahQty'])->name('barang.tambahQty');
-
 });
 
 Route::post('/predict', [ForecastController::class, 'predict']);
@@ -173,6 +172,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::put('/admin/transaksi/{id}', 'update')->name('transaksi.update');
         Route::delete('/admin/transaksi/{id}', 'destroy')->name('transaksi.destroy');
 
+        // Batch delete route
+        Route::delete('/admin/all-transaksi/batch-delete', 'batchDelete')->name('batch.delete.transaksi');
+        Route::get('/admin/all-transaksi/exportexcel', 'exportExcel')->name('alltransaksi.exportexcel');
         // Export routes for forecasting
         Route::get('/export-lstm', 'exportLstm')->name('export.lstm');
         Route::get('/export-prophet', 'exportProphet')->name('export.prophet');
@@ -213,18 +215,23 @@ Route::middleware(['auth'])->group(function () {
 
 Route::controller(TokoController::class)->group(function () {
     Route::get('/tokodashboard', function () {
-        return view('toko.dashboardToko'); })->name('tokodashboard');
+        return view('toko.dashboardToko');
+    })->name('tokodashboard');
     Route::get('/tokodashboard', [TokoController::class, 'tokodashboard'])->name('tokodashboard');
 
 
     Route::get('/shop', function () {
-        return view('toko.dashboardToko'); })->name('shop');
+        return view('toko.dashboardToko');
+    })->name('shop');
     Route::get('/keranjang', function () {
-        return view('toko.dashboardToko'); })->name('keranjang');
+        return view('toko.dashboardToko');
+    })->name('keranjang');
     Route::get('/faq', function () {
-        return view('toko.dashboardToko'); })->name('faq');
+        return view('toko.dashboardToko');
+    })->name('faq');
     Route::get('/lacak', function () {
-        return view('toko.dashboardToko'); })->name('lacak');
+        return view('toko.dashboardToko');
+    })->name('lacak');
     Route::get('/kontak', function () {
         return redirect('/#contact-us');
     })->name('kontak');
@@ -268,7 +275,6 @@ Route::controller(SupplierController::class)->group(function () {
     Route::delete('/admin/daftar-supplier/{id}', 'deleteSupplier')->name('deletesupplier');
     Route::get('/admin/search-supplier', 'searchSupplier')->name('searchsupplier');
     Route::get('/api/suppliers', 'get_supplier_list')->name('getsuppliers');
-
 });
 
 Route::controller(CustomerController::class)->group(function () {
@@ -321,8 +327,6 @@ Route::controller(AdminProfileController::class)->group(function () {
     Route::post('/admin/store-profile', 'StoreProfile')->name('storeprofile');
     Route::get('/admin/pending-order/search', 'SearchPending')->name('searchorder');
     Route::get('/admin/history-order', 'IndexHistory')->name('historyorder');
-
-
 });
 
 
@@ -430,8 +434,8 @@ Route::get('/userprofile', [DashboardController::class, 'Index'])->name('userpro
 Route::middleware('auth')->group(function () {
     Route::get('resources/admin/logout', [DashboardController::class, 'AdminLogout'])->name('adminlogout');
     // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-// Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-// Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // TAMBAHKAN BARIS INI UNTUK RUTE UPDATE PASSWORD
     // Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
@@ -497,4 +501,3 @@ Route::post('/set-selected-address', [AddressController::class, 'setSelectedAddr
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-

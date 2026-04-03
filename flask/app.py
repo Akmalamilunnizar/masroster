@@ -145,6 +145,60 @@ def prepare_series(tanggal, values, freq='W'):
     return df
 
 
+def extract_json_payload(endpoint_name):
+    raw_body = request.get_data(cache=True, as_text=True)
+    payload = request.get_json(silent=True)
+
+    if not isinstance(payload, dict):
+        app.logger.warning(
+            f'{endpoint_name} invalid JSON payload. content_type={request.content_type}, '
+            f'raw_body={raw_body!r}'
+        )
+        return None, raw_body
+
+    return payload, raw_body
+
+
+def log_validation_failure(endpoint_name, reason, payload=None, raw_body=''):
+    summary = {}
+
+    if isinstance(payload, dict):
+        bulan = payload.get('bulan', [])
+        terjual = payload.get('terjual', [])
+        summary = {
+            'keys': sorted(list(payload.keys())),
+            'bulan_count': len(bulan) if isinstance(bulan, list) else 'n/a',
+            'terjual_count': len(terjual) if isinstance(terjual, list) else 'n/a',
+            'model_name': payload.get('model_name'),
+            'data_type': payload.get('data_type'),
+        }
+
+    app.logger.warning(
+        f'{endpoint_name} validation failed: {reason}. summary={summary}. raw_body={raw_body!r}'
+    )
+
+
+def compute_wmape(y_true, y_pred):
+    """Compute WMAPE safely. Returns None when denominator is zero."""
+    y_true_arr = np.asarray(y_true, dtype=float)
+    y_pred_arr = np.asarray(y_pred, dtype=float)
+
+    denominator = float(np.sum(np.abs(y_true_arr)))
+    if denominator == 0.0:
+        return None
+
+    numerator = float(np.sum(np.abs(y_true_arr - y_pred_arr)))
+    return (numerator / denominator) * 100.0
+
+
+def build_metrics_payload(mae, rmse, wmape):
+    return {
+        'mae': round(float(mae), 2),
+        'rmse': round(float(rmse), 2),
+        'wmape': None if wmape is None else round(float(wmape), 2),
+    }
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # HEALTH CHECK
 # ═══════════════════════════════════════════════════════════════════════
@@ -207,11 +261,15 @@ def create_sequences(data, seq_length):
 @app.route('/train/lstm', methods=['POST'])
 def train_lstm():
     try:
-        data = request.get_json()
+        data, raw_body = extract_json_payload('train_lstm')
+        if data is None:
+            return jsonify({'error': 'Request body harus JSON valid.'}), 400
+
         bulan = data['bulan']
         terjual = data['terjual']
 
         if len(bulan) < MIN_DATA_POINTS:
+            log_validation_failure('train_lstm', 'Insufficient bulan points', data, raw_body)
             return jsonify({
                 'error': f'Minimal {MIN_DATA_POINTS} bulan data diperlukan. '
                          f'Saat ini hanya {len(bulan)} bulan.'
@@ -265,13 +323,17 @@ def train_lstm():
         joblib.dump(scaler, LSTM_SCALER_PATH)
         joblib.dump({'seq_length': seq_length}, LSTM_META_PATH)
 
+        wmape = compute_wmape([actual_value], [max(pred_value, 0)])
+
         return jsonify({
-            'message': 'LSTM model trained and saved successfully',
-            'epochs_run': len(history.history['loss']),
-            'final_loss': round(float(history.history['loss'][-1]), 6),
-            'mae': round(mae, 2),
-            'rmse': round(rmse, 2),
-            'model_path': LSTM_MODEL_PATH
+            'status': 'success',
+            'metrics': build_metrics_payload(mae, rmse, wmape),
+            'meta': {
+                'message': 'LSTM model trained and saved successfully',
+                'epochs_run': len(history.history['loss']),
+                'final_loss': round(float(history.history['loss'][-1]), 6),
+                'model_path': LSTM_MODEL_PATH,
+            }
         })
 
     except Exception as e:
@@ -286,11 +348,15 @@ def train_lstm():
 @app.route('/train/prophet', methods=['POST'])
 def train_prophet():
     try:
-        data = request.get_json()
+        data, raw_body = extract_json_payload('train_prophet')
+        if data is None:
+            return jsonify({'error': 'Request body harus JSON valid.'}), 400
+
         bulan = data['bulan']
         terjual = data['terjual']
 
         if len(bulan) < MIN_DATA_POINTS:
+            log_validation_failure('train_prophet', 'Insufficient bulan points', data, raw_body)
             return jsonify({
                 'error': f'Minimal {MIN_DATA_POINTS} bulan data diperlukan. '
                          f'Saat ini hanya {len(bulan)} bulan.'
@@ -337,12 +403,16 @@ def train_prophet():
         with open(PROPHET_MODEL_PATH, 'w') as f:
             f.write(model_to_json(full_model))
 
+        wmape = compute_wmape([test_actual], [test_pred])
+
         return jsonify({
-            'message': 'Prophet model trained and saved successfully',
-            'mae': round(mae, 2),
-            'rmse': round(rmse, 2),
-            'data_points': len(df),
-            'model_path': PROPHET_MODEL_PATH
+            'status': 'success',
+            'metrics': build_metrics_payload(mae, rmse, wmape),
+            'meta': {
+                'message': 'Prophet model trained and saved successfully',
+                'data_points': len(df),
+                'model_path': PROPHET_MODEL_PATH,
+            }
         })
 
     except Exception as e:
@@ -357,27 +427,39 @@ def train_prophet():
 @app.route('/predictlstm', methods=['POST'])
 def predict_lstm():
     try:
-        data = request.get_json()
+        data, raw_body = extract_json_payload('predict_lstm')
+        if data is None:
+            return jsonify({'error': 'Request body harus JSON valid.'}), 400
+
         bulan = data.get('bulan', [])
         terjual = data.get('terjual', [])
         model_name = data.get('model_name')
         data_type = data.get('data_type', 'Eceran')
 
         if len(bulan) < 3 or len(terjual) < 3:
+            log_validation_failure('predict_lstm', 'Not enough data points before resample', data, raw_body)
             return jsonify({
                 'error': 'Minimal 3 bulan data terbaru diperlukan untuk prediksi.'
             }), 400
 
         if len(bulan) != len(terjual):
+            log_validation_failure('predict_lstm', 'bulan and terjual length mismatch', data, raw_body)
             return jsonify({'error': 'Panjang array bulan dan terjual harus sama.'}), 400
 
-        entry = get_model_entry('LSTM', model_name=model_name, data_type=data_type)
+        try:
+            entry = get_model_entry('LSTM', model_name=model_name, data_type=data_type)
+        except ValueError as ve:
+            log_validation_failure('predict_lstm', str(ve), data, raw_body)
+            return jsonify({'error': str(ve)}), 400
+
         model_path = entry.get('artifact_resolved', '')
         scaler_path = entry.get('scaler_resolved', '')
 
         if not os.path.exists(model_path):
+            log_validation_failure('predict_lstm', f'Artifact model not found: {model_path}', data, raw_body)
             return jsonify({'error': f'Artifact model tidak ditemukan: {model_path}'}), 400
         if not scaler_path or not os.path.exists(scaler_path):
+            log_validation_failure('predict_lstm', f'Scaler not found: {scaler_path}', data, raw_body)
             return jsonify({'error': f'Scaler tidak ditemukan: {scaler_path}'}), 400
 
         # Load model, scaler, and metadata
@@ -403,6 +485,7 @@ def predict_lstm():
         values = df_series['y'].values.reshape(-1, 1)
 
         if len(values) <= seq_length:
+            log_validation_failure('predict_lstm', f'Resampled series too short: {len(values)} <= {seq_length}', data, raw_body)
             return jsonify({
                 'error': f'Data setelah resample kurang. Butuh > {seq_length} titik untuk model ini.'
             }), 400
@@ -421,6 +504,7 @@ def predict_lstm():
         actual = float(values[-1][0])
         mae = float(abs(actual - eval_pred))
         rmse = float(np.sqrt((actual - eval_pred) ** 2))
+        wmape = compute_wmape([actual], [eval_pred])
 
         # ── Forecast next 1 period ──
         forecast_input = scaled[-seq_length:].reshape(1, seq_length, 1)
@@ -428,12 +512,14 @@ def predict_lstm():
         forecast_value = np.maximum(inverse_output(forecast_scaled), 0)
 
         result = {
+            'status': 'success',
             'forecast': [round(float(v), 2) for v in forecast_value],
-            'mae': round(mae, 2),
-            'rmse': round(rmse, 2),
-            'model': 'LSTM',
-            'model_name': entry.get('model_name'),
-            'data_type': entry.get('data_type')
+            'metrics': build_metrics_payload(mae, rmse, wmape),
+            'model': {
+                'framework': 'LSTM',
+                'model_name': entry.get('model_name'),
+                'data_type': entry.get('data_type')
+            }
         }
         return jsonify(result)
 
@@ -449,21 +535,32 @@ def predict_lstm():
 @app.route('/predictprophet', methods=['POST'])
 def predict_prophet():
     try:
-        data = request.get_json()
+        data, raw_body = extract_json_payload('predict_prophet')
+        if data is None:
+            return jsonify({'error': 'Request body harus JSON valid.'}), 400
+
         bulan = data.get('bulan', [])
         terjual = data.get('terjual', [])
         model_name = data.get('model_name')
         data_type = data.get('data_type', 'Eceran')
 
         if len(bulan) < 3 or len(terjual) < 3:
+            log_validation_failure('predict_prophet', 'Not enough data points before resample', data, raw_body)
             return jsonify({'error': 'Minimal 3 data diperlukan untuk prediksi Prophet.'}), 400
 
         if len(bulan) != len(terjual):
+            log_validation_failure('predict_prophet', 'bulan and terjual length mismatch', data, raw_body)
             return jsonify({'error': 'Panjang array bulan dan terjual harus sama.'}), 400
 
-        entry = get_model_entry('Prophet', model_name=model_name, data_type=data_type)
+        try:
+            entry = get_model_entry('Prophet', model_name=model_name, data_type=data_type)
+        except ValueError as ve:
+            log_validation_failure('predict_prophet', str(ve), data, raw_body)
+            return jsonify({'error': str(ve)}), 400
+
         model_path = entry.get('artifact_resolved', '')
         if not os.path.exists(model_path):
+            log_validation_failure('predict_prophet', f'Artifact model not found: {model_path}', data, raw_body)
             return jsonify({'error': f'Artifact model tidak ditemukan: {model_path}'}), 400
 
         from prophet import Prophet
@@ -483,6 +580,7 @@ def predict_prophet():
 
         mae = float(abs(actual - eval_pred))
         rmse = float(np.sqrt((actual - eval_pred) ** 2))
+        wmape = compute_wmape([actual], [eval_pred])
 
         # ── Forecast next 1 period ──
         future = model.make_future_dataframe(periods=1, freq='W')
@@ -490,12 +588,14 @@ def predict_prophet():
         forecast_value = max(forecast.iloc[-1]['yhat'], 0)
 
         result = {
+            'status': 'success',
             'forecast': [round(float(forecast_value), 2)],
-            'mae': round(mae, 2),
-            'rmse': round(rmse, 2),
-            'model': 'PROPHET',
-            'model_name': entry.get('model_name'),
-            'data_type': entry.get('data_type')
+            'metrics': build_metrics_payload(mae, rmse, wmape),
+            'model': {
+                'framework': 'PROPHET',
+                'model_name': entry.get('model_name'),
+                'data_type': entry.get('data_type')
+            }
         }
         return jsonify(result)
 

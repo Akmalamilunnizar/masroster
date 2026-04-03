@@ -125,6 +125,7 @@ class ForecastController extends Controller
 
             $response = Http::timeout(30)
                 ->connectTimeout(30)
+                ->asJson()
                 ->post('http://127.0.0.1:5000' . $endpoint, $payload);
 
             if (!$response->successful()) {
@@ -149,12 +150,16 @@ class ForecastController extends Controller
                 throw new \Exception('Invalid response from forecasting service');
             }
 
+            $metrics = is_array($result['metrics'] ?? null) ? $result['metrics'] : [];
+            $modelMeta = is_array($result['model'] ?? null) ? $result['model'] : [];
+
             // Add presentation fields expected by result blade.
-            $result['model'] = strtoupper($model);
-            $result['data_type'] = $result['data_type'] ?? $dataType;
-            $result['model_name'] = $result['model_name'] ?? $modelName;
-            $result['mae'] = $result['mae'] ?? 0;
-            $result['rmse'] = $result['rmse'] ?? 0;
+            $result['model'] = strtoupper((string) ($modelMeta['framework'] ?? $model));
+            $result['data_type'] = $modelMeta['data_type'] ?? $dataType;
+            $result['model_name'] = $modelMeta['model_name'] ?? $modelName;
+            $result['mae'] = $metrics['mae'] ?? 0;
+            $result['rmse'] = $metrics['rmse'] ?? 0;
+            $result['wmape'] = $metrics['wmape'] ?? null;
 
             return view('admin.forecast.result', ['result' => (object) $result]);
 
@@ -309,14 +314,64 @@ class ForecastController extends Controller
 
             $exitCode = Artisan::call('app:forecast-all', $params);
             $output = Artisan::output();
+            $summary = $this->extractBatchSummary($output);
+            $metrics = is_array($summary['metrics'] ?? null) ? $summary['metrics'] : [
+                'mae' => null,
+                'wmape' => null,
+            ];
 
             $duration = round(microtime(true) - $startTime, 2);
+
+            if ($exitCode === 0 && is_array($summary)) {
+                $failed = (int) ($summary['failed'] ?? 0);
+                $successful = (int) ($summary['success'] ?? 0);
+
+                if ($failed > 0 && $successful > 0) {
+                    return response()->json([
+                        'status' => 'partial_success',
+                        'message' => $this->formatSuccessMessage(
+                            'Batch forecast selesai sebagian. Beberapa produk gagal diprediksi.',
+                            $metrics
+                        ),
+                        'duration' => $duration . 's',
+                        'summary' => $summary,
+                        'metrics' => $metrics,
+                        'output' => $output
+                    ]);
+                }
+
+                if ($failed === 0 && $successful > 0) {
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => $this->formatSuccessMessage(
+                            'Batch forecast berhasil dijalankan.',
+                            $metrics
+                        ),
+                        'duration' => $duration . 's',
+                        'summary' => $summary,
+                        'metrics' => $metrics,
+                        'output' => $output
+                    ]);
+                }
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Batch forecast gagal diproses.',
+                    'duration' => $duration . 's',
+                    'summary' => $summary,
+                    'output' => $output
+                ], 500);
+            }
 
             if ($exitCode === 0) {
                 return response()->json([
                     'status' => 'success',
-                    'message' => "Batch forecast berhasil dijalankan dengan model " . strtoupper($model) . ".",
+                    'message' => $this->formatSuccessMessage(
+                        "Batch forecast berhasil dijalankan dengan model " . strtoupper($model) . ".",
+                        $metrics
+                    ),
                     'duration' => $duration . 's',
+                    'metrics' => $metrics,
                     'output' => $output
                 ]);
             } else {
@@ -374,5 +429,30 @@ class ForecastController extends Controller
         return DB::connection()->getDriverName() === 'sqlite'
             ? "strftime('%Y-%m', transaksi.tglTransaksi)"
             : "DATE_FORMAT(transaksi.tglTransaksi, '%Y-%m')";
+    }
+
+    private function extractBatchSummary(string $output): ?array
+    {
+        if (!preg_match('/SUMMARY:\s*(\{.*\})/s', $output, $matches)) {
+            return null;
+        }
+
+        $summary = json_decode($matches[1], true);
+        return is_array($summary) ? $summary : null;
+    }
+
+    private function formatSuccessMessage(string $message, array $metrics): string
+    {
+        $parts = [$message];
+
+        if (isset($metrics['mae']) && $metrics['mae'] !== null) {
+            $parts[] = 'MAE: ' . rtrim(rtrim(number_format((float) $metrics['mae'], 4, '.', ''), '0'), '.');
+        }
+
+        if (isset($metrics['wmape']) && $metrics['wmape'] !== null) {
+            $parts[] = 'WMAPE: ' . rtrim(rtrim(number_format((float) $metrics['wmape'], 4, '.', ''), '0'), '.');
+        }
+
+        return implode(' | ', $parts);
     }
 }

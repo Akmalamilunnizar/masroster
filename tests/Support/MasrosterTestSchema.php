@@ -136,6 +136,8 @@ trait MasrosterTestSchema
                 $table->timestamp('created_at')->nullable();
                 $table->timestamp('updated_at')->nullable();
                 $table->float('forecasted_demand')->nullable();
+                $table->float('mae_score')->nullable();
+                $table->float('wmape_score')->nullable();
                 $table->string('forecast_model', 20)->nullable();
                 $table->integer('safety_stock')->default(70);
                 $table->string('forecast_status')->default('safe');
@@ -400,6 +402,8 @@ trait MasrosterTestSchema
             'Img' => 'produk/test.png',
             'deskripsi' => 'Produk uji otomatis',
             'forecasted_demand' => null,
+            'mae_score' => null,
+            'wmape_score' => null,
             'forecast_model' => null,
             'safety_stock' => 70,
             'forecast_status' => 'safe',

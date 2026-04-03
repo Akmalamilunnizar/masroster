@@ -55,7 +55,11 @@ class ForecastAllProducts extends Command
                 $this->warn('⚠️  Training failed. Falling back to SMA.');
                 $model = 'sma';
             } else {
-                $this->info("✅ Model trained! MAE: {$trainResult['mae']}, RMSE: {$trainResult['rmse']}");
+                $this->info(
+                    '✅ Model trained! MAE: ' . $this->formatMetric($trainResult['mae'] ?? null)
+                    . ', RMSE: ' . $this->formatMetric($trainResult['rmse'] ?? null)
+                    . ', WMAPE: ' . $this->formatMetric($trainResult['wmape'] ?? null)
+                );
             }
             $this->newLine();
         } elseif ($skipTrain && $model !== 'sma') {
@@ -90,8 +94,24 @@ class ForecastAllProducts extends Command
         $successCount = 0;
         $failCount = 0;
         $skippedCount = 0;
+        $failedProducts = [];
+        $successMaeTotal = 0.0;
+        $successMaeCount = 0;
+        $successWmapeTotal = 0.0;
+        $successWmapeCount = 0;
 
-        $query->chunk(self::CHUNK_SIZE, function ($products) use ($model, &$successCount, &$failCount, &$skippedCount, $progressBar) {
+        $query->chunk(self::CHUNK_SIZE, function ($products) use (
+            $model,
+            &$successCount,
+            &$failCount,
+            &$skippedCount,
+            &$failedProducts,
+            &$successMaeTotal,
+            &$successMaeCount,
+            &$successWmapeTotal,
+            &$successWmapeCount,
+            $progressBar
+        ) {
             foreach ($products as $product) {
                 try {
                     $salesData = $this->getSalesHistory($product->IdRoster);
@@ -111,20 +131,31 @@ class ForecastAllProducts extends Command
                     if ($model === 'sma') {
                         $forecast = $this->calculateSMA($salesData);
                         $forecastModel = 'sma';
+                        $maeScore = null;
+                        $wmapeScore = null;
                     } else {
-                        $forecast = $this->callFlaskPredict($model, $salesData, $product->IdRoster);
+                        $predictionResult = $this->callFlaskPredict($model, $salesData, $product->IdRoster);
                         $forecastModel = $model;
 
-                        if ($forecast === null) {
-                            $forecast = $this->calculateSMA($salesData);
-                            $forecastModel = 'sma';
+                        if ($predictionResult === null) {
+                            $failCount++;
+                            $failedProducts[] = $product->IdRoster;
+                            $progressBar->advance();
+                            continue;
+                        }
 
-                            Log::warning('Using SMA fallback after Flask prediction failure', [
-                                'id_roster' => $product->IdRoster,
-                                'framework' => $model,
-                                'fallback_model' => 'sma',
-                                'reason' => 'Flask predict failed or invalid response',
-                            ]);
+                        $forecast = $predictionResult['forecast'];
+                        $maeScore = $predictionResult['mae'];
+                        $wmapeScore = $predictionResult['wmape'];
+
+                        if ($maeScore !== null) {
+                            $successMaeTotal += (float) $maeScore;
+                            $successMaeCount++;
+                        }
+
+                        if ($wmapeScore !== null) {
+                            $successWmapeTotal += (float) $wmapeScore;
+                            $successWmapeCount++;
                         }
                     }
 
@@ -138,7 +169,9 @@ class ForecastAllProducts extends Command
                         'forecasted_demand' => round($forecast, 2),
                         'forecast_model' => $forecastModel,
                         'forecast_status' => $status,
-                        'last_forecast_at' => now()
+                        'last_forecast_at' => now(),
+                        'mae_score' => $maeScore,
+                        'wmape_score' => $wmapeScore,
                     ]);
 
                     $successCount++;
@@ -147,6 +180,7 @@ class ForecastAllProducts extends Command
                         'error' => $e->getMessage()
                     ]);
                     $failCount++;
+                    $failedProducts[] = $product->IdRoster;
                 }
 
                 $progressBar->advance();
@@ -168,6 +202,19 @@ class ForecastAllProducts extends Command
                 ['Model Used', strtoupper($model)]
             ]
         );
+
+        $this->line('SUMMARY: ' . json_encode([
+            'success' => $successCount,
+            'failed' => $failCount,
+            'skipped' => $skippedCount,
+            'total' => $totalProducts,
+            'failed_products' => $failedProducts,
+            'model' => strtoupper($model),
+            'metrics' => [
+                'mae' => $successMaeCount > 0 ? round($successMaeTotal / $successMaeCount, 4) : null,
+                'wmape' => $successWmapeCount > 0 ? round($successWmapeTotal / $successWmapeCount, 4) : null,
+            ],
+        ], JSON_UNESCAPED_UNICODE));
 
         $this->showStatusBreakdown();
         return Command::SUCCESS;
@@ -218,14 +265,32 @@ class ForecastAllProducts extends Command
 
             $endpoint = $model === 'lstm' ? '/train/lstm' : '/train/prophet';
 
+            $payload = [
+                'bulan' => $salesData->pluck('bulan')->toArray(),
+                'terjual' => $salesData->pluck('terjual')->toArray()
+            ];
+
+            Log::debug('Batch training payload', [
+                'model' => $model,
+                'payload' => [
+                    'bulan_count' => count($payload['bulan']),
+                    'terjual_count' => count($payload['terjual']),
+                ],
+            ]);
+
             $response = Http::timeout(self::TIMEOUT_SECONDS)
-                ->post(self::FLASK_BASE_URL . $endpoint, [
-                    'bulan' => $salesData->pluck('bulan')->toArray(),
-                    'terjual' => $salesData->pluck('terjual')->toArray()
-                ]);
+                ->asJson()
+                ->post(self::FLASK_BASE_URL . $endpoint, $payload);
 
             if ($response->successful()) {
-                return $response->json();
+                $payload = $response->json();
+                $metrics = is_array($payload['metrics'] ?? null) ? $payload['metrics'] : [];
+
+                return [
+                    'mae' => isset($metrics['mae']) ? (float) $metrics['mae'] : null,
+                    'rmse' => isset($metrics['rmse']) ? (float) $metrics['rmse'] : null,
+                    'wmape' => isset($metrics['wmape']) ? (float) $metrics['wmape'] : null,
+                ];
             }
 
             $this->warn("   ⚠️  Training returned error: " . ($response->json()['error'] ?? 'Unknown'));
@@ -302,32 +367,72 @@ class ForecastAllProducts extends Command
     /**
      * Call Flask predict endpoint (uses pre-trained model)
      */
-    private function callFlaskPredict(string $model, array $salesData, string $idRoster): ?float
+    private function callFlaskPredict(string $model, array $salesData, string $idRoster): ?array
     {
         try {
             $endpoint = $model === 'lstm' ? '/predictlstm' : '/predictprophet';
             $dataType = $this->resolveDataTypeByProduct($idRoster);
             $modelName = $this->mapModelName($model, $dataType);
 
+            $payload = [
+                'bulan' => $salesData['bulan']->toArray(),
+                'terjual' => $salesData['terjual']->toArray(),
+                'data_type' => $dataType,
+                'model_name' => $modelName,
+            ];
+
+            Log::debug('Batch forecast payload', [
+                'id_roster' => $idRoster,
+                'endpoint' => $endpoint,
+                'payload' => [
+                    'bulan_count' => count($payload['bulan']),
+                    'terjual_count' => count($payload['terjual']),
+                    'data_type' => $payload['data_type'],
+                    'model_name' => $payload['model_name'],
+                ],
+            ]);
+
             $response = Http::timeout(self::TIMEOUT_SECONDS)
-                ->post(self::FLASK_BASE_URL . $endpoint, [
-                    'bulan' => $salesData['bulan']->toArray(),
-                    'terjual' => $salesData['terjual']->toArray(),
-                    'data_type' => $dataType,
-                    'model_name' => $modelName,
-                ]);
+                ->asJson()
+                ->post(self::FLASK_BASE_URL . $endpoint, $payload);
 
             if ($response->successful()) {
                 $result = $response->json();
+
+                if (!is_array($result)) {
+                    Log::warning('Flask predict returned non-array payload', [
+                        'id_roster' => $idRoster,
+                        'framework' => $model,
+                    ]);
+                    return null;
+                }
+
+                $forecastValue = $result['forecast'][0] ?? null;
+                $metrics = is_array($result['metrics'] ?? null) ? $result['metrics'] : [];
+
+                if ($forecastValue === null) {
+                    Log::warning('Flask predict payload missing forecast value', [
+                        'id_roster' => $idRoster,
+                        'framework' => $model,
+                        'payload' => $result,
+                    ]);
+                    return null;
+                }
 
                 Log::info('Batch forecast model selection', [
                     'id_roster' => $idRoster,
                     'framework' => $model,
                     'data_type' => $dataType,
-                    'model_name' => $result['model_name'] ?? $modelName,
+                    'model_name' => $result['model']['model_name'] ?? $modelName,
                 ]);
 
-                return $result['forecast'][0] ?? null;
+                return [
+                    'forecast' => (float) $forecastValue,
+                    'mae' => isset($metrics['mae']) ? (float) $metrics['mae'] : null,
+                    'wmape' => array_key_exists('wmape', $metrics) && $metrics['wmape'] !== null
+                        ? (float) $metrics['wmape']
+                        : null,
+                ];
             }
 
             Log::warning('Flask predict returned non-success status', [
@@ -391,6 +496,15 @@ class ForecastAllProducts extends Command
         ];
 
         return $map[$framework][$normalizedType] ?? ($framework . '_' . $normalizedType);
+    }
+
+    private function formatMetric(?float $value): string
+    {
+        if ($value === null) {
+            return 'N/A';
+        }
+
+        return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
     }
 
     /**

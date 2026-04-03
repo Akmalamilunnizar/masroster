@@ -35,6 +35,8 @@ class Produk extends Model
         'NamaProduk',
         // Forecast columns
         'forecasted_demand',
+        'mae_score',
+        'wmape_score',
         'forecast_model',
         'safety_stock',
         'forecast_status',

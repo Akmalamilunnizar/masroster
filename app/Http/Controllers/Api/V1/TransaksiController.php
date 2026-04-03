@@ -54,9 +54,9 @@ class TransaksiController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('IdTransaksi', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function ($qCustomer) use ($search) {
-                      $qCustomer->where('f_name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('customer', function ($qCustomer) use ($search) {
+                        $qCustomer->where('f_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -139,6 +139,63 @@ class TransaksiController extends Controller
 
         return $pdf->stream('laporan-transaksi.pdf');
     }
+    public function exportExcel(Request $request)
+    {
+        $bulan = $request->query('bulan');
+        $tahun = $request->query('tahun');
+        $search = $request->query('search');
+        $statusPesanan = $request->query('status_pesanan');
+
+        $biayaOperasional = (int) preg_replace('/\D/', '', (string) $request->query('biaya_operasional', 0));
+        $retur = (int) preg_replace('/\D/', '', (string) $request->query('retur', 0));
+
+        $query = Transaksi::with(['detail', 'customer']);
+
+        if ($bulan) {
+            $query->whereMonth('tglTransaksi', $bulan);
+        }
+
+        if ($tahun) {
+            $query->whereYear('tglTransaksi', $tahun);
+        }
+
+        if ($statusPesanan) {
+            $query->where('StatusPesanan', $statusPesanan);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('IdTransaksi', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($qCustomer) use ($search) {
+                        $qCustomer->where('f_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $transaksis = $query->orderBy('tglTransaksi', 'asc')->get();
+
+        $totalPendapatan = (int) $transaksis->sum('GrandTotal');
+        $labaBersih = $totalPendapatan - $biayaOperasional - $retur;
+
+        $filename = 'laporan-transaksi-' . now()->format('Ymd_His') . '.xls';
+
+        $headers = [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $html = view('admin.transaksi_excel', compact(
+            'transaksis',
+            'bulan',
+            'tahun',
+            'biayaOperasional',
+            'retur',
+            'totalPendapatan',
+            'labaBersih'
+        ))->render();
+
+        return response($html, 200, $headers);
+    }
 
     /**
      * Export LSTM dataset as CSV
@@ -155,7 +212,7 @@ class TransaksiController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($transactions) {
+        $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
 
             // Add headers
@@ -195,7 +252,7 @@ class TransaksiController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($transactions) {
+        $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
 
             // Add headers
