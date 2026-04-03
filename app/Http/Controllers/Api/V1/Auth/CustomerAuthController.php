@@ -32,7 +32,7 @@ class CustomerAuthController extends Controller
 
         if (auth()->attempt($data)) {
             //auth()->user() is coming from laravel auth:api middleware
-            $token = auth()->user()->createToken('PercetakanCustomerAuth')->accessToken;
+            $token = auth()->user()->createToken('RosterCustomerAuth')->accessToken;
             if (!auth()->user()->status) {
                 $errors = [];
                 array_push($errors, ['code' => 'auth-003', 'message' => trans('messages.your_account_is_blocked')]);

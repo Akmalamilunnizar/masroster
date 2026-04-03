@@ -38,8 +38,8 @@ CIME | Halaman Forecasting
                         <div class="col-md-3">
                             <label for="model" class="form-label fw-semibold">Model Forecasting</label>
                             <select id="model" name="model" class="form-select" required>
-                                <option value="lstm">LSTM</option>
                                 <option value="prophet">Prophet</option>
+                                <option value="lstm">LSTM</option>
                             </select>
                             <div class="form-text mt-1 text-muted">Pilih algoritma yang digunakan untuk prediksi.</div>
                         </div>
@@ -53,6 +53,8 @@ CIME | Halaman Forecasting
 
                     <form method="POST" action="{{ route('predict') }}" id="forecastForm">
                         @csrf
+                        <input type="hidden" name="id_roster" id="form_id_roster" value="">
+                        <input type="hidden" name="model" id="form_model" value="prophet">
                         <div class="table-responsive border rounded mb-4">
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
@@ -143,6 +145,7 @@ function clearForm() {
     }
     rowCount = 12;
     document.getElementById('id_roster').value = '';
+    document.getElementById('form_id_roster').value = '';
 }
 
 function generateSampleData() {
@@ -175,6 +178,8 @@ function generateSampleData() {
 
 function loadFromDatabase(productId) {
     if (!productId) return;
+
+    document.getElementById('form_id_roster').value = productId;
 
     // Show loading indicator in table
     const tbody = document.getElementById('dataTableBody');
@@ -225,6 +230,24 @@ function loadFromDatabase(productId) {
         clearForm();
     });
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const modelSelect = document.getElementById('model');
+    const modelHidden = document.getElementById('form_model');
+    const productSelect = document.getElementById('id_roster');
+    const productHidden = document.getElementById('form_id_roster');
+
+    if (modelSelect && modelHidden) {
+        modelHidden.value = modelSelect.value;
+        modelSelect.addEventListener('change', function () {
+            modelHidden.value = this.value;
+        });
+    }
+
+    if (productSelect && productHidden) {
+        productHidden.value = productSelect.value || '';
+    }
+});
 </script>
 
 <style>

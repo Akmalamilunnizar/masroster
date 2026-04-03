@@ -82,14 +82,6 @@
                 <!-- Detail Produk -->
                 <div class="flex-grow-1">
                   <h5 class="mb-1" style="font-size: 20px; font-weight: bold;">{{ $details['nama'] }}</h5>
-                  @if(isset($details['design_file']))
-                  <div class="text-muted small mb-1" style="font-size: 16px;">
-                    File: <span class="text-danger">{{ basename($details['design_file']) }}</span>
-                    <a href="{{ asset('storage/' . $details['design_file']) }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                      <i class="bi bi-download"></i> Download
-                    </a>
-                  </div>
-                  @endif
                   @if(isset($details['print_option']))
                   <div class="text-muted small mb-1" style="font-size: 16px;">Cetak: {{ $details['print_option'] }}</div>
                   @endif

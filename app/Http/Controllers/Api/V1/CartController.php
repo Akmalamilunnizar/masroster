@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\Produk;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Address;
 
@@ -20,22 +18,19 @@ class CartController extends Controller
     public function add(Request $request)
     {
         try {
-            // Validate file if present
-            if ($request->hasFile('design_file')) {
-                $request->validate([
-                    'design_file' => 'file|mimes:jpg,jpeg,png,webp,pdf,rar,zip|max:10240', // 10240 KB = 10 MB
-                ], [
-                    'design_file.mimes' => 'File harus berupa jpg, jpeg, png, webp, pdf, rar, atau zip.',
-                    'design_file.max' => 'Ukuran file maksimal 10MB.',
-                ]);
-            }
-
             $cart = session()->get('cart', []);
 
             $productId = $request->id;
-            $ukuran = $request->ukuran ?? 'custom'; // ukuran id or custom string, default to 'custom'
-            $ukuran_label = $request->ukuran_label ?? 'Custom Ukuran'; // label for display (optional)
-            $custom_ukuran = $request->custom_ukuran ?? null; // custom ukuran (optional)
+            $ukuran = $request->ukuran;
+            $ukuran_label = $request->ukuran_label ?? 'Ukuran Standar';
+
+            if (!$productId || !$ukuran) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk dan ukuran wajib dipilih.',
+                ], 422);
+            }
+
             // Make a unique key for product+ukuran
             $cartKey = $productId . '|' . $ukuran;
 
@@ -57,15 +52,7 @@ class CartController extends Controller
                     "ukuran" => $ukuran,
                     "ukuran_label" => $ukuran_label,
                     "subtotal" => $subtotal,
-                    "custom_ukuran" => $custom_ukuran,
                 ];
-            }
-
-            // Handle file upload
-            if ($request->hasFile('design_file')) {
-                $file = $request->file('design_file');
-                $filePath = $file->store('designs', 'public');
-                $cart[$cartKey]['design_file'] = $filePath;
             }
 
             session()->put('cart', $cart);
@@ -111,10 +98,10 @@ class CartController extends Controller
     public function decrease(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer',
+            'id' => 'required|string',
         ]);
 
-        $id = (int) $request->input('id');
+        $id = $request->input('id');
 
         $cart = session()->get('cart', []);
 

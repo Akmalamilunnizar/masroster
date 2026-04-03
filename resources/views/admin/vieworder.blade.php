@@ -159,7 +159,6 @@ CIME | Detail Pesanan
                             <th>Jumlah</th>
                             <th>Harga</th>
                             <th>Subtotal</th>
-                            <th>File Desain</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -176,21 +175,10 @@ CIME | Detail Pesanan
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ $item->CustomUkuran ?? ($item->size ? $item->size->nama : '-') }}</td>
+                                <td>{{ $item->size ? $item->size->nama : '-' }}</td>
                                 <td>{{ $item->QtyProduk }}</td>
                                 <td>Rp {{ number_format($item->SubTotal / $item->QtyProduk, 0, ',', '.') }}</td>
                                 <td>Rp {{ number_format($item->SubTotal, 0, ',', '.') }}</td>
-                                <td>
-                                    @if($item->design_file)
-                                        <a href="{{ asset('storage/' . $item->design_file) }}"
-                                           class="btn btn-sm btn-primary"
-                                           target="_blank">
-                                            <i class='bx bx-download me-1'></i> Download
-                                        </a>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
                             </tr>
                         @endforeach
                     </tbody>

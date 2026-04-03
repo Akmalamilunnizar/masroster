@@ -30,8 +30,8 @@ CIME | Halaman Dashboard E-Commerce
                 var productNama = $(this).data('nama');
                 var productHarga = $(this).data('harga');
                 var productImg = $(this).data('img');
-                var productUkuran = $(this).data('ukuran') || 'custom';
-                var productUkuranLabel = $(this).data('ukuran-label') || 'Custom Ukuran';
+                var productUkuran = $(this).data('ukuran') || 1;
+                var productUkuranLabel = $(this).data('ukuran-label') || 'Ukuran Standar';
                 var quantity = 1;
                 var subtotal = productHarga * quantity;
 
@@ -407,7 +407,7 @@ CIME | Halaman Dashboard E-Commerce
                 <div class="hero-banner-content">
                     <div class="hero-banner-text">
                         <h1 class="hero-banner-title">E-commerce CIME</h1>
-                        <p class="hero-banner-subtitle">Percetakan Citra Media</p>
+                        <p class="hero-banner-subtitle">Pusat Produk Roster Citra Media</p>
                     </div>
                     <div class="hero-banner-decoration">
                         <!-- Decorative elements from background image -->
@@ -427,8 +427,8 @@ CIME | Halaman Dashboard E-Commerce
                     @foreach ($produkTerlaris as $item)
                         @php
                             $minHarga = null;
-                            $defaultUkuran = 'custom';
-                            $defaultUkuranLabel = 'Custom Ukuran';
+                            $defaultUkuran = 1;
+                            $defaultUkuranLabel = 'Ukuran Standar';
 
                             if ($item->sizes && count($item->sizes)) {
                                 $firstSize = $item->sizes->first();
@@ -439,7 +439,7 @@ CIME | Halaman Dashboard E-Commerce
                                 $defaultUkuranLabel = $firstSize->nama . ' (' . $firstSize->panjang . ' x ' . $firstSize->lebar . ' cm)';
                             }
                             if (!$minHarga) {
-                                $minHarga = $item->custom_harga;
+                                $minHarga = 0;
                             }
                         @endphp
                         <div class="col-6 col-md-4 col-lg-3">
@@ -452,7 +452,7 @@ CIME | Halaman Dashboard E-Commerce
                                 </div>
                                 <div class="product-card-body">
                                     <h5 class="product-title">{{ $item->NamaProduk }}</h5>
-                                    <p class="product-category">Digital Printing</p>
+                                    <p class="product-category">Produk Roster</p>
                                     <div class="product-price">
                                         Rp {{ number_format($minHarga, 0, ',', '.') }}
                                     </div>
@@ -490,8 +490,8 @@ CIME | Halaman Dashboard E-Commerce
                     @foreach ($produk as $item)
                         @php
                             $minHarga = null;
-                            $defaultUkuran = 'custom';
-                            $defaultUkuranLabel = 'Custom Ukuran';
+                            $defaultUkuran = 1;
+                            $defaultUkuranLabel = 'Ukuran Standar';
 
                             if ($item->sizes && count($item->sizes)) {
                                 $firstSize = $item->sizes->first();
@@ -502,7 +502,7 @@ CIME | Halaman Dashboard E-Commerce
                                 $defaultUkuranLabel = $firstSize->nama . ' (' . $firstSize->panjang . ' x ' . $firstSize->lebar . ' cm)';
                             }
                             if (!$minHarga) {
-                                $minHarga = $item->custom_harga;
+                                $minHarga = 0;
                             }
                         @endphp
                         <div class="col-6 col-md-4 col-lg-3">
@@ -515,7 +515,7 @@ CIME | Halaman Dashboard E-Commerce
                                 </div>
                                 <div class="product-card-body">
                                     <h5 class="product-title">{{ $item->NamaProduk }}</h5>
-                                    <p class="product-category">Digital Printing</p>
+                                    <p class="product-category">Produk Roster</p>
                                     <div class="product-price">
                                         Rp {{ number_format($minHarga, 0, ',', '.') }}
                                     </div>

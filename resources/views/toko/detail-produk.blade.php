@@ -394,7 +394,7 @@
                     <div class="current-price">
                         <span class="price-label">Harga Satuan:</span>
                         <span class="price-value" id="displayPrice">
-                            Rp {{ isset($produk->sizes[0]) ? number_format($produk->sizes[0]->pivot->harga, 0, ',', '.') : number_format($produk->custom_harga, 0, ',', '.') }}
+                            Rp {{ isset($produk->sizes[0]) ? number_format($produk->sizes[0]->pivot->harga, 0, ',', '.') : number_format(0, 0, ',', '.') }}
                         </span>
                     </div>
                 </div>
@@ -408,7 +408,6 @@
                                 {{ $size->nama }} ({{ $size->panjang }} x {{ $size->lebar }} cm) - Rp {{ number_format($size->pivot->harga, 0, ',', '.') }}
                             </option>
                         @endforeach
-                        <option value="custom" data-harga="{{ $produk->custom_harga }}">Custom Ukuran - Rp {{ number_format($produk->custom_harga, 0, ',', '.') }}</option>
                     </select>
                 </div>
 
@@ -424,7 +423,7 @@
                         @csrf
                         <input type="hidden" name="id" value="{{ $produk->IdRoster }}">
                         <input type="hidden" name="nama" value="{{ $produk->NamaProduk }}">
-                        <input type="hidden" name="harga" id="product_price" value="{{ isset($produk->sizes[0]) ? $produk->sizes[0]->pivot->harga : $produk->custom_harga }}">
+                        <input type="hidden" name="harga" id="product_price" value="{{ isset($produk->sizes[0]) ? $produk->sizes[0]->pivot->harga : 0 }}">
                         <input type="hidden" name="img" value="{{ $produk->Img }}">
 
                         <!-- Quantity Section -->
@@ -442,7 +441,7 @@
                             <div class="total-price-card">
                                 <div class="total-price-content">
                                     <span class="total-label">Total Harga:</span>
-                                    <span class="total-value" id="totalPrice">Rp {{ number_format(isset($produk->sizes[0]) ? $produk->sizes[0]->pivot->harga : $produk->custom_harga, 0, ',', '.') }}</span>
+                                    <span class="total-value" id="totalPrice">Rp {{ number_format(isset($produk->sizes[0]) ? $produk->sizes[0]->pivot->harga : 0, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>

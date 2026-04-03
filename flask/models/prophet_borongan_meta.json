@@ -1,0 +1,17 @@
+{
+  "model_key": "prophet_borongan",
+  "model_type": "prophet",
+  "data_type": "Borongan",
+  "params": {
+    "growth": "linear",
+    "seasonality_mode": "additive",
+    "yearly_seasonality": 2,
+    "weekly_seasonality": false,
+    "daily_seasonality": false,
+    "changepoint_prior_scale": 0.03,
+    "seasonality_prior_scale": 5.0,
+    "country_holidays": "ID"
+  },
+  "n_points": 155,
+  "frequency": "W"
+}

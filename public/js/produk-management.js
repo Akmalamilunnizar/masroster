@@ -18,6 +18,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const tipeSelect = document.getElementById("id_tipe");
     const motifSelect = document.getElementById("id_motif");
 
+    // [EXPERT TRICK] Simpan ingatan bawaan Laravel sebelum AJAX menghancurkannya
+    if (tipeSelect.value) tipeSelect.dataset.preselected = tipeSelect.value;
+    if (motifSelect.value) motifSelect.dataset.preselected = motifSelect.value;
+
     // ==========================================
     // 3. Fitur Dynamic Add/Remove Ukuran Harga
     // ==========================================
@@ -79,11 +83,13 @@ document.addEventListener("DOMContentLoaded", function () {
     // ==========================================
     // 5. Logika Cascading Dropdown (Jenis -> Tipe -> Motif)
     // ==========================================
+    // ==========================================
+    // 5. Logika Cascading Dropdown (Jenis -> Tipe -> Motif)
+    // ==========================================
     if (jenisSelect) {
         jenisSelect.addEventListener("change", function () {
             const jenisId = this.value;
             setOptions(tipeSelect, [], "IdTipe", "namaTipe", "Pilih Tipe");
-            setOptions(motifSelect, [], "IdMotif", "nama_motif", "Pilih Motif");
 
             if (!jenisId) return;
 
@@ -111,6 +117,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         "namaTipe",
                         data.length ? "Pilih Tipe" : "Tidak ada tipe",
                     );
+
+                    // [EXPERT TRICK] 1. Pulihkan ingatan Tipe setelah AJAX selesai
+                    if (tipeSelect.dataset.preselected) {
+                        tipeSelect.value = tipeSelect.dataset.preselected;
+                        tipeSelect.dataset.preselected = ""; // Hapus ingatannya
+
+                        // Lanjutkan trigger untuk me-load Motif!
+                        tipeSelect.dispatchEvent(new Event("change"));
+                    }
                 })
                 .catch((error) => {
                     let errorMessage = "Gagal memuat tipe";
@@ -128,8 +143,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
         });
 
-        // Trigger otomatis saat load (jika saat validasi gagal, old value tetap memanggil API)
+        // Trigger otomatis saat load
         if (jenisSelect.value) {
+            // [EXPERT TRICK] 0. Simpan ingatan Tipe & Motif bawaan Laravel SEBELUM dihancurkan oleh AJAX
+            if (tipeSelect.value)
+                tipeSelect.dataset.preselected = tipeSelect.value;
+            if (motifSelect.value)
+                motifSelect.dataset.preselected = motifSelect.value;
+
             jenisSelect.dispatchEvent(new Event("change"));
         }
     }
@@ -137,7 +158,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (tipeSelect) {
         tipeSelect.addEventListener("change", function () {
             const tipeId = this.value;
-            setOptions(motifSelect, [], "IdMotif", "nama_motif", "Pilih Motif");
             if (!tipeId) return;
 
             const loading = document.createElement("option");
@@ -164,6 +184,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         "nama_motif",
                         data.length ? "Pilih Motif" : "Tidak ada motif",
                     );
+
+                    // [EXPERT TRICK] 2. Pulihkan ingatan Motif setelah AJAX selesai
+                    if (motifSelect.dataset.preselected) {
+                        motifSelect.value = motifSelect.dataset.preselected;
+                        motifSelect.dataset.preselected = ""; // Hapus ingatannya
+                    }
                 })
                 .catch((error) => {
                     setOptions(
@@ -177,22 +203,20 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Modal Motif Cascade
+    // Modal Motif Cascade (Dibiarkan sama persis seperti milik Anda)
     const newJenisForMotif = document.getElementById("newJenisForMotif");
     if (newJenisForMotif) {
+        // ... (Kode bagian ini milik Anda dibiarkan utuh ke bawah) ...
         newJenisForMotif.addEventListener("change", function () {
             const jenisId = this.value;
             const tipeModalSelect = document.getElementById("newTipeForMotif");
 
             if (!jenisId) {
-                tipeModalSelect.innerHTML =
-                    '<option value="">Pilih Tipe</option>';
+                if (tipeModalSelect) {
+                    tipeModalSelect.innerHTML =
+                        '<option value="">Pilih Tipe</option>';
+                }
                 return;
-            }
-            const mainTipeValue = document.getElementById("id_tipe").value;
-
-            if (mainTipeValue) {
-                tipeModalSelect.dataset.preselected = mainTipeValue;
             }
 
             fetch(`${GET_TIPE_URL}?jenis_id=${encodeURIComponent(jenisId)}`, {
@@ -253,7 +277,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const tipeModalSelect =
                     document.getElementById("newTipeForMotif");
                 if (tipeModalSelect && currentTipe) {
-                    tipeModalSelect.dataset.preselectId = currentTipe;
+                    tipeModalSelect.dataset.preselected = currentTipe;
                 }
 
                 // Trigger change API untuk me-load Tipe yang sesuai dengan Jenis ini ke dalam modal

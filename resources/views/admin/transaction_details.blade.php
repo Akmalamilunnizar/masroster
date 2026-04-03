@@ -57,11 +57,7 @@ CIME | Detail Transaksi
                             <tr>
                                 <td style="text-align: center;">{{ $detail->produk->NamaProduk ?? '-' }}</td>
                                 <td style="text-align: center;">
-                                    @if($detail->id_ukuran)
-                                        {{ $detail->size->nama ?? '-' }}
-                                    @else
-                                        {{ $detail->CustomUkuran ?? '-' }}
-                                    @endif
+                                    {{ $detail->size->nama ?? '-' }}
                                 </td>
                                 <td style="text-align: center;">{{ $detail->QtyProduk }}</td>
                                 <td style="text-align: center;">Rp {{ number_format($detail->SubTotal, 0, ',', '.') }}</td>

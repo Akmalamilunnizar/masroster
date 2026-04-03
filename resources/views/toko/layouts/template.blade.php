@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@yield('page_title') | Toko Percetakan</title>
+  <title>@yield('page_title') | Toko Roster</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('dashboard2/assets/img/icons/logomasroster.png') }}" type="image/png" />

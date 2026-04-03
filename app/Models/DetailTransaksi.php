@@ -15,10 +15,9 @@ class DetailTransaksi extends Model
         'IdTransaksi',
         'IdRoster',
         'id_ukuran',
-        'CustomUkuran',
         'QtyProduk',
+        'data_type',
         'SubTotal',
-        'design_file'
     ];
 
     public function transaksi()

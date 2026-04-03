@@ -9,11 +9,7 @@ use App\Models\DetailTransaksi;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 
 class OrderController extends Controller
 {
@@ -61,7 +57,6 @@ class OrderController extends Controller
             }
 
             // Get or create customer
-            $customerId = 'C' . str_pad(Customer::count() + 1, 4, '0', STR_PAD_LEFT);
             $customer = Customer::firstOrCreate(
                 ['id' => $user->id],
                 [
@@ -95,12 +90,13 @@ class OrderController extends Controller
             // Create transaction
             $transaction = new Transaksi();
             $transaction->IdTransaksi = $transactionId;
-            $transaction->username = $user->username;
-            $transaction->id = $user->id;
+            $transaction->id_admin = 0;
+            $transaction->id_customer = $user->id;
             $transaction->address_id = $address ? $address->id : null;
             $transaction->shipping_method = session('shipping_method');
+            $transaction->delivery_method = session('delivery_method');
             $transaction->shipping_type = session('shipping_type');
-            $transaction->alamat_pengiriman = $address ? $address->full_address : null;
+            $transaction->ongkir = (int) $shippingCost;
             $transaction->notes = session('order_notes', null); // Add order notes
 
             if ($paymentMethod === 'midtrans' && $isPaid) {
@@ -121,16 +117,13 @@ class OrderController extends Controller
 
             // Create transaction details
             foreach ($cart as $id => $details) {
-                $isCustom = ($details['ukuran'] === 'custom');
                 $detailData = [
                     'IdTransaksi' => $transactionId,
-                    'IdProduk' => $details['id'],
-                    'id_ukuran' => $isCustom ? null : $details['ukuran'],
+                    'IdRoster' => $details['id'],
+                    'id_ukuran' => isset($details['ukuran']) ? (int) $details['ukuran'] : null,
                     'QtyProduk' => $details['quantity'],
                     'SubTotal' => $details['harga'] * $details['quantity'],
-                    'design_file' => $details['design_file'] ?? null,
                 ];
-                $detailData['CustomUkuran'] = $details['custom_ukuran'] ?? null;
                 DetailTransaksi::create($detailData);
                 Log::info('Transaction detail created:', ['detail' => $detailData]);
             }

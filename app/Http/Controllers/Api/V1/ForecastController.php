@@ -2,12 +2,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use Illuminate\Http\Request;
-use GuzzleHttp\Client;
 use App\Http\Controllers\Controller;
-use App\Models\Transaksi;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class ForecastController extends Controller
 {
@@ -22,15 +23,15 @@ class ForecastController extends Controller
         try {
             $idRoster = $request->query('id_roster');
             Log::info('Fetching sales data for forecasting', ['id_roster' => $idRoster]);
-            
+
             // Get the last 12 months of sales data
             $query = DB::table('detail_transaksi')
                 ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
                 ->select(
-                    DB::raw('DATE_FORMAT(transaksi.tglTransaksi, "%Y-%m") as bulan'),
+                    DB::raw($this->monthExpression() . ' as bulan'),
                     DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
                 );
-            
+
             if ($idRoster) {
                 // From DetailTransaksi model: 'IdRoster'
                 $query->where('detail_transaksi.IdRoster', $idRoster);
@@ -46,11 +47,11 @@ class ForecastController extends Controller
             // If we don't have enough data, fill with 0s to reach 12 points
             if ($salesData->count() < 12) {
                 Log::info('Not enough data, generating placeholder data to reach 12 points');
-                
+
                 $existingBulans = $salesData->pluck('terjual', 'bulan')->toArray();
                 $finalData = collect();
                 $currentDate = Carbon::now();
-                
+
                 for ($i = 0; $i < 12; $i++) {
                     $date = $currentDate->copy()->subMonths($i)->format('Y-m');
                     $finalData->push([
@@ -58,7 +59,7 @@ class ForecastController extends Controller
                         'terjual' => (int)($existingBulans[$date] ?? 0)
                     ]);
                 }
-                
+
                 $salesData = $finalData->sortBy('bulan')->values();
             }
 
@@ -86,6 +87,7 @@ class ForecastController extends Controller
     {
         try {
             $request->validate([
+                'id_roster' => 'required|exists:produk,IdRoster',
                 'bulan' => 'required|array|min:12',
                 'terjual' => 'required|array|min:12',
                 'bulan.*' => 'required|date_format:Y-m',
@@ -93,37 +95,116 @@ class ForecastController extends Controller
                 'model' => 'required|in:lstm,prophet'
             ]);
 
-            $client = new Client([
-                'timeout' => 30,
-                'connect_timeout' => 30
-            ]);
+            $model = strtolower($request->input('model'));
+            $idRoster = $request->input('id_roster');
 
-            $data = [
+            $bulan = $request->input('bulan');
+            $terjual = $request->input('terjual');
+
+            if (count($bulan) !== count($terjual)) {
+                return back()->with('error', 'Jumlah data bulan dan terjual harus sama.');
+            }
+
+            $dataType = $this->resolveDataTypeByProduct($idRoster);
+            $modelName = $this->mapModelName($model, $dataType);
+            $endpoint = $model === 'lstm' ? '/predictlstm' : '/predictprophet';
+
+            $payload = [
                 'bulan' => $request->input('bulan'),
-                'terjual' => $request->input('terjual')
+                'terjual' => $request->input('terjual'),
+                'data_type' => $dataType,
+                'model_name' => $modelName,
             ];
 
-            // Dete 
+            Log::info('Manual forecast request', [
+                'id_roster' => $idRoster,
+                'framework' => $model,
+                'data_type' => $dataType,
+                'model_name' => $modelName,
+            ]);
 
-            $body = $response->getBody();
-            $result = json_decode($body);
+            $response = Http::timeout(30)
+                ->connectTimeout(30)
+                ->post('http://127.0.0.1:5000' . $endpoint, $payload);
 
-            if (!$result) {
+            if (!$response->successful()) {
+                $errorMessage = $response->json('error') ?? $response->body() ?? 'Unknown error';
+
+                Log::warning('Manual forecast failed', [
+                    'id_roster' => $idRoster,
+                    'endpoint' => $endpoint,
+                    'framework' => $model,
+                    'data_type' => $dataType,
+                    'model_name' => $modelName,
+                    'status' => $response->status(),
+                    'error' => $errorMessage,
+                ]);
+
+                return back()->with('error', 'Layanan forecasting mengembalikan error: ' . $errorMessage);
+            }
+
+            $result = $response->json();
+
+            if (!is_array($result) || !isset($result['forecast']) || !is_array($result['forecast'])) {
                 throw new \Exception('Invalid response from forecasting service');
             }
 
-            // Add model info to result for display
-            $result->model = strtoupper($model);
+            // Add presentation fields expected by result blade.
+            $result['model'] = strtoupper($model);
+            $result['data_type'] = $result['data_type'] ?? $dataType;
+            $result['model_name'] = $result['model_name'] ?? $modelName;
+            $result['mae'] = $result['mae'] ?? 0;
+            $result['rmse'] = $result['rmse'] ?? 0;
 
-            return view('admin.forecast.result', ['result' => $result]);
+            return view('admin.forecast.result', ['result' => (object) $result]);
 
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return back()->with('error', 'Tidak dapat terhubung ke layanan forecasting. Pastikan server Flask berjalan di http://127.0.0.1:5000');
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            return back()->with('error', 'Terjadi kesalahan saat mengirim data ke layanan forecasting: ' . $e->getMessage());
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Determine data_type from product transaction behavior.
+     */
+    private function resolveDataTypeByProduct(string $idRoster): string
+    {
+        if (Schema::hasColumn('detail_transaksi', 'data_type')) {
+            $hasBoronganLine = DB::table('detail_transaksi')
+                ->where('IdRoster', $idRoster)
+                ->where('data_type', 'Borongan')
+                ->exists();
+        } else {
+            $hasBoronganLine = DB::table('detail_transaksi')
+                ->where('IdRoster', $idRoster)
+                ->where('QtyProduk', '>', 100)
+                ->exists();
+        }
+
+        return $hasBoronganLine ? 'Borongan' : 'Eceran';
+    }
+
+    /**
+     * Explicit model pinning map agreed in plan decisions.
+     */
+    private function mapModelName(string $framework, string $dataType): string
+    {
+        $framework = strtolower($framework);
+        $normalizedType = strtolower($dataType) === 'borongan' ? 'borongan' : 'eceran';
+
+        $map = [
+            'lstm' => [
+                'eceran' => 'lstm_eceran_tuned',
+                'borongan' => 'lstm_borongan',
+            ],
+            'prophet' => [
+                'eceran' => 'prophet_eceran_tuned',
+                'borongan' => 'prophet_borongan',
+            ],
+        ];
+
+        return $map[$framework][$normalizedType] ?? ($framework . '_' . $normalizedType);
     }
 
     public function stockForecast()
@@ -131,8 +212,8 @@ class ForecastController extends Controller
         try {
             // Get all products with cached forecast data
             $products = \App\Models\Produk::select(
-                    'IdRoster', 
-                    'NamaProduk', 
+                    'IdRoster',
+                    'NamaProduk',
                     'stock',
                     'forecasted_demand',
                     'forecast_model',
@@ -170,8 +251,8 @@ class ForecastController extends Controller
                     'forecasted_demand' => $product->forecasted_demand ?? 0,
                     'forecast_model' => strtoupper($product->forecast_model ?? 'N/A'),
                     'status' => $product->forecast_status ?? 'safe',
-                    'last_forecast_at' => $product->last_forecast_at ? 
-                        Carbon::parse($product->last_forecast_at)->diffForHumans() : 
+                    'last_forecast_at' => $product->last_forecast_at ?
+                        Carbon::parse($product->last_forecast_at)->diffForHumans() :
                         'Never',
                     'safety_stock' => $product->safety_stock ?? 70
                 ];
@@ -181,7 +262,7 @@ class ForecastController extends Controller
             $hasForecasts = $products->whereNotNull('last_forecast_at')->count() > 0;
             $oldestForecast = $products->whereNotNull('last_forecast_at')
                 ->min('last_forecast_at');
-            
+
             $needsUpdate = false;
             if ($oldestForecast && Carbon::parse($oldestForecast)->lt(now()->subDays(30))) {
                 $needsUpdate = true;
@@ -203,5 +284,95 @@ class ForecastController extends Controller
 
             return back()->with('error', 'Terjadi kesalahan saat menghitung forecast stok: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Run batch forecast via Artisan command (triggered from UI)
+     */
+    public function runBatchForecast(Request $request)
+    {
+        $request->validate([
+            'model' => 'required|in:lstm,prophet',
+            'force' => 'nullable|boolean'
+        ]);
+
+        $model = $request->input('model');
+        $force = $request->boolean('force', false);
+
+        try {
+            $params = ['--model' => $model];
+            if ($force) {
+                $params['--force'] = true;
+            }
+
+            $startTime = microtime(true);
+
+            $exitCode = Artisan::call('app:forecast-all', $params);
+            $output = Artisan::output();
+
+            $duration = round(microtime(true) - $startTime, 2);
+
+            if ($exitCode === 0) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => "Batch forecast berhasil dijalankan dengan model " . strtoupper($model) . ".",
+                    'duration' => $duration . 's',
+                    'output' => $output
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Batch forecast gagal.',
+                    'output' => $output
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Batch forecast error: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check Flask AI server health status
+     */
+    public function checkFlaskHealth()
+    {
+        try {
+            $response = Http::timeout(5)->get('http://127.0.0.1:5000/health');
+            $payload = $response->json();
+
+            if ($response->successful()) {
+                return response()->json([
+                    'status' => 'online',
+                    'models' => $payload['models'] ?? null,
+                    'registry_loaded' => $payload['registry_loaded'] ?? false,
+                    'available_models' => $payload['available_models'] ?? [],
+                    'message' => 'Flask AI server is running.'
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'offline',
+                'message' => 'Flask server returned an error.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'offline',
+                'message' => 'Flask AI server is not reachable. SMA fallback will be used.'
+            ]);
+        }
+    }
+
+    private function monthExpression(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', transaksi.tglTransaksi)"
+            : "DATE_FORMAT(transaksi.tglTransaksi, '%Y-%m')";
     }
 }

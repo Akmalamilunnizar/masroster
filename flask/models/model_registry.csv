@@ -1,0 +1,7 @@
+model_name,framework,data_type,artifact_path,scaler_path,meta_path,status,n_points,look_back,log_target,target_product
+prophet_eceran_tuned,Prophet,Eceran,Laravel\masroster\flask\models\prophet_eceran_tuned.json,,Laravel\masroster\flask\models\prophet_eceran_tuned_meta.json,saved,102,,,Roster Beton 20 x 20 Lubang 4
+prophet_borongan,Prophet,Borongan,Laravel\masroster\flask\models\prophet_borongan.json,,Laravel\masroster\flask\models\prophet_borongan_meta.json,saved,155,,,ALL_BORONGAN_AGGREGATE
+lstm_eceran_original,LSTM,Eceran,Laravel\masroster\flask\models\lstm_eceran_original.keras,Laravel\masroster\flask\models\lstm_eceran_original_scaler.pkl,Laravel\masroster\flask\models\lstm_eceran_original_meta.json,saved,102,8,False,Roster Beton 20 x 20 Lubang 4
+lstm_eceran_tuned,LSTM,Eceran,Laravel\masroster\flask\models\lstm_eceran_tuned.keras,Laravel\masroster\flask\models\lstm_eceran_tuned_scaler.pkl,Laravel\masroster\flask\models\lstm_eceran_tuned_meta.json,saved,102,6,False,Roster Beton 20 x 20 Lubang 4
+lstm_eceran_advanced,LSTM,Eceran,Laravel\masroster\flask\models\lstm_eceran_advanced.keras,Laravel\masroster\flask\models\lstm_eceran_advanced_scaler.pkl,Laravel\masroster\flask\models\lstm_eceran_advanced_meta.json,saved,102,10,True,Roster Beton 20 x 20 Lubang 4
+lstm_borongan,LSTM,Borongan,Laravel\masroster\flask\models\lstm_borongan.keras,Laravel\masroster\flask\models\lstm_borongan_scaler.pkl,Laravel\masroster\flask\models\lstm_borongan_meta.json,saved,155,8,False,ALL_BORONGAN_AGGREGATE

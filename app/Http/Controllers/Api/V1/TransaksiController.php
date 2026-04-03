@@ -9,12 +9,15 @@ use App\Models\Transaksi;
 use Illuminate\Support\Facades\Validator; // Keep if you use validation in other methods
 use Illuminate\Support\Facades\DB; // Keep if you use raw DB queries in other methods
 use Illuminate\Support\Facades\Log; // For debugging
+use Illuminate\Support\Facades\Schema;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon; // Keep if you use Carbon for date manipulations
 // Excel export will use HTML table streamed as .xls to avoid external type deps
 
 class TransaksiController extends Controller
 {
+    private ?bool $hasDetailTransaksiDataType = null;
+
     /**
      * Menampilkan daftar transaksi dengan fitur filter bulan/tahun dan pencarian.
      * Menggunakan eager loading untuk relasi 'detail'.
@@ -410,13 +413,19 @@ class TransaksiController extends Controller
             // Create detail transactions
             foreach ($request->products as $product) {
                 Log::info('Creating detail transaction:', $product);
-                \App\Models\DetailTransaksi::create([
+                $detailPayload = [
                     'IdTransaksi' => $transaksi->IdTransaksi,
                     'IdRoster' => $product['product_id'],
                     'id_ukuran' => $product['size_id'],
                     'QtyProduk' => $product['qty'],
                     'SubTotal' => $product['price'] * $product['qty'],
-                ]);
+                ];
+
+                if ($this->detailTransaksiHasDataTypeColumn()) {
+                    $detailPayload['data_type'] = $this->classifyDataTypeFromQty((int) $product['qty']);
+                }
+
+                \App\Models\DetailTransaksi::create($detailPayload);
 
                 // Auto-generate/update detail_harga for this customer, roster, and size
                 try {
@@ -531,13 +540,19 @@ class TransaksiController extends Controller
 
             // Create new detail transactions
             foreach ($request->products as $product) {
-                \App\Models\DetailTransaksi::create([
+                $detailPayload = [
                     'IdTransaksi' => $transaksi->IdTransaksi,
                     'IdRoster' => $product['product_id'],
                     'id_ukuran' => $product['size_id'],
                     'QtyProduk' => $product['qty'],
                     'SubTotal' => $product['price'] * $product['qty'],
-                ]);
+                ];
+
+                if ($this->detailTransaksiHasDataTypeColumn()) {
+                    $detailPayload['data_type'] = $this->classifyDataTypeFromQty((int) $product['qty']);
+                }
+
+                \App\Models\DetailTransaksi::create($detailPayload);
 
                 // Auto-generate/update detail_harga for this customer, roster, and size (on update)
                 try {
@@ -595,6 +610,23 @@ class TransaksiController extends Controller
             DB::rollback();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Locked rule: QtyProduk > 100 => Borongan, else Eceran (100 included as Eceran).
+     */
+    private function classifyDataTypeFromQty(int $qtyProduk): string
+    {
+        return $qtyProduk > 100 ? 'Borongan' : 'Eceran';
+    }
+
+    private function detailTransaksiHasDataTypeColumn(): bool
+    {
+        if ($this->hasDetailTransaksiDataType === null) {
+            $this->hasDetailTransaksiDataType = Schema::hasColumn('detail_transaksi', 'data_type');
+        }
+
+        return $this->hasDetailTransaksiDataType;
     }
 
     // Catatan: Jika ada metode lain seperti ManageTransaksi, AddTransaksi, StoreTransaksi,

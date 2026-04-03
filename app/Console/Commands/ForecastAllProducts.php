@@ -7,12 +7,13 @@ use App\Models\Produk;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class ForecastAllProducts extends Command
 {
     protected $signature = 'app:forecast-all
-        {--model=lstm : AI model to use (lstm or prophet)}
+        {--model=prophet : AI model to use (lstm or prophet)}
         {--force : Force forecast even if recently calculated}
         {--skip-train : Skip training, use existing saved model}';
 
@@ -111,12 +112,19 @@ class ForecastAllProducts extends Command
                         $forecast = $this->calculateSMA($salesData);
                         $forecastModel = 'sma';
                     } else {
-                        $forecast = $this->callFlaskPredict($model, $salesData);
+                        $forecast = $this->callFlaskPredict($model, $salesData, $product->IdRoster);
                         $forecastModel = $model;
 
                         if ($forecast === null) {
                             $forecast = $this->calculateSMA($salesData);
                             $forecastModel = 'sma';
+
+                            Log::warning('Using SMA fallback after Flask prediction failure', [
+                                'id_roster' => $product->IdRoster,
+                                'framework' => $model,
+                                'fallback_model' => 'sma',
+                                'reason' => 'Flask predict failed or invalid response',
+                            ]);
                         }
                     }
 
@@ -188,7 +196,7 @@ class ForecastAllProducts extends Command
             $salesData = DB::table('detail_transaksi')
                 ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
                 ->select(
-                    DB::raw('DATE_FORMAT(transaksi.tglTransaksi, "%Y-%m") as bulan'),
+                    DB::raw($this->monthExpression() . ' as bulan'),
                     DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
                 )
                 ->where('transaksi.tglTransaksi', '>=', Carbon::now()->subMonths(24))
@@ -196,9 +204,16 @@ class ForecastAllProducts extends Command
                 ->orderBy('bulan')
                 ->get();
 
+            $originalCount = $salesData->count();
+            $salesData = $this->buildMinimumTrainingDataset($salesData, 6);
+
             if ($salesData->count() < 6) {
                 $this->warn("   ⚠️  Only {$salesData->count()} months of data. Minimum 6 required for training.");
                 return null;
+            }
+
+            if ($originalCount < 6) {
+                $this->warn("   ⚠️  Only {$originalCount} months of real data. Padded with dummy months (0 sales) to reach 6 months for training.");
             }
 
             $endpoint = $model === 'lstm' ? '/train/lstm' : '/train/prophet';
@@ -222,6 +237,36 @@ class ForecastAllProducts extends Command
     }
 
     /**
+     * Build minimum contiguous monthly dataset in-memory without writing dummy rows to DB.
+     */
+    private function buildMinimumTrainingDataset($salesData, int $minimumMonths = 6)
+    {
+        if ($salesData->count() >= $minimumMonths) {
+            return $salesData;
+        }
+
+        $existing = [];
+        foreach ($salesData as $row) {
+            $existing[$row->bulan] = (float) $row->terjual;
+        }
+
+        $lastMonth = empty($existing)
+            ? Carbon::now()->startOfMonth()
+            : Carbon::createFromFormat('Y-m', max(array_keys($existing)))->startOfMonth();
+
+        $finalData = collect();
+        for ($i = $minimumMonths - 1; $i >= 0; $i--) {
+            $bulan = $lastMonth->copy()->subMonths($i)->format('Y-m');
+            $finalData->push((object) [
+                'bulan' => $bulan,
+                'terjual' => (float) ($existing[$bulan] ?? 0),
+            ]);
+        }
+
+        return $finalData;
+    }
+
+    /**
      * Get sales history for a single product (last 12 months)
      */
     private function getSalesHistory(string $idRoster): array
@@ -229,7 +274,7 @@ class ForecastAllProducts extends Command
         $salesData = DB::table('detail_transaksi')
             ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
             ->select(
-                DB::raw('DATE_FORMAT(transaksi.tglTransaksi, "%Y-%m") as bulan'),
+                DB::raw($this->monthExpression() . ' as bulan'),
                 DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
             )
             ->where('detail_transaksi.IdRoster', $idRoster)
@@ -245,29 +290,107 @@ class ForecastAllProducts extends Command
     }
 
     /**
+     * Return a month expression compatible with both sqlite tests and MySQL production.
+     */
+    private function monthExpression(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', transaksi.tglTransaksi)"
+            : "DATE_FORMAT(transaksi.tglTransaksi, '%Y-%m')";
+    }
+
+    /**
      * Call Flask predict endpoint (uses pre-trained model)
      */
-    private function callFlaskPredict(string $model, array $salesData): ?float
+    private function callFlaskPredict(string $model, array $salesData, string $idRoster): ?float
     {
         try {
             $endpoint = $model === 'lstm' ? '/predictlstm' : '/predictprophet';
+            $dataType = $this->resolveDataTypeByProduct($idRoster);
+            $modelName = $this->mapModelName($model, $dataType);
 
             $response = Http::timeout(self::TIMEOUT_SECONDS)
                 ->post(self::FLASK_BASE_URL . $endpoint, [
                     'bulan' => $salesData['bulan']->toArray(),
-                    'terjual' => $salesData['terjual']->toArray()
+                    'terjual' => $salesData['terjual']->toArray(),
+                    'data_type' => $dataType,
+                    'model_name' => $modelName,
                 ]);
 
             if ($response->successful()) {
                 $result = $response->json();
+
+                Log::info('Batch forecast model selection', [
+                    'id_roster' => $idRoster,
+                    'framework' => $model,
+                    'data_type' => $dataType,
+                    'model_name' => $result['model_name'] ?? $modelName,
+                ]);
+
                 return $result['forecast'][0] ?? null;
             }
 
+            Log::warning('Flask predict returned non-success status', [
+                'id_roster' => $idRoster,
+                'endpoint' => $endpoint,
+                'framework' => $model,
+                'data_type' => $dataType,
+                'model_name' => $modelName,
+                'status' => $response->status(),
+                'error' => $response->json('error') ?? $response->body(),
+            ]);
+
             return null;
         } catch (\Exception $e) {
-            Log::warning("Flask predict failed: {$e->getMessage()}");
+            Log::warning('Flask predict failed', [
+                'id_roster' => $idRoster,
+                'framework' => $model,
+                'error' => $e->getMessage(),
+            ]);
             return null;
         }
+    }
+
+    /**
+     * Product-level type selection from transaction behavior.
+     */
+    private function resolveDataTypeByProduct(string $idRoster): string
+    {
+        if (Schema::hasColumn('detail_transaksi', 'data_type')) {
+            $hasBoronganLine = DB::table('detail_transaksi')
+                ->where('IdRoster', $idRoster)
+                ->where('data_type', 'Borongan')
+                ->exists();
+        } else {
+            $hasBoronganLine = DB::table('detail_transaksi')
+                ->where('IdRoster', $idRoster)
+                ->where('QtyProduk', '>', 100)
+                ->exists();
+        }
+
+        return $hasBoronganLine ? 'Borongan' : 'Eceran';
+    }
+
+    /**
+     * Explicit framework+data_type to model pinning.
+     */
+    private function mapModelName(string $framework, string $dataType): string
+    {
+        $framework = strtolower($framework);
+        $normalizedType = strtolower($dataType) === 'borongan' ? 'borongan' : 'eceran';
+
+        $map = [
+            'lstm' => [
+                'eceran' => 'lstm_eceran_tuned',
+                'borongan' => 'lstm_borongan',
+            ],
+            'prophet' => [
+                'eceran' => 'prophet_eceran_tuned',
+                'borongan' => 'prophet_borongan',
+            ],
+        ];
+
+        return $map[$framework][$normalizedType] ?? ($framework . '_' . $normalizedType);
     }
 
     /**

@@ -46,15 +46,12 @@ class OrderController extends Controller
             $isPaid = session('midtrans_paid', false);
             $total = 0;
             foreach ($cart as $id => $details) {
-                $isCustom = ($details['ukuran'] === 'custom');
                 $detailData = [
                     'IdTransaksi' => $transactionId,
                     'IdProduk' => $details['id'],
-                    'id_ukuran' => $isCustom ? null : $details['ukuran'],
-                    'CustomUkuran' => $isCustom ? ($details['custom_ukuran'] ?? null) : null,
+                    'id_ukuran' => $details['ukuran'],
                     'QtyProduk' => $details['quantity'],
                     'SubTotal' => $details['harga'] * $details['quantity'],
-                    'design_file' => $details['design_file'] ?? null,
                 ];
                 $detail = DetailTransaksi::create($detailData);
                 $total += $details['harga'] * $details['quantity'];

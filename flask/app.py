@@ -7,6 +7,7 @@ import joblib
 import warnings
 import logging
 import os
+import json
 
 # Suppress verbose output
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -20,11 +21,128 @@ app = Flask(__name__)
 MIN_DATA_POINTS = 6
 MODEL_DIR = os.path.join(os.path.dirname(__file__), 'models')
 os.makedirs(MODEL_DIR, exist_ok=True)
+MODEL_REGISTRY_PATH = os.path.join(MODEL_DIR, 'model_registry.json')
 
 LSTM_MODEL_PATH = os.path.join(MODEL_DIR, 'lstm_model.h5')
 LSTM_SCALER_PATH = os.path.join(MODEL_DIR, 'lstm_scaler.pkl')
 LSTM_META_PATH = os.path.join(MODEL_DIR, 'lstm_meta.pkl')
 PROPHET_MODEL_PATH = os.path.join(MODEL_DIR, 'prophet_model.pkl')
+
+DEFAULT_MODEL_BY_FRAMEWORK = {
+    ('LSTM', 'Eceran'): 'lstm_eceran_tuned',
+    ('LSTM', 'Borongan'): 'lstm_borongan',
+    ('Prophet', 'Eceran'): 'prophet_eceran_tuned',
+    ('Prophet', 'Borongan'): 'prophet_borongan',
+}
+
+
+def resolve_artifact_path(path_value):
+    """Resolve artifact path from registry (absolute/relative/workspace) into real file path."""
+    if not path_value:
+        return ''
+
+    raw_path = os.path.normpath(str(path_value))
+    candidates = [
+        raw_path,
+        os.path.join(os.getcwd(), raw_path),
+        os.path.join(os.path.dirname(__file__), raw_path),
+        os.path.join(MODEL_DIR, os.path.basename(raw_path))
+    ]
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    # Fallback to models directory by basename.
+    return os.path.join(MODEL_DIR, os.path.basename(raw_path))
+
+
+def load_registry():
+    """Load model registry and normalize paths."""
+    if not os.path.exists(MODEL_REGISTRY_PATH):
+        return []
+
+    try:
+        with open(MODEL_REGISTRY_PATH, 'r', encoding='utf-8') as f:
+            rows = json.load(f)
+
+        normalized = []
+        for row in rows if isinstance(rows, list) else []:
+            item = dict(row)
+            item['artifact_resolved'] = resolve_artifact_path(item.get('artifact_path', ''))
+            item['scaler_resolved'] = resolve_artifact_path(item.get('scaler_path', ''))
+            item['meta_resolved'] = resolve_artifact_path(item.get('meta_path', ''))
+            normalized.append(item)
+        return normalized
+    except Exception:
+        return []
+
+
+def build_model_index(registry_rows):
+    index = {}
+    for row in registry_rows:
+        name = row.get('model_name')
+        if name:
+            index[name] = row
+    return index
+
+
+MODEL_REGISTRY = load_registry()
+MODEL_INDEX = build_model_index(MODEL_REGISTRY)
+
+
+def refresh_registry():
+    """Reload registry from disk to catch newly exported models without restarting server."""
+    global MODEL_REGISTRY, MODEL_INDEX
+    MODEL_REGISTRY = load_registry()
+    MODEL_INDEX = build_model_index(MODEL_REGISTRY)
+
+
+def get_model_entry(framework, model_name=None, data_type='Eceran'):
+    """Get a model entry by exact name or framework+data_type with smart default selection."""
+    refresh_registry()
+
+    if model_name:
+        entry = MODEL_INDEX.get(model_name)
+        if entry is None:
+            raise ValueError(f'Model tidak ditemukan di registry: {model_name}')
+        if str(entry.get('framework', '')).lower() != framework.lower():
+            raise ValueError(f'Model {model_name} bukan framework {framework}.')
+        return entry
+
+    candidates = [
+        row for row in MODEL_REGISTRY
+        if str(row.get('framework', '')).lower() == framework.lower()
+        and str(row.get('data_type', '')).lower() == str(data_type).lower()
+    ]
+
+    if not candidates:
+        raise ValueError(f'Tidak ada model {framework} untuk data_type={data_type} di registry.')
+
+    default_name = DEFAULT_MODEL_BY_FRAMEWORK.get((framework, data_type))
+    if default_name and default_name in MODEL_INDEX:
+        return MODEL_INDEX[default_name]
+
+    preferred_keywords = ['tuned', 'advanced', 'original']
+    for keyword in preferred_keywords:
+        for candidate in candidates:
+            model_key = str(candidate.get('model_name', '')).lower()
+            if keyword in model_key:
+                return candidate
+
+    return candidates[0]
+
+
+def prepare_series(tanggal, values, freq='W'):
+    """Convert input arrays to regularly sampled series for forecasting."""
+    df = pd.DataFrame({
+        'ds': pd.to_datetime(tanggal),
+        'y': [float(x) for x in values]
+    })
+    df = df.dropna(subset=['ds']).sort_values('ds')
+    df = df.set_index('ds').resample(freq).sum().reset_index()
+    df['y'] = pd.to_numeric(df['y'], errors='coerce').fillna(0)
+    return df
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -32,14 +150,29 @@ PROPHET_MODEL_PATH = os.path.join(MODEL_DIR, 'prophet_model.pkl')
 # ═══════════════════════════════════════════════════════════════════════
 @app.route('/health', methods=['GET'])
 def health():
-    lstm_ready = os.path.exists(LSTM_MODEL_PATH)
-    prophet_ready = os.path.exists(PROPHET_MODEL_PATH)
+    refresh_registry()
+    lstm_ready = any(str(row.get('framework', '')).lower() == 'lstm' for row in MODEL_REGISTRY)
+    prophet_ready = any(str(row.get('framework', '')).lower() == 'prophet' for row in MODEL_REGISTRY)
+
+    available = []
+    for row in MODEL_REGISTRY:
+        artifact_path = row.get('artifact_resolved', '')
+        available.append({
+            'model_name': row.get('model_name', ''),
+            'framework': row.get('framework', ''),
+            'data_type': row.get('data_type', ''),
+            'artifact_ready': bool(artifact_path and os.path.exists(artifact_path))
+        })
+
     return jsonify({
         'status': 'ok',
+        'registry_path': MODEL_REGISTRY_PATH,
+        'registry_loaded': len(MODEL_REGISTRY),
         'models': {
             'lstm': 'ready' if lstm_ready else 'not trained',
             'prophet': 'ready' if prophet_ready else 'not trained'
-        }
+        },
+        'available_models': available
     })
 
 
@@ -224,56 +357,83 @@ def train_prophet():
 @app.route('/predictlstm', methods=['POST'])
 def predict_lstm():
     try:
-        # Check if model exists
-        if not os.path.exists(LSTM_MODEL_PATH):
-            return jsonify({
-                'error': 'Model LSTM belum di-train. Panggil POST /train/lstm terlebih dahulu.'
-            }), 400
-
         data = request.get_json()
-        bulan = data['bulan']
-        terjual = data['terjual']
+        bulan = data.get('bulan', [])
+        terjual = data.get('terjual', [])
+        model_name = data.get('model_name')
+        data_type = data.get('data_type', 'Eceran')
 
-        if len(bulan) < 3:
+        if len(bulan) < 3 or len(terjual) < 3:
             return jsonify({
                 'error': 'Minimal 3 bulan data terbaru diperlukan untuk prediksi.'
             }), 400
 
+        if len(bulan) != len(terjual):
+            return jsonify({'error': 'Panjang array bulan dan terjual harus sama.'}), 400
+
+        entry = get_model_entry('LSTM', model_name=model_name, data_type=data_type)
+        model_path = entry.get('artifact_resolved', '')
+        scaler_path = entry.get('scaler_resolved', '')
+
+        if not os.path.exists(model_path):
+            return jsonify({'error': f'Artifact model tidak ditemukan: {model_path}'}), 400
+        if not scaler_path or not os.path.exists(scaler_path):
+            return jsonify({'error': f'Scaler tidak ditemukan: {scaler_path}'}), 400
+
         # Load model, scaler, and metadata
         from tensorflow.keras.models import load_model
-        model = load_model(LSTM_MODEL_PATH)
-        scaler = joblib.load(LSTM_SCALER_PATH)
-        meta = joblib.load(LSTM_META_PATH)
-        seq_length = meta['seq_length']
+        model = load_model(model_path)
+        scaler = joblib.load(scaler_path)
 
-        # Prepare the latest data
-        df = prepare_dataframe(bulan, terjual)
-        values = df['Jumlah'].values.reshape(-1, 1)
-        scaled = scaler.transform(values)
+        seq_length = 3
+        if str(entry.get('look_back', '')).strip() != '':
+            seq_length = int(entry.get('look_back', 3))
+        elif entry.get('meta_resolved') and os.path.exists(entry.get('meta_resolved')):
+            try:
+                with open(entry.get('meta_resolved'), 'r', encoding='utf-8') as f:
+                    meta_json = json.load(f)
+                seq_length = int(meta_json.get('look_back', meta_json.get('seq_length', 3)))
+            except Exception:
+                seq_length = 3
+
+        use_log_target = bool(entry.get('log_target', False))
+
+        # Prepare and transform the latest data.
+        df_series = prepare_series(bulan, terjual, freq='W')
+        values = df_series['y'].values.reshape(-1, 1)
+
+        if len(values) <= seq_length:
+            return jsonify({
+                'error': f'Data setelah resample kurang. Butuh > {seq_length} titik untuk model ini.'
+            }), 400
+
+        transformed = np.log1p(values) if use_log_target else values
+        scaled = scaler.transform(transformed)
+
+        def inverse_output(pred_scaled):
+            pred_transformed = scaler.inverse_transform(pred_scaled).flatten()
+            return np.expm1(pred_transformed) if use_log_target else pred_transformed
 
         # ── Evaluate on last known month ──
-        if len(scaled) > seq_length:
-            eval_seq = scaled[-(seq_length + 1):-1].reshape(1, seq_length, 1)
-            eval_pred_scaled = model.predict(eval_seq, verbose=0)
-            eval_pred = scaler.inverse_transform(eval_pred_scaled).flatten()[0]
-            actual = values[-1][0]
-            mae = float(abs(actual - max(eval_pred, 0)))
-            rmse = float(np.sqrt((actual - max(eval_pred, 0)) ** 2))
-        else:
-            mae = 0.0
-            rmse = 0.0
+        eval_seq = scaled[-(seq_length + 1):-1].reshape(1, seq_length, 1)
+        eval_pred_scaled = model.predict(eval_seq, verbose=0)
+        eval_pred = float(np.maximum(inverse_output(eval_pred_scaled)[0], 0))
+        actual = float(values[-1][0])
+        mae = float(abs(actual - eval_pred))
+        rmse = float(np.sqrt((actual - eval_pred) ** 2))
 
-        # ── Forecast next 1 month ──
+        # ── Forecast next 1 period ──
         forecast_input = scaled[-seq_length:].reshape(1, seq_length, 1)
         forecast_scaled = model.predict(forecast_input, verbose=0)
-        forecast_value = scaler.inverse_transform(forecast_scaled).flatten()
-        forecast_value = np.maximum(forecast_value, 0)
+        forecast_value = np.maximum(inverse_output(forecast_scaled), 0)
 
         result = {
             'forecast': [round(float(v), 2) for v in forecast_value],
             'mae': round(mae, 2),
             'rmse': round(rmse, 2),
-            'model': 'LSTM'
+            'model': 'LSTM',
+            'model_name': entry.get('model_name'),
+            'data_type': entry.get('data_type')
         }
         return jsonify(result)
 
@@ -289,31 +449,34 @@ def predict_lstm():
 @app.route('/predictprophet', methods=['POST'])
 def predict_prophet():
     try:
-        # Check if model exists
-        if not os.path.exists(PROPHET_MODEL_PATH):
-            return jsonify({
-                'error': 'Model Prophet belum di-train. Panggil POST /train/prophet terlebih dahulu.'
-            }), 400
-
         data = request.get_json()
-        bulan = data['bulan']
-        terjual = data['terjual']
+        bulan = data.get('bulan', [])
+        terjual = data.get('terjual', [])
+        model_name = data.get('model_name')
+        data_type = data.get('data_type', 'Eceran')
+
+        if len(bulan) < 3 or len(terjual) < 3:
+            return jsonify({'error': 'Minimal 3 data diperlukan untuk prediksi Prophet.'}), 400
+
+        if len(bulan) != len(terjual):
+            return jsonify({'error': 'Panjang array bulan dan terjual harus sama.'}), 400
+
+        entry = get_model_entry('Prophet', model_name=model_name, data_type=data_type)
+        model_path = entry.get('artifact_resolved', '')
+        if not os.path.exists(model_path):
+            return jsonify({'error': f'Artifact model tidak ditemukan: {model_path}'}), 400
 
         from prophet import Prophet
         from prophet.serialize import model_from_json
 
         # Load saved model
-        with open(PROPHET_MODEL_PATH, 'r') as f:
+        with open(model_path, 'r', encoding='utf-8') as f:
             model = model_from_json(f.read())
 
         # Prepare data for evaluation
-        df = pd.DataFrame({
-            'ds': pd.to_datetime(bulan),
-            'y': [float(x) for x in terjual]
-        })
-        df = df.set_index('ds').resample('ME').sum().reset_index()
+        df = prepare_series(bulan, terjual, freq='W')
 
-        # ── Evaluate on last known month ──
+        # ── Evaluate on last known point ──
         actual = df.iloc[-1]['y']
         eval_forecast = model.predict(df[['ds']])
         eval_pred = max(eval_forecast.iloc[-1]['yhat'], 0)
@@ -321,8 +484,8 @@ def predict_prophet():
         mae = float(abs(actual - eval_pred))
         rmse = float(np.sqrt((actual - eval_pred) ** 2))
 
-        # ── Forecast next 1 month ──
-        future = model.make_future_dataframe(periods=1, freq='ME')
+        # ── Forecast next 1 period ──
+        future = model.make_future_dataframe(periods=1, freq='W')
         forecast = model.predict(future)
         forecast_value = max(forecast.iloc[-1]['yhat'], 0)
 
@@ -330,7 +493,9 @@ def predict_prophet():
             'forecast': [round(float(forecast_value), 2)],
             'mae': round(mae, 2),
             'rmse': round(rmse, 2),
-            'model': 'PROPHET'
+            'model': 'PROPHET',
+            'model_name': entry.get('model_name'),
+            'data_type': entry.get('data_type')
         }
         return jsonify(result)
 
@@ -342,7 +507,10 @@ def predict_prophet():
 # ═══════════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     print(f"📁 Models directory: {MODEL_DIR}")
-    print(f"🔍 LSTM model: {'✅ Ready' if os.path.exists(LSTM_MODEL_PATH) else '❌ Not trained'}")
-    print(f"🔍 Prophet model: {'✅ Ready' if os.path.exists(PROPHET_MODEL_PATH) else '❌ Not trained'}")
+    refresh_registry()
+    print(f"📄 Registry path: {MODEL_REGISTRY_PATH}")
+    print(f"📊 Registry models loaded: {len(MODEL_REGISTRY)}")
+    print(f"🔍 Legacy LSTM model: {'✅ Ready' if os.path.exists(LSTM_MODEL_PATH) else '❌ Not trained'}")
+    print(f"🔍 Legacy Prophet model: {'✅ Ready' if os.path.exists(PROPHET_MODEL_PATH) else '❌ Not trained'}")
     print(f"🚀 Starting Flask API on http://0.0.0.0:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)

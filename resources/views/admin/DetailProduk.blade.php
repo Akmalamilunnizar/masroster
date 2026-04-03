@@ -116,21 +116,7 @@
                                                             {{ $ukuran->nama }} ({{ $ukuran->panjang }} x {{ $ukuran->lebar }} + "Cm") - Rp {{ number_format($ukuran->pivot->harga, 0, ',', '.') }}
                                                         </option>
                                                     @endforeach
-                                                    <option value="custom" data-harga="{{ $customHargaFinal }}">
-                                                        Custom - Rp {{ number_format($customHargaFinal, 0, ',', '.') }}
-                                                    </option>
                                                 </select>
-
-                                                <input type="text"
-                                                    class="form-control mt-2 {{ old('ukuran_produk_is_custom') ? '' : 'd-none' }}"
-                                                    id="ukuran_produk_custom"
-                                                    placeholder="Masukkan ukuran custom (contoh: 2x3 meter)"
-                                                    value="{{ old('ukuran_produk_custom_value') }}" />
-
-                                                {{-- Hidden input to store the final selected/custom value for submission
-                                                --}}
-                                                <input type="hidden" name="ukuran_produk" id="ukuran_produk_final"
-                                                    value="{{ old('ukuran_produk') }}">
                                             </div>
                                         </div>
 
@@ -152,18 +138,6 @@
                                                 <button class="btn btn-outline-secondary" type="button" id="plusButton"><i
                                                         class="bx bx-plus"></i></button>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3 align-items-center">
-                                        <div class="col-md-4">
-                                            <label for="uploadFile" class="form-label fw-bold"><i
-                                                    class="bx bx-upload me-2"></i> Upload File</label>
-                                        </div>
-                                        <div class="col-md-8">
-                                            <input class="form-control form-control-sm" type="file" id="uploadFile" name="design_file"
-                                                accept=".jpg,.jpeg,.png,.webp,.pdf,.rar,.zip" />
-                                            <small class="text-muted">nb : jpg, png, jpeg, webp, pdf, rar, zip. max
-                                                10mb</small>
                                         </div>
                                     </div>
                                     <div class="row mb-3 align-items-center">
@@ -329,9 +303,7 @@ $(document).ready(function () {
         const beliSekarangModal = document.getElementById('beliSekarangModal');
         const closeButton = document.querySelector('.close-button');
         const batalBeliBtn = document.getElementById('batalBeliBtn');
-        const ukuranProdukCustom = document.getElementById('ukuran_produk_custom');
         const catatanInput = document.getElementById('catatan');
-        const uploadFileInput = document.getElementById('uploadFile');
         const nomorHPInput = document.getElementById('nomorHP');
         const modalProductImage = document.getElementById('modalProductImage');
         const modalUkuran = document.getElementById('modalUkuran');
@@ -357,21 +329,9 @@ $(document).ready(function () {
             }
         }
 
-        function handleCustomUkuranRequired() {
-            if (sizeSelect.value === 'custom' && ukuranProdukCustom) {
-                ukuranProdukCustom.required = true;
-                ukuranProdukCustom.classList.remove('d-none');
-            } else if (ukuranProdukCustom) {
-                ukuranProdukCustom.required = false;
-                ukuranProdukCustom.classList.add('d-none');
-            }
-        }
         sizeSelect.addEventListener('change', function() {
-            handleCustomUkuranRequired();
             updateHargaDanTotal();
         });
-        // Initial state
-        handleCustomUkuranRequired();
 
         jumlahInput.addEventListener('input', updateHargaDanTotal);
         if (plusButton) {
@@ -400,27 +360,17 @@ $(document).ready(function () {
                 const jumlah = parseInt(jumlahInput.value) || 1;
                 const catatan = catatanInput ? catatanInput.value : '-';
                 const nomorHP = nomorHPInput ? nomorHPInput.value : '-';
-                modalUkuran.textContent = sizeSelect.value === 'custom' && ukuranProdukCustom ? ukuranProdukCustom.value : selectedOption.text;
+                modalUkuran.textContent = selectedOption.text;
                 if (modalCatatan) modalCatatan.textContent = catatan;
                 if (modalNomorHP) modalNomorHP.textContent = nomorHP;
                 if (modalHargaSatuan) modalHargaSatuan.textContent = harga.toLocaleString('id-ID');
                 if (modalJumlah) modalJumlah.textContent = jumlah;
                 if (modalSubtotal) modalSubtotal.textContent = (harga * jumlah).toLocaleString('id-ID');
-                // Handle uploaded image
-                if (uploadFileInput && uploadFileInput.files.length > 0) {
-                    const uploadedFile = uploadFileInput.files[0];
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        if (modalProductImage) modalProductImage.src = e.target.result;
-                    };
-                    reader.readAsDataURL(uploadedFile);
-                } else if (modalProductImage) {
+                if (modalProductImage) {
                     modalProductImage.src = "{{ asset('storage/' . $produk->Img) }}";
                 }
                 beliSekarangModal.classList.add("show");
-                if (modalBeliSekarangBtn && uploadFileInput) {
-                    modalBeliSekarangBtn.disabled = uploadFileInput.files.length === 0;
-                }
+                if (modalBeliSekarangBtn) modalBeliSekarangBtn.disabled = false;
             });
             if (closeButton) closeButton.addEventListener('click', function () { beliSekarangModal.classList.remove("show"); });
             if (batalBeliBtn) batalBeliBtn.addEventListener('click', function () { beliSekarangModal.classList.remove("show"); });
@@ -449,23 +399,7 @@ $(document).ready(function () {
                     var productName = '{{ $produk->NamaRoster }}';
                     var size = sizeSelect.value;
                     var ukuranLabel = selectedOption.text;
-                    var fileInput = uploadFileInput;
-                    var designFile = fileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
                     var subtotal = harga * jumlah;
-                    var customUkuran = '';
-                    if (sizeSelect.value === 'custom' && ukuranProdukCustom) {
-                        customUkuran = ukuranProdukCustom.value;
-                        if (!customUkuran) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Ukuran custom harus diisi!',
-                                text: 'Silakan masukkan ukuran custom.'
-                            });
-                            modalBeliSekarangBtn.disabled = false;
-                            modalBeliSekarangBtn.innerHTML = 'Pesan Sekarang';
-                            return;
-                        }
-                    }
                     var formData = new FormData();
                     formData.append('_token', '{{ csrf_token() }}');
                     formData.append('id', productId);
@@ -476,10 +410,6 @@ $(document).ready(function () {
                     formData.append('ukuran', size);
                     formData.append('ukuran_label', ukuranLabel);
                     formData.append('subtotal', subtotal);
-                    formData.append('custom_ukuran', customUkuran);
-                    if (designFile) {
-                        formData.append('design_file', designFile);
-                    }
                     // Show loading state
                     modalBeliSekarangBtn.disabled = true;
                     modalBeliSekarangBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
@@ -571,57 +501,16 @@ $(document).ready(function () {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const select = document.getElementById('ukuran_produk_select');
-            const customInput = document.getElementById('ukuran_produk_custom');
-            const hiddenInput = document.getElementById('ukuran_produk_final');
-
-            function updateFinalValue() {
-                if (select.value === 'custom') {
-                    customInput.classList.remove('d-none');
-                    hiddenInput.value = customInput.value;
-                } else {
-                    customInput.classList.add('d-none');
-                    hiddenInput.value = select.value;
-                }
+            if (!select) {
+                return;
             }
 
-            select.addEventListener('change', updateFinalValue);
-            customInput.addEventListener('input', function () {
-                hiddenInput.value = customInput.value;
+            select.addEventListener('change', function () {
+                // Reserved for future size-dependent logic.
             });
-
-            // Panggil saat pertama kali jika old value adalah custom
-            if (select.value === 'custom') {
-                customInput.classList.remove('d-none');
-            }
         });
     </script>
 @endpush
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectEl = document.getElementById('ukuran_produk_select');
-        const customInput = document.getElementById('ukuran_produk_custom');
-        const hiddenFinal = document.getElementById('ukuran_produk_final');
-
-        function handleChange() {
-            const selectedValue = selectEl.value;
-            if (selectedValue === 'custom') {
-                customInput.classList.remove('d-none');
-                hiddenFinal.value = customInput.value; // Isi sementara
-            } else {
-                customInput.classList.add('d-none');
-                hiddenFinal.value = selectedValue;
-            }
-        }
-
-        selectEl.addEventListener('change', handleChange);
-
-        // Update hidden field saat user mengetik ukuran custom
-        customInput.addEventListener('input', function () {
-            hiddenFinal.value = this.value;
-        });
-    });
-</script>
 
 <style>
 
@@ -1455,28 +1344,13 @@ $(document).ready(function () {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const select = document.getElementById('ukuran_produk_select');
-            const customInput = document.getElementById('ukuran_produk_custom');
-            const hiddenInput = document.getElementById('ukuran_produk_final');
-
-            function updateFinalValue() {
-                if (select.value === 'custom') {
-                    customInput.classList.remove('d-none');
-                    hiddenInput.value = customInput.value;
-                } else {
-                    customInput.classList.add('d-none');
-                    hiddenInput.value = select.value;
-                }
+            if (!select) {
+                return;
             }
 
-            select.addEventListener('change', updateFinalValue);
-            customInput.addEventListener('input', function () {
-                hiddenInput.value = customInput.value;
+            select.addEventListener('change', function () {
+                // Reserved for future size-dependent logic.
             });
-
-            // Panggil saat pertama kali jika old value adalah custom
-            if (select.value === 'custom') {
-                customInput.classList.remove('d-none');
-            }
         });
     </script>
 @endpush
@@ -1484,25 +1358,12 @@ $(document).ready(function () {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const selectEl = document.getElementById('ukuran_produk_select');
-        const customInput = document.getElementById('ukuran_produk_custom');
-        const hiddenFinal = document.getElementById('ukuran_produk_final');
-
-        function handleChange() {
-            const selectedValue = selectEl.value;
-            if (selectedValue === 'custom') {
-                customInput.classList.remove('d-none');
-                hiddenFinal.value = customInput.value; // Isi sementara
-            } else {
-                customInput.classList.add('d-none');
-                hiddenFinal.value = selectedValue;
-            }
+        if (!selectEl) {
+            return;
         }
 
-        selectEl.addEventListener('change', handleChange);
-
-        // Update hidden field saat user mengetik ukuran custom
-        customInput.addEventListener('input', function () {
-            hiddenFinal.value = this.value;
+        selectEl.addEventListener('change', function () {
+            // Reserved for future size-dependent logic.
         });
     });
 </script>
@@ -1511,7 +1372,9 @@ $(document).ready(function () {
     document.addEventListener('DOMContentLoaded', function() {
         const beliSekarangBtn = document.getElementById('beliSekarangBtn');
         const sizeSelect = document.getElementById('ukuran_produk_select');
-        const fileInput = document.getElementById('uploadFile');
+        if (!beliSekarangBtn || !sizeSelect) {
+            return;
+        }
         
         // Initially disable the button
         beliSekarangBtn.disabled = true;
@@ -1519,10 +1382,7 @@ $(document).ready(function () {
         // Function to check if all required fields are filled
         function validateForm() {
             const isSizeSelected = sizeSelect && sizeSelect.value !== '';
-            const isFileSelected = fileInput && fileInput.files.length > 0;
-            
-            // Enable button only if both size and file are selected
-            beliSekarangBtn.disabled = !(isSizeSelected && isFileSelected);
+            beliSekarangBtn.disabled = !isSizeSelected;
             
             // Add visual feedback
             if (!isSizeSelected) {
@@ -1531,20 +1391,11 @@ $(document).ready(function () {
                 sizeSelect.classList.remove('is-invalid');
             }
             
-            if (!isFileSelected) {
-                fileInput.classList.add('is-invalid');
-            } else {
-                fileInput.classList.remove('is-invalid');
-            }
         }
         
         // Add event listeners for validation
         if (sizeSelect) {
             sizeSelect.addEventListener('change', validateForm);
-        }
-        
-        if (fileInput) {
-            fileInput.addEventListener('change', validateForm);
         }
         
         // Add click handler for the button
@@ -1554,7 +1405,7 @@ $(document).ready(function () {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Lengkapi Data',
-                    text: 'Silakan pilih ukuran dan upload file desain terlebih dahulu',
+                    text: 'Silakan pilih ukuran produk terlebih dahulu',
                     confirmButtonText: 'OK'
                 });
                 return;
@@ -1567,7 +1418,6 @@ $(document).ready(function () {
             const productImg = '{{ $produk->Img }}';
             const quantity = document.getElementById('jumlahOrderInput').value;
             const size = sizeSelect.value;
-            const designFile = fileInput.files[0];
             
             // Calculate subtotal
             var subtotal = productPrice * quantity;
@@ -1581,11 +1431,8 @@ $(document).ready(function () {
             formData.append('img', productImg);
             formData.append('quantity', quantity);
             formData.append('ukuran', size);
-            formData.append('ukuran_label', sizeSelect.value === 'custom' ? customInput.value : sizeSelect.options[sizeSelect.selectedIndex].text);
+            formData.append('ukuran_label', sizeSelect.options[sizeSelect.selectedIndex].text);
             formData.append('subtotal', subtotal);
-            if (designFile) {
-                formData.append('design_file', designFile);
-            }
             
             // Show loading state
             beliSekarangBtn.disabled = true;
