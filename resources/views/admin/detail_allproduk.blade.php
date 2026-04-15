@@ -1,7 +1,7 @@
 @extends('admin.layouts.template')
 
 @section('page_title')
-Detail Barang - Citra Media
+Detail Produk - Citra Media
 @endsection
 
 @section('content')
@@ -9,33 +9,56 @@ Detail Barang - Citra Media
 
     <!-- Judul & Breadcrumb -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="py-3 mb-4"><span class="text-muted fw-light">Semua Barang /</span> Detail Barang</h4>
-            <a href="{{ route('allitems.exportpdf.detail', $item->IdBarang) }}" target="_blank" class="btn btn-danger d-flex align-items-center"
+        <h4 class="py-3 mb-4"><span class="text-muted fw-light">Semua Produk /</span> Detail Produk</h4>
+            {{-- <button type="button" onclick="window.print()" class="btn btn-danger d-flex align-items-center"
                 style="background: linear-gradient(45deg, #dc3545, #ff6b6b);">
                 <i class='bx bxs-printer me-2'></i> Print
-            </a>
+            </button> --}}
     </div>
 
     <!-- Card Gabungan -->
     <div class="card shadow-sm border-0 rounded-3 mb-4">
         <div class="card-header text-white" style="background-color: rgb(123, 171, 254);">
-            <strong class="fs-4">Detail Barang & Riwayat</strong>
+            <strong class="fs-4">Detail Produk & Riwayat</strong>
         </div>
         <div class="card-body pt-3">
 
-            <!-- Detail Barang -->
-            <h5 class="fw-semibold mb-3">📦 Detail Barang</h5>
+            <!-- Detail Produk -->
+            <h5 class="fw-semibold mb-3">📦 Detail Produk</h5>
             <div class="row py-2 border-bottom">
-                <div class="col-md-4 fw-semibold">Nama Barang:</div>
-                <div class="col-md-8">{{ $item->NamaBarang }}</div>
+                <div class="col-md-4 fw-semibold">Nama Produk:</div>
+                <div class="col-md-8">{{ $produk->NamaProduk ?? '-' }}</div>
             </div>
             <div class="row py-2 border-bottom">
-                <div class="col-md-4 fw-semibold">Jenis Barang:</div>
-                <div class="col-md-8">{{ $item->jenisBarang->JenisBarang ?? 'N/A' }}</div>
-            </div>            
+                <div class="col-md-4 fw-semibold">Jenis Produk:</div>
+                <div class="col-md-8">{{ optional($produk->jenisRoster)->JenisBarang ?? 'N/A' }}</div>
+            </div>
             <div class="row py-2 border-bottom mb-4">
                 <div class="col-md-4 fw-semibold">Jumlah Stok:</div>
-                <div class="col-md-8">{{ $item->stock ?? 0 }}</div>
+                <div class="col-md-8">{{ $produk->stock ?? 0 }}</div>
+            </div>
+            <div class="row py-2 border-bottom">
+                <div class="col-md-4 fw-semibold">Tipe Produk:</div>
+                <div class="col-md-8">{{ optional($produk->tipeRoster)->namaTipe ?? 'N/A' }}</div>
+            </div>
+            <div class="row py-2 border-bottom mb-4">
+                <div class="col-md-4 fw-semibold">Motif Produk:</div>
+                <div class="col-md-8">{{ optional($produk->motif)->nama_motif ?? 'N/A' }}</div>
+            </div>
+            <div class="row py-2 border-bottom mb-4">
+                <div class="col-md-4 fw-semibold">Ukuran Tersedia:</div>
+                <div class="col-md-8">
+                    @forelse($produk->sizes as $size)
+                        <span class="badge bg-primary me-1 mb-1">
+                            {{ $size->nama_ukuran ?? $size->id_ukuran }}
+                            @if(isset($size->pivot) && $size->pivot->harga !== null)
+                                - Rp {{ number_format($size->pivot->harga, 0, ',', '.') }}
+                            @endif
+                        </span>
+                    @empty
+                        <span class="text-muted">Belum ada ukuran</span>
+                    @endforelse
+                </div>
             </div>
 
             <!-- Riwayat Barang Masuk -->

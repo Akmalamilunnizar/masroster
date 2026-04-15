@@ -37,7 +37,7 @@ use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\PesananController;
-// use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\DetailProdukController;
 use App\Http\Controllers\Api\V1\DetailHargaController;
 use App\Http\Controllers\Api\V1\SizeController;
@@ -130,27 +130,27 @@ Route::controller(DetailHargaController::class)->group(function () {
 });
 
 
-Route::controller(ItemsController::class)->group(function () {
-    Route::get('/admin/all-item', 'Index')->name('allitems'); /* */
-    Route::get('/admin/all-item/exportpdf', 'exportPdf')->name('allitems.exportpdf');
-    Route::delete('/admin/batch-delete-items', 'batchDelete')->name('batch.delete.items');
-    Route::get('/admin/all-item/detail/{id}', 'detail')->name('admin.detail_allitems');
-    Route::get('/admin/all-item/exportpdf/{id}', 'exportPdfDetail')->name('allitems.exportpdf.detail');
-    Route::get('/admin/manage-item', 'ManageItems')->name('manageitems');
-    Route::get('/admin/all-item/search', 'SearchItem')->name('searchitem');
-    Route::get('/admin/add-items', 'AddItems')->name('additems');
-    Route::post('/admin/store-item', 'StoreItem')->name('store-item');
-    Route::get('/admin/edit-item/{id}', 'EditItem')->name('edititem');
-    Route::post('/admin/update-item', 'UpdateItem')->name('updateitem');
-    Route::get('/admin/delete-item/{id}', 'DeleteItem')->name('deleteitem');
-    Route::get('/admin/keluar-barang', 'KeluarBarang')->name('exititems');
-    Route::post('/admin/store-keluar-barang', 'StoreKeluarBarang')->name('store-exititems');
-    Route::get('/admin/keluar-barang', 'KeluarBarang')->name('exititems');
-    Route::post('/admin/store-keluar-barang', 'StoreKeluarBarang')->name('store-exititems');
-    // New route for updating stock
-    Route::post('/admin/update-stock-item', 'UpdateStockItem')->name('update-stock-item'); /* */
-    Route::post('/barang/tambah-qty', [ItemsController::class, 'tambahQty'])->name('barang.tambahQty');
-});
+// Route::controller(ItemsController::class)->group(function () {
+//     Route::get('/admin/all-item', 'Index')->name('allitems'); /* */
+//     Route::get('/admin/all-item/exportpdf', 'exportPdf')->name('allitems.exportpdf');
+//     Route::delete('/admin/batch-delete-items', 'batchDelete')->name('batch.delete.items');
+//     Route::get('/admin/all-item/detail/{id}', 'detail')->name('admin.detail_allitems');
+//     Route::get('/admin/all-item/exportpdf/{id}', 'exportPdfDetail')->name('allitems.exportpdf.detail');
+//     Route::get('/admin/manage-item', 'ManageItems')->name('manageitems');
+//     Route::get('/admin/all-item/search', 'SearchItem')->name('searchitem');
+//     Route::get('/admin/add-items', 'AddItems')->name('additems');
+//     Route::post('/admin/store-item', 'StoreItem')->name('store-item');
+//     Route::get('/admin/edit-item/{id}', 'EditItem')->name('edititem');
+//     Route::post('/admin/update-item', 'UpdateItem')->name('updateitem');
+//     Route::get('/admin/delete-item/{id}', 'DeleteItem')->name('deleteitem');
+//     Route::get('/admin/keluar-barang', 'KeluarBarang')->name('exititems');
+//     Route::post('/admin/store-keluar-barang', 'StoreKeluarBarang')->name('store-exititems');
+//     Route::get('/admin/keluar-barang', 'KeluarBarang')->name('exititems');
+//     Route::post('/admin/store-keluar-barang', 'StoreKeluarBarang')->name('store-exititems');
+//     // New route for updating stock
+//     Route::post('/admin/update-stock-item', 'UpdateStockItem')->name('update-stock-item'); /* */
+//     Route::post('/barang/tambah-qty', [ItemsController::class, 'tambahQty'])->name('barang.tambahQty');
+// });
 
 Route::post('/predict', [ForecastController::class, 'predict']);
 
@@ -245,6 +245,7 @@ Route::controller(ParameterReportController::class)->group(function () {
 Route::controller(ProdukController::class)->group(function () {
     // Tampilkan semua produk
     Route::get('/admin/all-produk', 'index')->name('allproduk');
+        Route::get('/admin/all-produk/detail/{id}', 'detail')->name('admin.detail_allproduk');
     // Tampilkan form tambah produk
     Route::get('/admin/add-produk', 'addProduk')->name('addproduk');
     // Proses form tambah produk
@@ -295,16 +296,16 @@ Route::controller(UserController::class)->group(function () {
     Route::get('/admin/delete-users/{id}', 'DeleteUsers')->name('deleteusers');
 });
 
-Route::controller(DiagnosaController::class)->group(function () {
-    Route::get('/admin/all-diagnosa', 'Index')->name('allDiagnosaPenyakit');
-    Route::get('/admin/search-diagnosa', 'SearchDiagnosa')->name('searchdiagnosa');
-    Route::get('/admin/add-diagnosa', 'AddDiagnosa')->name('add-diagnosa');
-    Route::post('/admin/store-diagnosa', 'StoreDiagnosa')->name('storediagnosa');
-    Route::get('/admin/edit-diagnosa/{id}', 'editDiagnosa')->name('editdiagnosa');
-    Route::post('/admin/update-diagnosa/{id}', 'updateDiagnosa')->name('update-diagnosa');
-    Route::get('/admin/delete-diagnosa/{id}', 'deleteDiagnosa')->name('deletediagnosa');
-    Route::get('/admin/show-diagnosa/{id}', 'showDiagnosa')->name('showdiagnosa');
-});
+// Route::controller(DiagnosaController::class)->group(function () {
+//     Route::get('/admin/all-diagnosa', 'Index')->name('allDiagnosaPenyakit');
+//     Route::get('/admin/search-diagnosa', 'SearchDiagnosa')->name('searchdiagnosa');
+//     Route::get('/admin/add-diagnosa', 'AddDiagnosa')->name('add-diagnosa');
+//     Route::post('/admin/store-diagnosa', 'StoreDiagnosa')->name('storediagnosa');
+//     Route::get('/admin/edit-diagnosa/{id}', 'editDiagnosa')->name('editdiagnosa');
+//     Route::post('/admin/update-diagnosa/{id}', 'updateDiagnosa')->name('update-diagnosa');
+//     Route::get('/admin/delete-diagnosa/{id}', 'deleteDiagnosa')->name('deletediagnosa');
+//     Route::get('/admin/show-diagnosa/{id}', 'showDiagnosa')->name('showdiagnosa');
+// });
 
 
 // Route::controller(OrderController::class)->group(function () {
@@ -336,6 +337,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/forecast/stock', [ForecastController::class, 'showForm'])->name('forecast.form');
     Route::post('/admin/forecast/predict', [ForecastController::class, 'predict'])->name('predict');
     Route::get('/admin/forecast/get-sales-data', [ForecastController::class, 'getSalesData'])->name('forecast.get-sales-data');
+    Route::post('/admin/forecast/train-model', [ForecastController::class, 'trainModel'])->name('forecast.train-model');
+    Route::post('/admin/forecast/model/{id_history}/set-active', [ForecastController::class, 'setActiveModel'])->name('forecast.model.set-active');
+    Route::post('/admin/forecast/model/global-override', [ForecastController::class, 'globalOverride'])->name('forecast.model.global-override');
+    Route::post('/admin/forecast/model/auto-optimize', [ForecastController::class, 'autoOptimize'])->name('forecast.model.auto-optimize');
     Route::post('/admin/forecast/run-batch', [ForecastController::class, 'runBatchForecast'])->name('forecast.run-batch');
     Route::get('/admin/forecast/flask-health', [ForecastController::class, 'checkFlaskHealth'])->name('forecast.flask-health');
 });
@@ -360,7 +365,7 @@ Route::controller(TokoController::class)->group(function () {
     })->name('kontak');
 });
 
-Route::get('/pesanan/{id}', [PesananController::class, 'detail'])->name('pesanan.detail');
+Route::get('/pesanan/{id}', [PesananController::class, 'detail'])->middleware('auth')->name('pesanan.detail');
 
 
 
@@ -372,7 +377,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/save-address', 'saveAddress')->name('save.address');
         Route::post('/save-shipping', 'saveShipping')->name('save.shipping');
         Route::get('/shipping', [CartController::class, 'shipping'])->name('shipping');
-        // Route::get('/payment', [\App\Http\Controllers\Api\V1\PaymentController::class, 'payment'])->name('payment');
+        Route::get('/payment', [\App\Http\Controllers\Api\V1\PaymentController::class, 'payment'])->name('payment');
         Route::get('/review', [\App\Http\Controllers\Api\V1\OrderController::class, 'review'])->name('review');
 
         // API Cart
@@ -464,14 +469,13 @@ Route::get('/checkout', [DeliveryShoppingController::class, 'index'])->name('che
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
 // Midtrans Payment Routes
-/*
-// Route::controller(PaymentController::class)->group(function () {
-    // Route::post('/payment/create-snap-token', 'createSnapToken')->name('payment.create-snap-token');
-    // Route::post('/payment/notification', 'handleNotification')->name('payment.notification');
-    // Route::get('/payment/success', 'paymentSuccess')->name('payment.success');
-    // Route::get('/payment/error', 'paymentError')->name('payment.error');
-// });
-*/
+
+Route::controller(PaymentController::class)->group(function () {
+    Route::post('/payment/create-snap-token', 'createSnapToken')->name('payment.create-snap-token');
+    Route::post('/payment/notification', 'handleNotification')->name('payment.notification');
+    Route::get('/payment/success', 'paymentSuccess')->name('payment.success');
+    Route::get('/payment/error', 'paymentError')->name('payment.error');
+});
 
 // Test route for debugging
 Route::get('/test-transaction', function () {

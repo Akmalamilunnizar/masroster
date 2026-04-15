@@ -11,8 +11,11 @@
             <small class="text-muted">Forecast for {{ $month }} | Last Update: {{ $lastUpdate }}</small>
         </div>
         <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#trainModelModal">
+                <i class="bx bx-refresh me-1"></i> Latih Ulang AI
+            </button>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#runForecastModal">
-                <i class="bx bx-bot me-1"></i> Run Batch Forecast
+                <i class="bx bx-flash me-1"></i> Jalankan Prediksi Cepat
             </button>
             <a href="{{ route('forecast.form') }}" class="btn btn-success">
                 <i class="bx bx-chart me-1"></i> Forecast Spesifik Produk
@@ -40,6 +43,71 @@
             <i class="bx bx-info-circle fs-4 me-2"></i>
             <div>
                 <strong>No forecasts yet!</strong> Click <strong>"Run Batch Forecast"</strong> above to generate AI forecasts for all products.
+            </div>
+        </div>
+    @endif
+
+    @if(session('batch_results'))
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0 text-primary">
+                    <i class="bx bx-table me-1"></i> Detail Data Table - Hasil Batch Forecast
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Kode Produk</th>
+                                <th>Nama Roster</th>
+                                <th class="text-end">Tebakan Penjualan (Bulan Depan)</th>
+                                <th class="text-center">WMAPE (%)</th>
+                                <th class="text-end">MAE</th>
+                                <th class="text-end">RMSE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(session('batch_results') as $row)
+                                @php
+                                    $wmape = $row['wmape_score'] ?? null;
+                                    $wmapeBadgeClass = 'bg-danger';
+                                    $wmapeLabel = 'Perlu Perhatian / Kurang Data';
+
+                                    if (!is_null($wmape) && (float) $wmape < 15) {
+                                        $wmapeBadgeClass = 'bg-success';
+                                        $wmapeLabel = 'Sangat Akurat';
+                                    } elseif (!is_null($wmape) && (float) $wmape >= 16 && (float) $wmape <= 30) {
+                                        $wmapeBadgeClass = 'bg-warning text-dark';
+                                        $wmapeLabel = 'Cukup Akurat';
+                                    }
+
+                                    $wmapeText = is_null($wmape)
+                                        ? 'N/A'
+                                        : rtrim(rtrim(number_format((float) $wmape, 2, '.', ''), '0'), '.');
+                                @endphp
+                                <tr>
+                                    <td><code>{{ $row['id_roster'] ?? '-' }}</code></td>
+                                    <td>{{ $row['nama_produk'] ?? '-' }}</td>
+                                    <td class="text-end">
+                                        {{ is_null($row['forecasted_demand'] ?? null) ? '-' : number_format((float) $row['forecasted_demand'], 2) }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $wmapeBadgeClass }}">
+                                            {{ $wmapeText }}{{ is_null($wmape) ? '' : '%' }} - {{ $wmapeLabel }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        {{ is_null($row['mae_score'] ?? null) ? '-' : number_format((float) $row['mae_score'], 2) }}
+                                    </td>
+                                    <td class="text-end">
+                                        {{ is_null($row['rmse_score'] ?? null) ? '-' : number_format((float) $row['rmse_score'], 2) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     @endif
@@ -140,6 +208,7 @@
                                     <th class="text-end">AI Forecast (Next Month)</th>
                                     <th class="text-end">Safety Stock</th>
                                     <th class="text-center">Model</th>
+                                    <th class="text-center">Versi Aktif</th>
                                     <th class="text-center">Status</th>
                                     <th class="text-center">Last Updated</th>
                                 </tr>
@@ -166,6 +235,10 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
+                                            <small class="d-block">LSTM: <code>{{ $item['active_lstm_version'] ?? '-' }}</code></small>
+                                            <small class="d-block">Prophet: <code>{{ $item['active_prophet_version'] ?? '-' }}</code></small>
+                                        </td>
+                                        <td class="text-center">
                                             @if($item['status'] === 'critical')
                                                 <span class="badge bg-danger">
                                                     <i class="bx bx-error-circle me-1"></i> Critical
@@ -190,10 +263,65 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-4">
+                                        <td colspan="9" class="text-center py-4">
                                             <i class="bx bx-package" style="font-size: 3rem; opacity: 0.3;"></i>
                                             <p class="text-muted mb-0">Tidak ada data produk</p>
                                         </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-bottom">
+                    <h5 class="mb-0 text-primary"><i class="bx bx-health me-1"></i> AI Health Dashboard</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nama Produk</th>
+                                    <th>Algoritma Aktif</th>
+                                    <th>ID Versi</th>
+                                    <th>WMAPE</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($healthRows ?? [] as $row)
+                                    @php
+                                        $wmape = $row['wmape_score'];
+                                        $wmapeClass = is_null($wmape) || $wmape > 50
+                                            ? 'bg-danger'
+                                            : ($wmape >= 21 ? 'bg-warning text-dark' : 'bg-success');
+                                        $wmapeText = is_null($wmape) ? 'Belum dilatih' : rtrim(rtrim(number_format((float) $wmape, 2, '.', ''), '0'), '.') . '%';
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $row['nama_produk'] }}</td>
+                                        <td>
+                                            <span class="badge {{ $row['is_active'] ? 'bg-success' : 'bg-dark' }}">
+                                                {{ $row['is_active'] ? '[AKTIF] ' : '[LAMA] ' }}{{ $row['algoritma_aktif'] }}
+                                            </span>
+                                        </td>
+                                        <td><code>{{ $row['version_id'] }}</code></td>
+                                        <td><span class="badge {{ $wmapeClass }}">{{ $wmapeText }}</span></td>
+                                        <td class="text-center">
+                                            @if(!$row['is_active'])
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="setActiveModel({{ $row['id'] }})">
+                                                    Jadikan Model Utama
+                                                </button>
+                                            @else
+                                                <span class="badge bg-success">Aktif</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">Belum ada model aktif di registry.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -223,7 +351,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="runForecastModalLabel">
-                    <i class="bx bx-bot me-1"></i> Run Batch Forecast
+                    <i class="bx bx-flash me-1"></i> Jalankan Prediksi Cepat
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -277,8 +405,8 @@
                         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                             <span class="visually-hidden">Processing...</span>
                         </div>
-                        <h6 class="mb-1" id="progressTitle">Training model & forecasting...</h6>
-                        <p class="text-muted mb-0" id="progressSubtext">This may take a few minutes depending on product count.</p>
+                        <h6 class="mb-1" id="progressTitle">Running quick inference forecast...</h6>
+                        <p class="text-muted mb-0" id="progressSubtext">This should finish quickly if active model versions are available.</p>
                         <div class="progress mt-3" style="height: 6px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
                         </div>
@@ -294,7 +422,43 @@
             <div class="modal-footer" id="modalFooter">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-primary" id="btnRunForecast" onclick="runBatchForecast()">
-                    <i class="bx bx-play me-1"></i> Jalankan Forecast
+                    <i class="bx bx-play me-1"></i> Jalankan Prediksi Cepat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Train Model Modal -->
+<div class="modal fade" id="trainModelModal" tabindex="-1" aria-labelledby="trainModelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="trainModelModalLabel">
+                    <i class="bx bx-refresh me-1"></i> Latih Ulang AI
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Training akan membuat versi model baru. Versi hanya dipromosikan jika WMAPE lebih baik.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Pilih Model untuk Training</label>
+                    <select id="trainModelSelect" class="form-select">
+                        <option value="prophet">PROPHET</option>
+                        <option value="lstm">LSTM</option>
+                    </select>
+                </div>
+                <div id="trainProgress" class="d-none text-center py-3">
+                    <div class="spinner-border text-warning mb-3" role="status"></div>
+                    <h6 class="mb-1">Training sedang berjalan...</h6>
+                    <p class="text-muted mb-0">Mohon tunggu sampai proses selesai.</p>
+                </div>
+                <div id="trainResult" class="d-none"></div>
+            </div>
+            <div class="modal-footer" id="trainModalFooter">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-warning" id="btnTrainModel" onclick="runModelTraining()">
+                    <i class="bx bx-play me-1"></i> Mulai Training
                 </button>
             </div>
         </div>
@@ -325,6 +489,39 @@
         document.getElementById('btnRunForecast').disabled = false;
         document.getElementById('modalFooter').classList.remove('d-none');
     });
+
+    document.getElementById('trainModelModal').addEventListener('show.bs.modal', function () {
+        document.getElementById('trainProgress').classList.add('d-none');
+        document.getElementById('trainResult').classList.add('d-none');
+        document.getElementById('btnTrainModel').disabled = false;
+        document.getElementById('trainModalFooter').classList.remove('d-none');
+    });
+
+        function setActiveModel(historyId) {
+            if (!confirm('Jadikan versi ini sebagai model utama?')) {
+                return;
+            }
+
+            fetch(`{{ url('/admin/forecast/model') }}/${historyId}/set-active`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.status === 'success') {
+                    location.reload();
+                    return;
+                }
+
+                alert(data.message || 'Gagal mengubah model aktif.');
+            })
+            .catch(err => alert(err.message));
+        }
 
     function checkFlaskHealth() {
         const statusEl = document.getElementById('flaskStatus');
@@ -358,7 +555,7 @@
                     <i class="bx bx-error fs-4 me-2 mt-1"></i>
                     <div>
                         <strong>Flask AI Server is Offline</strong><br>
-                        <small>Forecast will use <strong>Simple Moving Average (SMA)</strong> as fallback.</small>
+                        <small>Fast inference requires the AI server to be online.</small>
                     </div>
                 `;
             }
@@ -369,7 +566,7 @@
                 <i class="bx bx-error fs-4 me-2 mt-1"></i>
                 <div>
                     <strong>Could not check server status</strong><br>
-                    <small>Forecast will use <strong>SMA fallback</strong> if Flask is unreachable.</small>
+                    <small>Flask AI Server is not reachable. Fast inference is unavailable.</small>
                 </div>
             `;
         });
@@ -383,7 +580,7 @@
         document.getElementById('forecastProgress').classList.remove('d-none');
         document.getElementById('forecastResult').classList.add('d-none');
         document.getElementById('btnRunForecast').disabled = true;
-        document.getElementById('progressTitle').textContent = `Training ${model.toUpperCase()} model & forecasting all products...`;
+        document.getElementById('progressTitle').textContent = `Menjalankan prediksi cepat ${model.toUpperCase()}...`;
 
         fetch('{{ route("forecast.run-batch") }}', {
             method: 'POST',
@@ -420,6 +617,9 @@
                     </div>
                 `;
                 document.getElementById('modalFooter').classList.add('d-none');
+                setTimeout(() => {
+                    location.reload();
+                }, 700);
             } else {
                 resultEl.innerHTML = `
                     <div class="text-center text-danger mb-3">
@@ -446,12 +646,71 @@
         });
     }
 
+    function runModelTraining() {
+        const model = document.getElementById('trainModelSelect').value;
+
+        document.getElementById('trainProgress').classList.remove('d-none');
+        document.getElementById('trainResult').classList.add('d-none');
+        document.getElementById('btnTrainModel').disabled = true;
+
+        fetch('{{ route("forecast.train-model") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ model: model })
+        })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            document.getElementById('trainProgress').classList.add('d-none');
+            const resultEl = document.getElementById('trainResult');
+            resultEl.classList.remove('d-none');
+
+            if (ok && data.status === 'success') {
+                const summary = data.summary || {};
+                const metrics = summary.metrics || {};
+                resultEl.innerHTML = `
+                    <div class="alert alert-success mb-0">
+                        <strong>Training selesai.</strong><br>
+                        Model: ${summary.model || model.toUpperCase()}<br>
+                        Versi Baru: <code>${summary.model_version || '-'}</code><br>
+                        Promoted: ${summary.promoted ?? 0}, Rejected: ${summary.rejected ?? 0}<br>
+                        MAE: ${metrics.mae ?? '-'} | WMAPE: ${metrics.wmape ?? '-'}
+                    </div>
+                `;
+            } else {
+                resultEl.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <strong>Training gagal.</strong><br>
+                        ${data.message || 'Unknown error'}
+                    </div>
+                `;
+                document.getElementById('btnTrainModel').disabled = false;
+            }
+        })
+        .catch(err => {
+            document.getElementById('trainProgress').classList.add('d-none');
+            const resultEl = document.getElementById('trainResult');
+            resultEl.classList.remove('d-none');
+            resultEl.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <strong>Connection error.</strong><br>
+                    ${err.message}
+                </div>
+            `;
+            document.getElementById('btnTrainModel').disabled = false;
+        });
+    }
+
     // Initialize DataTable if available
     $(document).ready(function() {
         if ($.fn.DataTable) {
             $('#stockTable').DataTable({
                 pageLength: 25,
-                order: [[6, 'asc']], // Sort by status column
+                order: [[7, 'asc']], // Sort by status column
                 language: {
                     search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",

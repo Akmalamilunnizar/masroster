@@ -34,6 +34,26 @@ class BatchForecastTest extends TestCase
             'last_forecast_at' => null,
         ]);
 
+        $this->createModelHistory([
+            'id_roster' => $successfulProduct->IdRoster,
+            'model_type' => 'prophet',
+            'version_id' => 'v900',
+            'wmape_score' => 12.5,
+            'mae_score' => 1.11,
+            'rmse_score' => 2.22,
+            'is_active' => true,
+        ]);
+
+        $this->createModelHistory([
+            'id_roster' => $failedProduct->IdRoster,
+            'model_type' => 'prophet',
+            'version_id' => 'v900',
+            'wmape_score' => 12.5,
+            'mae_score' => 1.11,
+            'rmse_score' => 2.22,
+            'is_active' => true,
+        ]);
+
         for ($i = 6; $i >= 1; $i--) {
             $transaction = $this->createMasrosterTransaction([
                 'IdTransaksi' => 'TXS' . $i . '001',
@@ -96,22 +116,11 @@ class BatchForecastTest extends TestCase
                 ], 200);
             }
 
-            if (str_contains($url, '/train/')) {
-                return Http::response([
-                    'status' => 'success',
-                    'metrics' => [
-                        'mae' => 1.11,
-                        'rmse' => 2.22,
-                        'wmape' => 3.33,
-                    ],
-                    'meta' => [
-                        'message' => 'trained',
-                    ],
-                ], 200);
-            }
-
             if (str_contains($url, '/predict')) {
                 $predictCalls++;
+
+                $body = json_decode($request->body(), true);
+                $this->assertSame('v900', $body['model_version'] ?? null);
 
                 if ($predictCalls === 1) {
                     return Http::response([
@@ -147,12 +156,9 @@ class BatchForecastTest extends TestCase
             ->assertJsonPath('status', 'partial_success')
             ->assertJsonPath('summary.success', 1)
             ->assertJsonPath('summary.failed', 1)
-            ->assertJsonPath('summary.total', 2)
-            ->assertJsonPath('summary.metrics.mae', 1.11)
-            ->assertJsonPath('summary.metrics.wmape', 3.33);
+            ->assertJsonPath('summary.total', 2);
 
         Http::assertSent(fn ($request) => str_contains($request->url(), '/health'));
-        Http::assertSent(fn ($request) => str_contains($request->url(), '/train/prophet'));
         Http::assertSent(fn ($request) => str_contains($request->url(), '/predictprophet'));
 
         $this->assertDatabaseHas('produk', [
@@ -164,11 +170,7 @@ class BatchForecastTest extends TestCase
         $failedProduct->refresh();
 
         $this->assertNotNull($successfulProduct->forecasted_demand);
-        $this->assertEquals(1.11, (float) $successfulProduct->mae_score);
-        $this->assertEquals(3.33, (float) $successfulProduct->wmape_score);
         $this->assertNull($failedProduct->forecasted_demand);
-        $this->assertNull($failedProduct->mae_score);
-        $this->assertNull($failedProduct->wmape_score);
         $this->assertNull($failedProduct->last_forecast_at);
     }
 
@@ -187,6 +189,16 @@ class BatchForecastTest extends TestCase
             'forecast_model' => null,
             'forecasted_demand' => null,
             'last_forecast_at' => null,
+        ]);
+
+        $this->createModelHistory([
+            'id_roster' => $product->IdRoster,
+            'model_type' => 'prophet',
+            'version_id' => 'v902',
+            'wmape_score' => 11.1,
+            'mae_score' => 1.11,
+            'rmse_score' => 2.22,
+            'is_active' => true,
         ]);
 
         for ($i = 6; $i >= 1; $i--) {
@@ -226,21 +238,10 @@ class BatchForecastTest extends TestCase
                 ], 200);
             }
 
-            if (str_contains($url, '/train/')) {
-                return Http::response([
-                    'status' => 'success',
-                    'metrics' => [
-                        'mae' => 1.11,
-                        'rmse' => 2.22,
-                        'wmape' => 3.33,
-                    ],
-                    'meta' => [
-                        'message' => 'trained',
-                    ],
-                ], 200);
-            }
-
             if (str_contains($url, '/predict')) {
+                $body = json_decode($request->body(), true);
+                $this->assertSame('v902', $body['model_version'] ?? null);
+
                 return Http::response([
                     'status' => 'success',
                     'forecast' => [123.45],
@@ -269,7 +270,6 @@ class BatchForecastTest extends TestCase
             ->assertJsonPath('status', 'success');
 
         Http::assertSent(fn ($request) => str_contains($request->url(), '/health'));
-        Http::assertSent(fn ($request) => str_contains($request->url(), '/train/prophet'));
         Http::assertSent(fn ($request) => str_contains($request->url(), '/predictprophet'));
 
         $this->assertDatabaseHas('produk', [
@@ -278,7 +278,6 @@ class BatchForecastTest extends TestCase
         ]);
 
         $product->refresh();
-        $this->assertEquals(1.11, (float) $product->mae_score);
-        $this->assertEquals(3.33, (float) $product->wmape_score);
+        $this->assertNotNull($product->forecasted_demand);
     }
 }

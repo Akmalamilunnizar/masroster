@@ -16,6 +16,18 @@ Kolom utama yang dipakai:
 - `forecast_status` (`critical`, `low`, `safe`, `overstock`)
 - `last_forecast_at` (timestamp)
 
+## Registry Model History
+Seluruh versi model disimpan di tabel `model_histories` sebagai single source of truth.
+
+Kolom utama:
+- `id_roster`
+- `model_type` (`lstm`, `prophet`)
+- `version_id`
+- `wmape_score`
+- `mae_score`
+- `rmse_score`
+- `is_active`
+
 ## Aturan Klasifikasi Status
 - `critical`: `stock < safety_stock`
 - `low`: `stock < (forecasted_demand + safety_stock)`
@@ -64,17 +76,15 @@ Payload inti prediksi:
 {
   "bulan": ["2025-01", "2025-02"],
   "terjual": [120, 150],
-  "data_type": "Eceran",
-  "model_name": "lstm_eceran_tuned"
+  "model_version": "v123456"
 }
 ```
 
-Tidak ada ketergantungan terhadap metadata non-forecast; payload hanya berisi data time-series penjualan.
+Batch dan manual forecast mengirim `model_version` yang diambil dari `model_histories`.
 
 ## Fallback Behavior
 Jika Flask tidak tersedia:
-- Sistem fallback ke **Simple Moving Average (SMA)**
-- Forecast tetap diperbarui
+- Fast inference dibatalkan
 - Log warning dicatat di `storage/logs/laravel.log`
 
 ## Dashboard Utility
@@ -91,6 +101,7 @@ php artisan app:forecast-all --model=lstm
 ```
 3. Buka halaman admin forecast/dashboard untuk memastikan status dan rekomendasi tampil.
 4. Periksa log jika terjadi timeout atau service offline.
+5. Cek `model_histories` untuk memastikan baris aktif per `id_roster` dan `model_type` sudah benar.
 
 ## Troubleshooting
 - Forecast kosong: jalankan ulang dengan `--force`.

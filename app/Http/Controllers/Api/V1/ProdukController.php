@@ -5,17 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Produk;
-use App\Models\Items;
 use App\Models\Size;
 use App\Models\DetailMasuk;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
-use App\Models\BarangMasuk;
-use App\Models\DetailKeluar;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class ProdukController extends Controller
 {
@@ -23,13 +18,13 @@ class ProdukController extends Controller
     public function index()
     {
         // Load products with relationships needed for listing
-        $dataProduk = Produk::with(['sizes', 'jenisRoster', 'motif'])->get();
+        $dataProduk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->get();
         return view('admin.allproduk', compact('dataProduk'));
     }
     public function detail($IdRoster)
     {
-        // Ambil data barang dengan relasi yang dibutuhkan
-        $item = Items::with(['jenisRoster', 'satuan'])
+        // Ambil data produk dengan relasi yang dibutuhkan untuk detail dan ukuran
+        $produk = Produk::with(['jenisRoster', 'tipeRoster', 'motif', 'sizes'])
             ->where('IdRoster', $IdRoster)
             ->firstOrFail();
 
@@ -48,7 +43,7 @@ class ProdukController extends Controller
             ->get();
 
         // Kirim ke view
-        return view('admin.detail_allitems', compact('item', 'historiMasuk', 'historiKeluar'));
+        return view('admin.detail_allproduk', compact('produk', 'historiMasuk', 'historiKeluar'));
     }
     // Menampilkan form tambah produk
     public function addProduk()
@@ -72,10 +67,10 @@ class ProdukController extends Controller
         try {
             // Validasi input
             $request->validate([
-                'sizes' => 'required|array',
+                'sizes' => 'required|array|min:1',
                 'sizes.*' => 'exists:size,id_ukuran',
-                'harga_per_size' => 'required|array',
-                'harga_per_size.*' => 'required|integer',
+                'harga_per_size' => 'required|array|min:1',
+                'harga_per_size.*' => 'required|integer|min:0',
                 'IdJenisBarang' => 'required|exists:jenisbarang,IdJenisBarang',
                 'id_tipe' => 'required|exists:tipe_roster,IdTipe',
                 'id_motif' => [
@@ -86,6 +81,9 @@ class ProdukController extends Controller
                 'Img' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'deskripsi' => 'required|string|max:1500',
             ]);
+
+            $this->ensureMotifMatchesTipe($request->id_tipe, $request->id_motif);
+            $syncData = $this->buildSizeSyncData($request->sizes, $request->harga_per_size);
 
             DB::beginTransaction();
             // Ambil ID produk terakhir dari database
@@ -106,15 +104,13 @@ class ProdukController extends Controller
                 'deskripsi' => $request->deskripsi,
             ]);
 
-            // Attach sizes with harga
-            $syncData = [];
-            foreach ($request->sizes as $index => $sizeId) {
-                $syncData[$sizeId] = ['harga' => $request->harga_per_size[$index]];
-            }
+            // Attach ukuran dan harga pivot agar data size tetap konsisten di Produk
             $produk->sizes()->attach($syncData);
 
             DB::commit();
             return redirect()->route('allproduk')->with('message', 'Produk berhasil ditambahkan!');
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -139,7 +135,7 @@ class ProdukController extends Controller
 
         // Validasi input
         $request->validate([
-            'sizes' => 'required|array',
+            'sizes' => 'required|array|min:1',
             'sizes.*' => 'exists:size,id_ukuran',
             'IdJenisBarang' => 'required|exists:jenisbarang,IdJenisBarang',
             'id_tipe' => 'required|exists:tipe_roster,IdTipe',
@@ -151,6 +147,9 @@ class ProdukController extends Controller
             'Img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'deskripsi' => 'required|string|max:1500',
         ]);
+
+        $this->ensureMotifMatchesTipe($request->id_tipe, $request->id_motif);
+        $syncData = $this->buildSizeSyncData($request->sizes, $request->harga_per_size);
 
         DB::beginTransaction();
         try {
@@ -172,15 +171,14 @@ class ProdukController extends Controller
                 'deskripsi' => $request->deskripsi,
             ]);
 
-            // Sync sizes
-            $syncData = [];
-            foreach ($request->sizes as $index => $sizeId) {
-                $syncData[$sizeId] = ['harga' => $request->harga_per_size[$index]];
-            }
+            // Sinkronkan ukuran dan harga pivot agar update tidak meninggalkan pasangan data yang tidak seimbang
             $produk->sizes()->sync($syncData);
 
             DB::commit();
             return redirect()->route('allproduk')->with('message', 'Produk berhasil diperbarui!');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -213,162 +211,10 @@ class ProdukController extends Controller
         }
     }
 
-    public function StoreItem(Request $request)
-    {
-        $request->validate([
-            'IdRoster' => 'required|unique:databarang,IdRoster',
-            'NamaBarang' => 'required|unique:databarang,NamaBarang',
-            'IdJenisBarang' => 'required',
-            'IdSatuan' => 'required',
-            'IdMasuk' => 'required',
-            'username' => 'required',
-            'IdSupplier' => 'required',
-            'QtyMasuk' => 'required|numeric',
-            'HargaSatuan' => 'required|numeric',
-            'SubTotal' => 'required|numeric',
-        ]);
-
-        // Simpan ke tabel databarang (timestamps auto)
-        Items::create([
-            'IdRoster' => $request->IdRoster,
-            'NamaBarang' => $request->NamaBarang,
-            'IdJenisBarang' => $request->IdJenisBarang,
-            'stock' => 0, // handled by trigger
-            'IdSatuan' => $request->IdSatuan,
-        ]);
-
-        // Simpan ke tabel barangmasuk (master transaksi, no timestamps)
-        BarangMasuk::create([
-            'IdMasuk' => $request->IdMasuk,
-            'username' => $request->username,
-            'tglMasuk' => Carbon::now(),
-        ]);
-
-        // Simpan ke tabel detail_barangmasuk (timestamps auto)
-        DetailMasuk::create([
-            'IdMasuk' => $request->IdMasuk,
-            'IdSupplier' => $request->IdSupplier,
-            'IdRoster' => $request->IdRoster,
-            'QtyMasuk' => $request->QtyMasuk,
-            'HargaSatuan' => $request->HargaSatuan,
-            'SubTotal' => $request->SubTotal,
-        ]);
-
-        return redirect()->route('allitems')->with('message', 'Barang telah berhasil ditambah!');
-    }
-
-    public function StoreKeluarBarang(Request $request)
-    {
-        $request->validate([
-            'IdKeluar' => 'required',
-            'username' => 'required',
-            'IdRoster' => 'required',
-            'QtyKeluar' => 'required|numeric|min:1',
-        ]);
-
-        // Check if stock is sufficient
-        $item = Items::findOrFail($request->IdRoster);
-        if ($item->stock < $request->QtyKeluar) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi!');
-        }
-
-        // Begin transaction
-        DB::beginTransaction();
-        try {
-            // Insert into barangkeluar (no timestamps)
-            \App\Models\BarangKeluar::create([
-                'IdKeluar' => $request->IdKeluar,
-                'username' => $request->username,
-                'tglKeluar' => Carbon::now(),
-            ]);
-
-            // Insert into detail_barangkeluar (timestamps auto)
-            DetailKeluar::create([
-                'IdKeluar' => $request->IdKeluar,
-                'IdRoster' => $request->IdRoster,
-                'QtyKeluar' => $request->QtyKeluar,
-            ]);
-
-            DB::commit();
-            return redirect()->route('allitems')->with('message', 'Barang berhasil keluar!');
-        } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
-
-    public function tambahQty(Request $request)
-    {
-        $request->validate([
-            'IdRoster' => 'required',
-            'QtyMasuk' => 'required|integer|min:1',
-        ]);
-
-        // Ambil IdMasuk terakhir dari tabel barangmasuk
-        $lastMasuk = DB::table('barangmasuk')->orderByDesc('IdMasuk')->first();
-
-        // Buat IdMasuk baru berdasarkan yang terakhir
-        $newIdMasuk = $lastMasuk
-            ? 'BM' . str_pad((int) substr($lastMasuk->IdMasuk, 2) + 1, 4, '0', STR_PAD_LEFT)
-            : 'BM0001';
-
-        // Ambil data detail masuk terakhir untuk IdRoster ini untuk mendapatkan HargaSatuan terbaru
-        $latestDetailMasuk = DetailMasuk::where('IdRoster', $request->IdRoster)
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $hargaSatuan = $latestDetailMasuk ? $latestDetailMasuk->HargaSatuan : 0;
-        $subTotal = $request->QtyMasuk * $hargaSatuan;
-
-        // Ambil IdSupplier dari detail masuk terakhir, atau gunakan default jika tidak ada
-        $idSupplier = $latestDetailMasuk ? $latestDetailMasuk->IdSupplier : 'SP0001';
-
-        // Simpan data ke tabel barangmasuk
-        DB::table('barangmasuk')->insert([
-            'IdMasuk' => $newIdMasuk,
-            'username' => (Auth::check() ? Auth::user()->username : 'admin'),
-            'tglMasuk' => now(),
-        ]);
-
-        // Simpan data ke tabel detail_barangmasuk
-        DB::table('detail_barangmasuk')->insert([
-            'IdMasuk' => $newIdMasuk,
-            'IdSupplier' => $idSupplier,
-            'IdRoster' => $request->IdRoster,
-            'QtyMasuk' => $request->QtyMasuk,
-            'HargaSatuan' => $hargaSatuan,
-            'SubTotal' => $subTotal,
-        ]);
-
-        return redirect()->back()->with('message', 'Qty berhasil ditambahkan!');
-    }
-
-    public function DeleteItem($IdRoster)
-    {
-        // Ambil semua IdMasuk yang berkaitan dengan barang ini
-        $idMasukList = DetailMasuk::where('IdRoster', $IdRoster)->pluck('IdMasuk');
-
-        // Hapus semua entri detail masuk yang terkait dengan barang ini
-        DetailMasuk::where('IdRoster', $IdRoster)->delete();
-
-        // Hapus dari databarang
-        Items::where('IdRoster', $IdRoster)->delete();
-
-        // Cek apakah IdMasuk yang tadi sudah tidak digunakan lagi di detail_barangmasuk
-        foreach ($idMasukList as $idMasuk) {
-            $used = DetailMasuk::where('IdMasuk', $idMasuk)->exists();
-            if (!$used) {
-                BarangMasuk::where('IdMasuk', $idMasuk)->delete();
-            }
-        }
-
-        return redirect()->route('allitems')->with('message', 'Penghapusan Barang ');
-    }
-
     // Menampilkan list produk dalam format JSON
     public function get_produk_list()
     {
-        $produk = Produk::with(['jenisRoster', 'motif'])->get();
+        $produk = Produk::with(['jenisRoster', 'tipeRoster', 'motif', 'sizes'])->get();
         return response()->json($produk, 200);
     }
 
@@ -377,10 +223,10 @@ class ProdukController extends Controller
     {
         $search = $request->search;
 
-        $dataProduk = Produk::with(['sizes', 'jenisRoster', 'motif'])
+        $dataProduk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])
             ->where(function ($query) use ($search) {
                 $query->where('IdRoster', 'like', "%$search%")
-                    ->orWhere('NamaRoster', 'like', "%$search%")
+                    ->orWhere('NamaProduk', 'like', "%$search%")
                     ->orWhere('deskripsi', 'like', "%$search%");
             })
             ->get();
@@ -394,14 +240,8 @@ class ProdukController extends Controller
 
     public function show($id)
     {
-        $produk = Produk::with(['jenisRoster', 'motif'])->findOrFail($id);
+        $produk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->findOrFail($id);
         return view('admin.showproduk', compact('produk'));
-    }
-    public function sizes()
-    {
-        return $this->belongsToMany(Size::class, 'produk_size', 'IdRoster', 'id_ukuran')
-            ->withPivot('harga')
-            ->withTimestamps();
     }
 
     // AJAX method to get connected tipe roster based on jenis roster
@@ -442,5 +282,49 @@ class ProdukController extends Controller
         Log::info('Connected motif result: ' . $connectedMotif->toJson());
 
         return response()->json($connectedMotif);
+    }
+
+    private function ensureMotifMatchesTipe($tipeId, $motifId): void
+    {
+        if (empty($motifId)) {
+            return;
+        }
+
+        $isValidPair = DB::table('detail_motif')
+            ->where('id_tipe', $tipeId)
+            ->where('id_motif', $motifId)
+            ->exists();
+
+        if (!$isValidPair) {
+            throw ValidationException::withMessages([
+                'id_motif' => 'Motif yang dipilih tidak sesuai dengan tipe produk.',
+            ]);
+        }
+    }
+
+    private function buildSizeSyncData(array $sizes, array $prices): array
+    {
+        $sizes = array_values($sizes);
+        $prices = array_values($prices);
+
+        if (count($sizes) !== count($prices)) {
+            throw ValidationException::withMessages([
+                'harga_per_size' => 'Jumlah ukuran dan harga per ukuran harus sama.',
+            ]);
+        }
+
+        if (count(array_unique($sizes)) !== count($sizes)) {
+            throw ValidationException::withMessages([
+                'sizes' => 'Ukuran produk tidak boleh duplikat.',
+            ]);
+        }
+
+        $syncData = [];
+
+        foreach ($sizes as $index => $sizeId) {
+            $syncData[$sizeId] = ['harga' => $prices[$index]];
+        }
+
+        return $syncData;
     }
 }

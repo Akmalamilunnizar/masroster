@@ -42,7 +42,7 @@
                 <div class="card shadow-sm">
                     <div class="card-body p-4">
                         <h4 class="mb-4">Payment Method</h4>
-                        
+
                         <div class="payment-options">
                             <div class="mb-3">
                                 <div class="form-check">
@@ -78,9 +78,6 @@
                             <div>Subtotal: Rp {{ number_format($subtotal, 0, ',', '.') }}</div>
                             <div>Biaya Pengiriman: Rp {{ number_format($shippingCost, 0, ',', '.') }}</div>
                             <div><strong>Total: Rp {{ number_format($grandTotal, 0, ',', '.') }}</strong></div>
-                        {{-- Debug: --}}
-  Selected Address ID: {{ session('selected_address_id') }}
-
                         </div>
                     </div>
                 </div>
@@ -96,22 +93,16 @@
             return false;
         };
     </script>
-    <script src="{{ config('midtrans.snap_url') }}" 
+    <script src="{{ config('midtrans.snap_url') }}"
             data-client-key="{{ config('midtrans.client_key') }}"
             onerror="console.error('Failed to load Midtrans Snap script')"
             onload="console.log('Midtrans Snap script loaded successfully')">
-    </script>
-    <!-- Alternative Midtrans Snap script -->
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js" 
-            data-client-key="{{ config('midtrans.client_key') }}"
-            onerror="console.error('Failed to load alternative Midtrans Snap script')"
-            onload="console.log('Alternative Midtrans Snap script loaded successfully')">
     </script>
     <script>
     document.getElementById('pay-button').addEventListener('click', function() {
         const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
         const button = this;
-        
+
         if (paymentMethod === 'midtrans') {
             // Check if Midtrans Snap is loaded
             if (typeof window.snap === 'undefined') {

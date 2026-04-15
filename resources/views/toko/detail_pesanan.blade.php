@@ -29,9 +29,9 @@
 
             <div class="row mb-3">
                 <div class="col-sm-4 fw-semibold text-secondary">Username</div>
-                <div class="col-sm-8">{{ $pesanan->username }}</div>
+                <div class="col-sm-8">{{ $pesanan->customer ? $pesanan->customer->username : '-' }}</div>
             </div>
-            
+
             <div class="row mb-3">
                 <div class="col-sm-4 fw-semibold text-secondary">Alamat Pengiriman</div>
                 <div class="col-sm-8">{{ $pesanan->alamat_pengiriman ?? '-' }}</div>
@@ -127,7 +127,7 @@
                         <h6 class="fw-bold">{{ $detail->produk->NamaProduk }}</h6>
                         <p class="mb-1 text-muted">Jumlah: {{ $detail->QtyProduk }}</p>
                         <p class="mb-1 text-muted">
-                            Harga Satuan: Rp 
+                            Harga Satuan: Rp
                             {{ number_format($detail->QtyProduk > 0 ? ($detail->SubTotal / $detail->QtyProduk) : 0, 0, ',', '.') }}
                         </p>
                         <p class="mb-0 fw-semibold">Subtotal: Rp {{ number_format($detail->SubTotal, 0, ',', '.') }}</p>

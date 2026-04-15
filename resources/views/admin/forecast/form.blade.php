@@ -43,6 +43,13 @@ CIME | Halaman Forecasting
                             </select>
                             <div class="form-text mt-1 text-muted">Pilih algoritma yang digunakan untuk prediksi.</div>
                         </div>
+                        <div class="col-md-3">
+                            <label for="version_id" class="form-label fw-semibold">Versi Model</label>
+                            <select id="version_id" name="version_id" form="forecastForm" class="form-select" required disabled>
+                                <option value="">-- Pilih Produk dulu --</option>
+                            </select>
+                            <div class="form-text mt-1 text-muted">Pilih versi dari model history.</div>
+                        </div>
                         <div class="col-md-5 text-md-end mt-3 mt-md-0">
                             <div class="btn-group shadow-sm" role="group">
                                 <button type="button" class="btn btn-outline-primary" onclick="generateSampleData()"><i class="bx bx-shuffle me-1"></i> Data Sampel</button>
@@ -146,6 +153,12 @@ function clearForm() {
     rowCount = 12;
     document.getElementById('id_roster').value = '';
     document.getElementById('form_id_roster').value = '';
+    const versionSelect = document.getElementById('version_id');
+    if (versionSelect) {
+        versionSelect.innerHTML = '<option value="">-- Pilih Produk dulu --</option>';
+        versionSelect.disabled = true;
+    }
+    window.__forecastHistories = [];
 }
 
 function generateSampleData() {
@@ -201,6 +214,7 @@ function loadFromDatabase(productId) {
         if (response.status !== 'success') throw new Error(response.message || 'Unknown error');
 
         const data = response.data;
+        window.__forecastHistories = response.histories || [];
         tbody.innerHTML = '';
         rowCount = 0;
 
@@ -208,6 +222,8 @@ function loadFromDatabase(productId) {
             tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Data tidak ditemukan untuk produk ini.</td></tr>';
             return;
         }
+
+        renderVersionOptions();
 
         data.forEach(item => {
             const newRow = document.createElement('tr');
@@ -231,21 +247,58 @@ function loadFromDatabase(productId) {
     });
 }
 
+function renderVersionOptions() {
+    const model = document.getElementById('model').value;
+    const versionSelect = document.getElementById('version_id');
+    const histories = Array.isArray(window.__forecastHistories) ? window.__forecastHistories : [];
+    const filtered = histories.filter(item => (item.model_type || '').toLowerCase() === model);
+
+    if (!versionSelect) {
+        return;
+    }
+
+    versionSelect.innerHTML = '';
+
+    if (filtered.length === 0) {
+        versionSelect.innerHTML = '<option value="">-- Tidak ada versi untuk model ini --</option>';
+        versionSelect.disabled = true;
+        return;
+    }
+
+    versionSelect.disabled = false;
+    versionSelect.innerHTML = '<option value="">-- Pilih Versi Model --</option>';
+
+    filtered.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.label || `${(item.model_type || '').toUpperCase()} - ${item.version_id}`;
+        versionSelect.appendChild(option);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const modelSelect = document.getElementById('model');
     const modelHidden = document.getElementById('form_model');
     const productSelect = document.getElementById('id_roster');
     const productHidden = document.getElementById('form_id_roster');
+    const versionSelect = document.getElementById('version_id');
+
+    window.__forecastHistories = [];
 
     if (modelSelect && modelHidden) {
         modelHidden.value = modelSelect.value;
         modelSelect.addEventListener('change', function () {
             modelHidden.value = this.value;
+            renderVersionOptions();
         });
     }
 
     if (productSelect && productHidden) {
         productHidden.value = productSelect.value || '';
+    }
+
+    if (versionSelect) {
+        versionSelect.disabled = true;
     }
 });
 </script>

@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Items;
 use App\Models\Size;
 use App\Models\LaporanTransaksi;
 use App\Models\TipeRoster;
+use App\Models\ModelHistory;
 
 class Produk extends Model
 {
@@ -36,6 +36,7 @@ class Produk extends Model
         // Forecast columns
         'forecasted_demand',
         'mae_score',
+        'rmse_score',
         'wmape_score',
         'forecast_model',
         'safety_stock',
@@ -47,11 +48,6 @@ class Produk extends Model
     public $timestamps = true;
 
     // Relationships
-
-    public function diskonRelasi()
-    {
-        return $this->belongsTo(Items::class, 'diskon', 'id');
-    }
 
     public function jenisRoster()
     {
@@ -82,10 +78,41 @@ class Produk extends Model
     }
     public function transaksi()
     {
-        return $this->belongsToMany(Transaksi::class, 'detail_transaksi', 'IdProduk', 'IdTransaksi')
+        return $this->belongsToMany(Transaksi::class, 'detail_transaksi', 'IdRoster', 'IdTransaksi')
             ->withPivot(['QtyProduk', 'SubTotal'])
             ->withTimestamps()
         ;
+    }
+
+    public function modelHistories()
+    {
+        return $this->hasMany(ModelHistory::class, 'id_roster', 'IdRoster');
+    }
+
+    public function activeLstmHistory()
+    {
+        return $this->hasOne(ModelHistory::class, 'id_roster', 'IdRoster')
+            ->where('model_type', 'lstm')
+            ->where('is_active', true)
+            ->latest('created_at');
+    }
+
+    public function activeProphetHistory()
+    {
+        return $this->hasOne(ModelHistory::class, 'id_roster', 'IdRoster')
+            ->where('model_type', 'prophet')
+            ->where('is_active', true)
+            ->latest('created_at');
+    }
+
+    public function getActiveLstmVersionAttribute()
+    {
+        return optional($this->activeLstmHistory)->version_id;
+    }
+
+    public function getActiveProphetVersionAttribute()
+    {
+        return optional($this->activeProphetHistory)->version_id;
     }
 
     /**

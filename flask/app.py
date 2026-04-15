@@ -8,6 +8,8 @@ import warnings
 import logging
 import os
 import json
+import time
+import re
 
 # Suppress verbose output
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -22,11 +24,10 @@ MIN_DATA_POINTS = 6
 MODEL_DIR = os.path.join(os.path.dirname(__file__), 'models')
 os.makedirs(MODEL_DIR, exist_ok=True)
 MODEL_REGISTRY_PATH = os.path.join(MODEL_DIR, 'model_registry.json')
-
-LSTM_MODEL_PATH = os.path.join(MODEL_DIR, 'lstm_model.h5')
-LSTM_SCALER_PATH = os.path.join(MODEL_DIR, 'lstm_scaler.pkl')
-LSTM_META_PATH = os.path.join(MODEL_DIR, 'lstm_meta.pkl')
-PROPHET_MODEL_PATH = os.path.join(MODEL_DIR, 'prophet_model.pkl')
+LSTM_MODEL_DIR = os.path.join(MODEL_DIR, 'lstm')
+PROPHET_MODEL_DIR = os.path.join(MODEL_DIR, 'prophet')
+os.makedirs(LSTM_MODEL_DIR, exist_ok=True)
+os.makedirs(PROPHET_MODEL_DIR, exist_ok=True)
 
 DEFAULT_MODEL_BY_FRAMEWORK = {
     ('LSTM', 'Eceran'): 'lstm_eceran_tuned',
@@ -46,7 +47,9 @@ def resolve_artifact_path(path_value):
         raw_path,
         os.path.join(os.getcwd(), raw_path),
         os.path.join(os.path.dirname(__file__), raw_path),
-        os.path.join(MODEL_DIR, os.path.basename(raw_path))
+        os.path.join(MODEL_DIR, os.path.basename(raw_path)),
+        os.path.join(LSTM_MODEL_DIR, os.path.basename(raw_path)),
+        os.path.join(PROPHET_MODEL_DIR, os.path.basename(raw_path)),
     ]
 
     for candidate in candidates:
@@ -55,6 +58,63 @@ def resolve_artifact_path(path_value):
 
     # Fallback to models directory by basename.
     return os.path.join(MODEL_DIR, os.path.basename(raw_path))
+
+
+def slugify_token(value):
+    text = str(value or '').strip().lower()
+    text = re.sub(r'[^a-z0-9]+', '_', text)
+    text = re.sub(r'_+', '_', text).strip('_')
+    return text or 'model'
+
+
+def infer_legacy_version_prefix(row):
+    model_name = str(row.get('model_name', '')).lower()
+    return 'v_original' if 'original' in model_name else 'v_legacy'
+
+
+def derive_legacy_version_base(row):
+    framework = str(row.get('framework', '')).upper() or 'MODEL'
+    prefix = infer_legacy_version_prefix(row)
+    source = (
+        row.get('model_name')
+        or os.path.splitext(os.path.basename(str(row.get('artifact_path') or row.get('artifact_resolved') or 'model')))[0]
+        or row.get('data_type')
+        or 'model'
+    )
+    return f"{prefix}_{framework.lower()}_{slugify_token(source)}"
+
+
+def normalize_legacy_registry(registry_rows):
+    normalized = []
+    seen_versions = set()
+    changed = False
+
+    for row in registry_rows:
+        item = dict(row)
+        framework = str(item.get('framework', '')).upper() or 'MODEL'
+        version = str(item.get('model_version', '')).strip()
+
+        if version:
+            seen_versions.add((framework, version))
+            normalized.append(item)
+            continue
+
+        base_version = derive_legacy_version_base(item)
+        candidate = base_version
+        suffix = 2
+
+        while (framework, candidate) in seen_versions:
+            candidate = f"{base_version}_{suffix}"
+            suffix += 1
+
+        item['model_version'] = candidate
+        item['bootstrap_source'] = 'legacy'
+        item['bootstrap_label'] = infer_legacy_version_prefix(item)
+        seen_versions.add((framework, candidate))
+        normalized.append(item)
+        changed = True
+
+    return normalized, changed
 
 
 def load_registry():
@@ -73,6 +133,19 @@ def load_registry():
             item['scaler_resolved'] = resolve_artifact_path(item.get('scaler_path', ''))
             item['meta_resolved'] = resolve_artifact_path(item.get('meta_path', ''))
             normalized.append(item)
+
+        normalized, changed = normalize_legacy_registry(normalized)
+        if changed:
+            persistable = [
+                {
+                    key: value
+                    for key, value in row.items()
+                    if key not in {'artifact_resolved', 'scaler_resolved', 'meta_resolved'}
+                }
+                for row in normalized
+            ]
+            with open(MODEL_REGISTRY_PATH, 'w', encoding='utf-8') as f:
+                json.dump(persistable, f, ensure_ascii=False, indent=2)
         return normalized
     except Exception:
         return []
@@ -87,15 +160,95 @@ def build_model_index(registry_rows):
     return index
 
 
+def build_model_version_index(registry_rows):
+    index = {}
+    for row in registry_rows:
+        framework = str(row.get('framework', '')).upper()
+        version = str(row.get('model_version', '')).strip()
+        if framework and version:
+            index[(framework, version)] = row
+    return index
+
+
 MODEL_REGISTRY = load_registry()
 MODEL_INDEX = build_model_index(MODEL_REGISTRY)
+MODEL_VERSION_INDEX = build_model_version_index(MODEL_REGISTRY)
 
 
 def refresh_registry():
     """Reload registry from disk to catch newly exported models without restarting server."""
-    global MODEL_REGISTRY, MODEL_INDEX
+    global MODEL_REGISTRY, MODEL_INDEX, MODEL_VERSION_INDEX
     MODEL_REGISTRY = load_registry()
     MODEL_INDEX = build_model_index(MODEL_REGISTRY)
+    MODEL_VERSION_INDEX = build_model_version_index(MODEL_REGISTRY)
+
+
+def save_registry(registry_rows):
+    sanitized_rows = [
+        {
+            key: value
+            for key, value in row.items()
+            if key not in {'artifact_resolved', 'scaler_resolved', 'meta_resolved'}
+        }
+        for row in registry_rows
+    ]
+    with open(MODEL_REGISTRY_PATH, 'w', encoding='utf-8') as f:
+        json.dump(sanitized_rows, f, ensure_ascii=False, indent=2)
+
+
+def framework_folder(framework):
+    return LSTM_MODEL_DIR if str(framework).upper() == 'LSTM' else PROPHET_MODEL_DIR
+
+
+def generate_model_version():
+    return f"v{int(time.time())}"
+
+
+def register_model_version(entry):
+    refresh_registry()
+    MODEL_REGISTRY.append(entry)
+    save_registry(MODEL_REGISTRY)
+    refresh_registry()
+
+
+def get_model_entry_by_version(framework, model_version):
+    refresh_registry()
+    key = (str(framework).upper(), str(model_version).strip())
+    entry = MODEL_VERSION_INDEX.get(key)
+    if entry is None:
+        raise ValueError(f'Model version tidak ditemukan: {framework}:{model_version}')
+    return entry
+
+
+def remove_model_version(framework, model_version):
+    refresh_registry()
+    framework_upper = str(framework).upper()
+    version_str = str(model_version).strip()
+
+    removed_entry = None
+    kept_entries = []
+    for row in MODEL_REGISTRY:
+        row_framework = str(row.get('framework', '')).upper()
+        row_version = str(row.get('model_version', '')).strip()
+        if row_framework == framework_upper and row_version == version_str and removed_entry is None:
+            removed_entry = row
+            continue
+        kept_entries.append(row)
+
+    if removed_entry is None:
+        return False, 'Model version tidak ditemukan.'
+
+    for path_key in ['artifact_resolved', 'scaler_resolved', 'meta_resolved']:
+        p = removed_entry.get(path_key)
+        if p and os.path.exists(p):
+            try:
+                os.remove(p)
+            except OSError:
+                app.logger.warning(f'Failed to remove artifact path: {p}')
+
+    save_registry(kept_entries)
+    refresh_registry()
+    return True, 'Model version berhasil dihapus.'
 
 
 def get_model_entry(framework, model_name=None, data_type='Eceran'):
@@ -213,8 +366,10 @@ def health():
         artifact_path = row.get('artifact_resolved', '')
         available.append({
             'model_name': row.get('model_name', ''),
+            'model_version': row.get('model_version', ''),
             'framework': row.get('framework', ''),
             'data_type': row.get('data_type', ''),
+            'bootstrap_source': row.get('bootstrap_source', ''),
             'artifact_ready': bool(artifact_path and os.path.exists(artifact_path))
         })
 
@@ -318,21 +473,44 @@ def train_lstm():
         mae = float(abs(actual_value - max(pred_value, 0)))
         rmse = float(np.sqrt((actual_value - max(pred_value, 0)) ** 2))
 
-        # ── Save model, scaler, and metadata ──
-        model.save(LSTM_MODEL_PATH)
-        joblib.dump(scaler, LSTM_SCALER_PATH)
-        joblib.dump({'seq_length': seq_length}, LSTM_META_PATH)
+        # ── Save model as a new versioned artifact ──
+        model_version = generate_model_version()
+        model_name = f'lstm_global_{model_version}'
+        model_path = os.path.join(framework_folder('LSTM'), f'{model_name}.keras')
+        scaler_path = os.path.join(framework_folder('LSTM'), f'{model_name}_scaler.pkl')
+        meta_path = os.path.join(framework_folder('LSTM'), f'{model_name}_meta.json')
+
+        model.save(model_path)
+        joblib.dump(scaler, scaler_path)
+        with open(meta_path, 'w', encoding='utf-8') as f:
+            json.dump({'seq_length': seq_length}, f, ensure_ascii=False, indent=2)
+
+        register_model_version({
+            'model_name': model_name,
+            'model_version': model_version,
+            'framework': 'LSTM',
+            'data_type': 'Global',
+            'artifact_path': os.path.relpath(model_path, MODEL_DIR).replace('\\', '/'),
+            'scaler_path': os.path.relpath(scaler_path, MODEL_DIR).replace('\\', '/'),
+            'meta_path': os.path.relpath(meta_path, MODEL_DIR).replace('\\', '/'),
+            'look_back': seq_length,
+            'log_target': False,
+            'n_points': int(len(values)),
+            'status': 'saved',
+        })
 
         wmape = compute_wmape([actual_value], [max(pred_value, 0)])
 
         return jsonify({
             'status': 'success',
+            'model_version': model_version,
             'metrics': build_metrics_payload(mae, rmse, wmape),
             'meta': {
                 'message': 'LSTM model trained and saved successfully',
                 'epochs_run': len(history.history['loss']),
                 'final_loss': round(float(history.history['loss'][-1]), 6),
-                'model_path': LSTM_MODEL_PATH,
+                'model_name': model_name,
+                'model_path': model_path,
             }
         })
 
@@ -399,19 +577,39 @@ def train_prophet():
         )
         full_model.fit(df)
 
-        # ── Save model ──
-        with open(PROPHET_MODEL_PATH, 'w') as f:
+        # ── Save model as a new versioned artifact ──
+        model_version = generate_model_version()
+        model_name = f'prophet_global_{model_version}'
+        model_path = os.path.join(framework_folder('PROPHET'), f'{model_name}.json')
+        meta_path = os.path.join(framework_folder('PROPHET'), f'{model_name}_meta.json')
+
+        with open(model_path, 'w', encoding='utf-8') as f:
             f.write(model_to_json(full_model))
+        with open(meta_path, 'w', encoding='utf-8') as f:
+            json.dump({'data_points': int(len(df))}, f, ensure_ascii=False, indent=2)
+
+        register_model_version({
+            'model_name': model_name,
+            'model_version': model_version,
+            'framework': 'PROPHET',
+            'data_type': 'Global',
+            'artifact_path': os.path.relpath(model_path, MODEL_DIR).replace('\\', '/'),
+            'meta_path': os.path.relpath(meta_path, MODEL_DIR).replace('\\', '/'),
+            'n_points': int(len(df)),
+            'status': 'saved',
+        })
 
         wmape = compute_wmape([test_actual], [test_pred])
 
         return jsonify({
             'status': 'success',
+            'model_version': model_version,
             'metrics': build_metrics_payload(mae, rmse, wmape),
             'meta': {
                 'message': 'Prophet model trained and saved successfully',
                 'data_points': len(df),
-                'model_path': PROPHET_MODEL_PATH,
+                'model_name': model_name,
+                'model_path': model_path,
             }
         })
 
@@ -433,8 +631,7 @@ def predict_lstm():
 
         bulan = data.get('bulan', [])
         terjual = data.get('terjual', [])
-        model_name = data.get('model_name')
-        data_type = data.get('data_type', 'Eceran')
+        model_version = str(data.get('model_version', '')).strip()
 
         if len(bulan) < 3 or len(terjual) < 3:
             log_validation_failure('predict_lstm', 'Not enough data points before resample', data, raw_body)
@@ -446,8 +643,12 @@ def predict_lstm():
             log_validation_failure('predict_lstm', 'bulan and terjual length mismatch', data, raw_body)
             return jsonify({'error': 'Panjang array bulan dan terjual harus sama.'}), 400
 
+        if not model_version:
+            log_validation_failure('predict_lstm', 'model_version missing', data, raw_body)
+            return jsonify({'error': 'model_version wajib diisi untuk inference.'}), 400
+
         try:
-            entry = get_model_entry('LSTM', model_name=model_name, data_type=data_type)
+            entry = get_model_entry_by_version('LSTM', model_version)
         except ValueError as ve:
             log_validation_failure('predict_lstm', str(ve), data, raw_body)
             return jsonify({'error': str(ve)}), 400
@@ -518,6 +719,7 @@ def predict_lstm():
             'model': {
                 'framework': 'LSTM',
                 'model_name': entry.get('model_name'),
+                'model_version': model_version,
                 'data_type': entry.get('data_type')
             }
         }
@@ -541,8 +743,7 @@ def predict_prophet():
 
         bulan = data.get('bulan', [])
         terjual = data.get('terjual', [])
-        model_name = data.get('model_name')
-        data_type = data.get('data_type', 'Eceran')
+        model_version = str(data.get('model_version', '')).strip()
 
         if len(bulan) < 3 or len(terjual) < 3:
             log_validation_failure('predict_prophet', 'Not enough data points before resample', data, raw_body)
@@ -552,8 +753,12 @@ def predict_prophet():
             log_validation_failure('predict_prophet', 'bulan and terjual length mismatch', data, raw_body)
             return jsonify({'error': 'Panjang array bulan dan terjual harus sama.'}), 400
 
+        if not model_version:
+            log_validation_failure('predict_prophet', 'model_version missing', data, raw_body)
+            return jsonify({'error': 'model_version wajib diisi untuk inference.'}), 400
+
         try:
-            entry = get_model_entry('Prophet', model_name=model_name, data_type=data_type)
+            entry = get_model_entry_by_version('PROPHET', model_version)
         except ValueError as ve:
             log_validation_failure('predict_prophet', str(ve), data, raw_body)
             return jsonify({'error': str(ve)}), 400
@@ -594,6 +799,7 @@ def predict_prophet():
             'model': {
                 'framework': 'PROPHET',
                 'model_name': entry.get('model_name'),
+                'model_version': model_version,
                 'data_type': entry.get('data_type')
             }
         }
@@ -604,13 +810,40 @@ def predict_prophet():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/models/delete', methods=['POST'])
+def delete_model_version_endpoint():
+    data, _ = extract_json_payload('delete_model_version')
+    if data is None:
+        return jsonify({'error': 'Request body harus JSON valid.'}), 400
+
+    framework = str(data.get('framework', '')).upper()
+    model_version = str(data.get('model_version', '')).strip()
+
+    if framework not in ['LSTM', 'PROPHET']:
+        return jsonify({'error': 'framework wajib LSTM atau PROPHET.'}), 400
+
+    if not model_version:
+        return jsonify({'error': 'model_version wajib diisi.'}), 400
+
+    deleted, message = remove_model_version(framework, model_version)
+    if not deleted:
+        return jsonify({'error': message}), 404
+
+    return jsonify({
+        'status': 'success',
+        'framework': framework,
+        'model_version': model_version,
+        'message': message,
+    })
+
+
 # ═══════════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     print(f"📁 Models directory: {MODEL_DIR}")
+    print(f"📁 LSTM versions directory: {LSTM_MODEL_DIR}")
+    print(f"📁 Prophet versions directory: {PROPHET_MODEL_DIR}")
     refresh_registry()
     print(f"📄 Registry path: {MODEL_REGISTRY_PATH}")
     print(f"📊 Registry models loaded: {len(MODEL_REGISTRY)}")
-    print(f"🔍 Legacy LSTM model: {'✅ Ready' if os.path.exists(LSTM_MODEL_PATH) else '❌ Not trained'}")
-    print(f"🔍 Legacy Prophet model: {'✅ Ready' if os.path.exists(PROPHET_MODEL_PATH) else '❌ Not trained'}")
     print(f"🚀 Starting Flask API on http://0.0.0.0:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)

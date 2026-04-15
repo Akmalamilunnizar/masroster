@@ -37,10 +37,12 @@ class TokoController extends Controller
     public function pesanan()
     {
         if (Auth::user()->user === 'Admin') {
-            $transaksi = Transaksi::orderBy('tglTransaksi', 'desc')->get();
+            $transaksi = Transaksi::with(['customer', 'produk'])
+                            ->orderBy('tglTransaksi', 'desc')
+                            ->get();
         } else {
-            $username = Auth::user()->username;
-            $transaksi = Transaksi::where('username', $username)
+            $transaksi = Transaksi::with(['customer', 'produk'])
+                            ->where('id_customer', Auth::id())
                             ->orderBy('tglTransaksi', 'desc')
                             ->get();
         }

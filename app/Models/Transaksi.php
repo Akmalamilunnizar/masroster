@@ -52,12 +52,12 @@ class Transaksi extends Model
     {
         return $this->belongsTo(User::class, 'id_admin', 'id');
     }
-    
+
     public function address()
     {
         return $this->belongsTo(Address::class, 'address_id', 'id');
     }
-    
+
     public function detail()
     {
         return $this->hasMany(DetailTransaksi::class, 'IdTransaksi', 'IdTransaksi');
@@ -67,7 +67,7 @@ class Transaksi extends Model
 
     public function produk()
     {
-        return $this->belongsToMany(Produk::class, 'detail_transaksi', 'IdTransaksi', 'IdProduk')
+        return $this->belongsToMany(Produk::class, 'detail_transaksi', 'IdTransaksi', 'IdRoster')
             ->withPivot(['QtyProduk', 'SubTotal']) // alias pivot
             // ->withTimestamps()
         ;

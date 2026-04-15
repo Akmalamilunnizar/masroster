@@ -11,10 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('produk', function (Blueprint $table) {
-            $table->float('mae_score')->nullable()->after('forecasted_demand');
-            $table->float('wmape_score')->nullable()->after('mae_score');
-        });
+        if (!Schema::hasColumn('produk', 'mae_score')) {
+            Schema::table('produk', function (Blueprint $table) {
+                if (Schema::hasColumn('produk', 'forecasted_demand')) {
+                    $table->float('mae_score')->nullable()->after('forecasted_demand');
+                    return;
+                }
+
+                $table->float('mae_score')->nullable();
+            });
+        }
+
+        if (!Schema::hasColumn('produk', 'wmape_score')) {
+            Schema::table('produk', function (Blueprint $table) {
+                if (Schema::hasColumn('produk', 'mae_score')) {
+                    $table->float('wmape_score')->nullable()->after('mae_score');
+                    return;
+                }
+
+                $table->float('wmape_score')->nullable();
+            });
+        }
     }
 
     /**
@@ -22,8 +39,16 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('produk', function (Blueprint $table) {
-            $table->dropColumn(['mae_score', 'wmape_score']);
-        });
+        if (Schema::hasColumn('produk', 'wmape_score')) {
+            Schema::table('produk', function (Blueprint $table) {
+                $table->dropColumn('wmape_score');
+            });
+        }
+
+        if (Schema::hasColumn('produk', 'mae_score')) {
+            Schema::table('produk', function (Blueprint $table) {
+                $table->dropColumn('mae_score');
+            });
+        }
     }
 };

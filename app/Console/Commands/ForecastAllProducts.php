@@ -4,20 +4,19 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Produk;
+use App\Models\ModelHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class ForecastAllProducts extends Command
 {
     protected $signature = 'app:forecast-all
         {--model=prophet : AI model to use (lstm or prophet)}
-        {--force : Force forecast even if recently calculated}
-        {--skip-train : Skip training, use existing saved model}';
+        {--force : Force forecast even if recently calculated}';
 
-    protected $description = 'Train AI model and batch forecast all products';
+    protected $description = 'Fast inference-only batch forecast using active model versions';
 
     private const FLASK_BASE_URL = 'http://127.0.0.1:5000';
     private const TIMEOUT_SECONDS = 120;
@@ -27,8 +26,7 @@ class ForecastAllProducts extends Command
     {
         $startTime = now();
         $model = $this->option('model');
-         $force = $this->option('force');
-        $skipTrain = $this->option('skip-train');
+        $force = $this->option('force');
 
         if (!in_array($model, ['lstm', 'prophet'])) {
             $this->error("Invalid model. Use 'lstm' or 'prophet'");
@@ -42,29 +40,8 @@ class ForecastAllProducts extends Command
         $flaskAvailable = $this->checkFlaskServer();
 
         if (!$flaskAvailable) {
-            $this->warn('⚠️  Flask server is not available. Falling back to Simple Moving Average.');
-            $model = 'sma';
-        }
-
-        // ── Step 2: Train model (if Flask is available) ──
-        if ($model !== 'sma' && !$skipTrain) {
-            $this->info("📚 Step 1: Training {$model} model...");
-            $trainResult = $this->trainModel($model);
-
-            if ($trainResult === null) {
-                $this->warn('⚠️  Training failed. Falling back to SMA.');
-                $model = 'sma';
-            } else {
-                $this->info(
-                    '✅ Model trained! MAE: ' . $this->formatMetric($trainResult['mae'] ?? null)
-                    . ', RMSE: ' . $this->formatMetric($trainResult['rmse'] ?? null)
-                    . ', WMAPE: ' . $this->formatMetric($trainResult['wmape'] ?? null)
-                );
-            }
-            $this->newLine();
-        } elseif ($skipTrain && $model !== 'sma') {
-            $this->info("⏭️  Skipping training, using existing saved model.");
-            $this->newLine();
+            $this->error('Flask server is not available. Fast prediction requires AI server online.');
+            return Command::FAILURE;
         }
 
         // ── Step 3: Predict for each product ──
@@ -94,70 +71,111 @@ class ForecastAllProducts extends Command
         $successCount = 0;
         $failCount = 0;
         $skippedCount = 0;
+        $skippedNoVersionCount = 0;
         $failedProducts = [];
+        $details = [];
         $successMaeTotal = 0.0;
-        $successMaeCount = 0;
+        $successRmseTotal = 0.0;
         $successWmapeTotal = 0.0;
-        $successWmapeCount = 0;
+        $successMetricCount = 0;
 
         $query->chunk(self::CHUNK_SIZE, function ($products) use (
             $model,
             &$successCount,
             &$failCount,
             &$skippedCount,
+            &$skippedNoVersionCount,
             &$failedProducts,
+            &$details,
             &$successMaeTotal,
-            &$successMaeCount,
+            &$successRmseTotal,
             &$successWmapeTotal,
-            &$successWmapeCount,
+            &$successMetricCount,
             $progressBar
         ) {
             foreach ($products as $product) {
                 try {
-                    $salesData = $this->getSalesHistory($product->IdRoster);
+                    $activeModel = ModelHistory::query()
+                        ->where('id_roster', $product->IdRoster)
+                        ->where('model_type', $model)
+                        ->where('is_active', true)
+                        ->first();
 
-                    if ($salesData['bulan']->isEmpty()) {
-                        $product->update([
-                            'forecasted_demand' => 0,
-                            'forecast_model' => 'none',
-                            'forecast_status' => 'safe',
-                            'last_forecast_at' => now()
-                        ]);
+                    if (!$activeModel) {
+                        $details[] = [
+                            'id_roster' => $product->IdRoster,
+                            'nama_produk' => $product->NamaProduk,
+                            'forecasted_demand' => null,
+                            'wmape_score' => null,
+                            'mae_score' => null,
+                            'rmse_score' => null,
+                        ];
                         $skippedCount++;
+                        $skippedNoVersionCount++;
                         $progressBar->advance();
                         continue;
                     }
 
-                    if ($model === 'sma') {
-                        $forecast = $this->calculateSMA($salesData);
-                        $forecastModel = 'sma';
-                        $maeScore = null;
-                        $wmapeScore = null;
-                    } else {
-                        $predictionResult = $this->callFlaskPredict($model, $salesData, $product->IdRoster);
-                        $forecastModel = $model;
+                    $dataType = ucfirst(strtolower(trim((string) ($activeModel->data_type ?? ''))));
 
-                        if ($predictionResult === null) {
-                            $failCount++;
-                            $failedProducts[] = $product->IdRoster;
-                            $progressBar->advance();
-                            continue;
-                        }
+                    $salesData = $this->getSalesHistory($product->IdRoster, $dataType);
 
-                        $forecast = $predictionResult['forecast'];
-                        $maeScore = $predictionResult['mae'];
-                        $wmapeScore = $predictionResult['wmape'];
+                    if ($salesData['bulan']->isEmpty() || $salesData['bulan']->count() < 3) {
+                        Log::warning('Forecast skipped due to insufficient filtered sales history', [
+                            'id_roster' => $product->IdRoster,
+                            'framework' => $model,
+                            'model_version' => $activeModel->version_id,
+                            'data_type' => $dataType,
+                            'points' => $salesData['bulan']->count(),
+                        ]);
 
-                        if ($maeScore !== null) {
-                            $successMaeTotal += (float) $maeScore;
-                            $successMaeCount++;
-                        }
-
-                        if ($wmapeScore !== null) {
-                            $successWmapeTotal += (float) $wmapeScore;
-                            $successWmapeCount++;
-                        }
+                        $details[] = [
+                            'id_roster' => $product->IdRoster,
+                            'nama_produk' => $product->NamaProduk,
+                            'forecasted_demand' => null,
+                            'wmape_score' => null,
+                            'mae_score' => null,
+                            'rmse_score' => null,
+                            'data_type' => $dataType,
+                            'reason' => 'insufficient_filtered_data',
+                        ];
+                        $failCount++;
+                        $failedProducts[] = $product->IdRoster;
+                        $progressBar->advance();
+                        continue;
                     }
+
+                    Log::info('Batch forecast model selection', [
+                        'id_roster' => $product->IdRoster,
+                        'framework' => $model,
+                        'model_version' => $activeModel->version_id,
+                        'data_type' => $dataType,
+                    ]);
+
+                    $predictionResult = $this->callFlaskPredict($model, $salesData, $product->IdRoster, $activeModel->version_id);
+                    $forecastModel = $model;
+
+                    if ($predictionResult === null) {
+                        $details[] = [
+                            'id_roster' => $product->IdRoster,
+                            'nama_produk' => $product->NamaProduk,
+                            'forecasted_demand' => null,
+                            'wmape_score' => null,
+                            'mae_score' => null,
+                            'rmse_score' => null,
+                            'data_type' => $dataType,
+                            'reason' => 'prediction_failed',
+                        ];
+                        $failCount++;
+                        $failedProducts[] = $product->IdRoster;
+                        $progressBar->advance();
+                        continue;
+                    }
+
+                    $forecast = $predictionResult['forecast'];
+                    $maeScore = $predictionResult['mae'];
+                    $rmseScore = $predictionResult['rmse'];
+                    $wmapeScore = $predictionResult['wmape'];
 
                     $status = $this->calculateStatus(
                         $product->stock ?? 0,
@@ -170,15 +188,41 @@ class ForecastAllProducts extends Command
                         'forecast_model' => $forecastModel,
                         'forecast_status' => $status,
                         'last_forecast_at' => now(),
-                        'mae_score' => $maeScore,
-                        'wmape_score' => $wmapeScore,
                     ]);
+
+                    $details[] = [
+                        'id_roster' => $product->IdRoster,
+                        'nama_produk' => $product->NamaProduk,
+                        'forecasted_demand' => round($forecast, 2),
+                        'wmape_score' => $wmapeScore,
+                        'mae_score' => $maeScore,
+                        'rmse_score' => $rmseScore,
+                        'data_type' => $dataType,
+                        'reason' => null,
+                    ];
+
+                    if ($maeScore !== null && $rmseScore !== null && $wmapeScore !== null) {
+                        $successMaeTotal += (float) $maeScore;
+                        $successRmseTotal += (float) $rmseScore;
+                        $successWmapeTotal += (float) $wmapeScore;
+                        $successMetricCount++;
+                    }
 
                     $successCount++;
                 } catch (\Exception $e) {
                     Log::error("Forecast failed for product {$product->IdRoster}", [
                         'error' => $e->getMessage()
                     ]);
+                    $details[] = [
+                        'id_roster' => $product->IdRoster,
+                        'nama_produk' => $product->NamaProduk,
+                        'forecasted_demand' => null,
+                        'wmape_score' => null,
+                        'mae_score' => null,
+                        'rmse_score' => null,
+                        'data_type' => isset($activeModel) ? ucfirst(strtolower(trim((string) ($activeModel->data_type ?? '')))) : null,
+                        'reason' => 'exception',
+                    ];
                     $failCount++;
                     $failedProducts[] = $product->IdRoster;
                 }
@@ -198,6 +242,7 @@ class ForecastAllProducts extends Command
                 ['Success', $successCount],
                 ['Failed', $failCount],
                 ['Skipped (no data)', $skippedCount],
+                ['Skipped (no active version)', $skippedNoVersionCount],
                 ['Duration', "{$duration}s"],
                 ['Model Used', strtoupper($model)]
             ]
@@ -207,13 +252,16 @@ class ForecastAllProducts extends Command
             'success' => $successCount,
             'failed' => $failCount,
             'skipped' => $skippedCount,
+            'skipped_no_version' => $skippedNoVersionCount,
             'total' => $totalProducts,
             'failed_products' => $failedProducts,
             'model' => strtoupper($model),
             'metrics' => [
-                'mae' => $successMaeCount > 0 ? round($successMaeTotal / $successMaeCount, 4) : null,
-                'wmape' => $successWmapeCount > 0 ? round($successWmapeTotal / $successWmapeCount, 4) : null,
+                'mae' => $successMetricCount > 0 ? round($successMaeTotal / $successMetricCount, 4) : null,
+                'rmse' => $successMetricCount > 0 ? round($successRmseTotal / $successMetricCount, 4) : null,
+                'wmape' => $successMetricCount > 0 ? round($successWmapeTotal / $successMetricCount, 4) : null,
             ],
+            'details' => $details,
         ], JSON_UNESCAPED_UNICODE));
 
         $this->showStatusBreakdown();
@@ -234,119 +282,25 @@ class ForecastAllProducts extends Command
     }
 
     /**
-     * Train the model by sending aggregated sales data
-     */
-    private function trainModel(string $model): ?array
-    {
-        try {
-            // Gather aggregated monthly sales across all products
-            $salesData = DB::table('detail_transaksi')
-                ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
-                ->select(
-                    DB::raw($this->monthExpression() . ' as bulan'),
-                    DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
-                )
-                ->where('transaksi.tglTransaksi', '>=', Carbon::now()->subMonths(24))
-                ->groupBy('bulan')
-                ->orderBy('bulan')
-                ->get();
-
-            $originalCount = $salesData->count();
-            $salesData = $this->buildMinimumTrainingDataset($salesData, 6);
-
-            if ($salesData->count() < 6) {
-                $this->warn("   ⚠️  Only {$salesData->count()} months of data. Minimum 6 required for training.");
-                return null;
-            }
-
-            if ($originalCount < 6) {
-                $this->warn("   ⚠️  Only {$originalCount} months of real data. Padded with dummy months (0 sales) to reach 6 months for training.");
-            }
-
-            $endpoint = $model === 'lstm' ? '/train/lstm' : '/train/prophet';
-
-            $payload = [
-                'bulan' => $salesData->pluck('bulan')->toArray(),
-                'terjual' => $salesData->pluck('terjual')->toArray()
-            ];
-
-            Log::debug('Batch training payload', [
-                'model' => $model,
-                'payload' => [
-                    'bulan_count' => count($payload['bulan']),
-                    'terjual_count' => count($payload['terjual']),
-                ],
-            ]);
-
-            $response = Http::timeout(self::TIMEOUT_SECONDS)
-                ->asJson()
-                ->post(self::FLASK_BASE_URL . $endpoint, $payload);
-
-            if ($response->successful()) {
-                $payload = $response->json();
-                $metrics = is_array($payload['metrics'] ?? null) ? $payload['metrics'] : [];
-
-                return [
-                    'mae' => isset($metrics['mae']) ? (float) $metrics['mae'] : null,
-                    'rmse' => isset($metrics['rmse']) ? (float) $metrics['rmse'] : null,
-                    'wmape' => isset($metrics['wmape']) ? (float) $metrics['wmape'] : null,
-                ];
-            }
-
-            $this->warn("   ⚠️  Training returned error: " . ($response->json()['error'] ?? 'Unknown'));
-            return null;
-        } catch (\Exception $e) {
-            Log::warning("Training failed: {$e->getMessage()}");
-            return null;
-        }
-    }
-
-    /**
-     * Build minimum contiguous monthly dataset in-memory without writing dummy rows to DB.
-     */
-    private function buildMinimumTrainingDataset($salesData, int $minimumMonths = 6)
-    {
-        if ($salesData->count() >= $minimumMonths) {
-            return $salesData;
-        }
-
-        $existing = [];
-        foreach ($salesData as $row) {
-            $existing[$row->bulan] = (float) $row->terjual;
-        }
-
-        $lastMonth = empty($existing)
-            ? Carbon::now()->startOfMonth()
-            : Carbon::createFromFormat('Y-m', max(array_keys($existing)))->startOfMonth();
-
-        $finalData = collect();
-        for ($i = $minimumMonths - 1; $i >= 0; $i--) {
-            $bulan = $lastMonth->copy()->subMonths($i)->format('Y-m');
-            $finalData->push((object) [
-                'bulan' => $bulan,
-                'terjual' => (float) ($existing[$bulan] ?? 0),
-            ]);
-        }
-
-        return $finalData;
-    }
-
-    /**
      * Get sales history for a single product (last 12 months)
      */
-    private function getSalesHistory(string $idRoster): array
+    private function getSalesHistory(string $idRoster, ?string $dataType = null): array
     {
-        $salesData = DB::table('detail_transaksi')
+        $query = DB::table('detail_transaksi')
             ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
             ->select(
                 DB::raw($this->monthExpression() . ' as bulan'),
                 DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
             )
             ->where('detail_transaksi.IdRoster', $idRoster)
-            ->where('transaksi.tglTransaksi', '>=', Carbon::now()->subMonths(12))
-            ->groupBy('bulan')
-            ->orderBy('bulan')
-            ->get();
+            ->where('transaksi.tglTransaksi', '>=', Carbon::now()->subMonths(12));
+
+        $normalizedDataType = ucfirst(strtolower(trim((string) $dataType)));
+        if (in_array($normalizedDataType, ['Eceran', 'Borongan'], true)) {
+            $query->where('detail_transaksi.data_type', $normalizedDataType);
+        }
+
+        $salesData = $query->groupBy('bulan')->orderBy('bulan')->get();
 
         return [
             'bulan' => $salesData->pluck('bulan'),
@@ -367,18 +321,15 @@ class ForecastAllProducts extends Command
     /**
      * Call Flask predict endpoint (uses pre-trained model)
      */
-    private function callFlaskPredict(string $model, array $salesData, string $idRoster): ?array
+    private function callFlaskPredict(string $model, array $salesData, string $idRoster, string $modelVersion): ?array
     {
         try {
             $endpoint = $model === 'lstm' ? '/predictlstm' : '/predictprophet';
-            $dataType = $this->resolveDataTypeByProduct($idRoster);
-            $modelName = $this->mapModelName($model, $dataType);
 
             $payload = [
                 'bulan' => $salesData['bulan']->toArray(),
                 'terjual' => $salesData['terjual']->toArray(),
-                'data_type' => $dataType,
-                'model_name' => $modelName,
+                'model_version' => $modelVersion,
             ];
 
             Log::debug('Batch forecast payload', [
@@ -387,8 +338,7 @@ class ForecastAllProducts extends Command
                 'payload' => [
                     'bulan_count' => count($payload['bulan']),
                     'terjual_count' => count($payload['terjual']),
-                    'data_type' => $payload['data_type'],
-                    'model_name' => $payload['model_name'],
+                    'model_version' => $payload['model_version'],
                 ],
             ]);
 
@@ -408,7 +358,6 @@ class ForecastAllProducts extends Command
                 }
 
                 $forecastValue = $result['forecast'][0] ?? null;
-                $metrics = is_array($result['metrics'] ?? null) ? $result['metrics'] : [];
 
                 if ($forecastValue === null) {
                     Log::warning('Flask predict payload missing forecast value', [
@@ -422,13 +371,16 @@ class ForecastAllProducts extends Command
                 Log::info('Batch forecast model selection', [
                     'id_roster' => $idRoster,
                     'framework' => $model,
-                    'data_type' => $dataType,
-                    'model_name' => $result['model']['model_name'] ?? $modelName,
+                    'model_version' => $modelVersion,
+                    'model_name' => $result['model']['model_name'] ?? null,
                 ]);
+
+                $metrics = is_array($result['metrics'] ?? null) ? $result['metrics'] : [];
 
                 return [
                     'forecast' => (float) $forecastValue,
                     'mae' => isset($metrics['mae']) ? (float) $metrics['mae'] : null,
+                    'rmse' => isset($metrics['rmse']) ? (float) $metrics['rmse'] : null,
                     'wmape' => array_key_exists('wmape', $metrics) && $metrics['wmape'] !== null
                         ? (float) $metrics['wmape']
                         : null,
@@ -439,8 +391,7 @@ class ForecastAllProducts extends Command
                 'id_roster' => $idRoster,
                 'endpoint' => $endpoint,
                 'framework' => $model,
-                'data_type' => $dataType,
-                'model_name' => $modelName,
+                'model_version' => $modelVersion,
                 'status' => $response->status(),
                 'error' => $response->json('error') ?? $response->body(),
             ]);
@@ -454,72 +405,6 @@ class ForecastAllProducts extends Command
             ]);
             return null;
         }
-    }
-
-    /**
-     * Product-level type selection from transaction behavior.
-     */
-    private function resolveDataTypeByProduct(string $idRoster): string
-    {
-        if (Schema::hasColumn('detail_transaksi', 'data_type')) {
-            $hasBoronganLine = DB::table('detail_transaksi')
-                ->where('IdRoster', $idRoster)
-                ->where('data_type', 'Borongan')
-                ->exists();
-        } else {
-            $hasBoronganLine = DB::table('detail_transaksi')
-                ->where('IdRoster', $idRoster)
-                ->where('QtyProduk', '>', 100)
-                ->exists();
-        }
-
-        return $hasBoronganLine ? 'Borongan' : 'Eceran';
-    }
-
-    /**
-     * Explicit framework+data_type to model pinning.
-     */
-    private function mapModelName(string $framework, string $dataType): string
-    {
-        $framework = strtolower($framework);
-        $normalizedType = strtolower($dataType) === 'borongan' ? 'borongan' : 'eceran';
-
-        $map = [
-            'lstm' => [
-                'eceran' => 'lstm_eceran_tuned',
-                'borongan' => 'lstm_borongan',
-            ],
-            'prophet' => [
-                'eceran' => 'prophet_eceran_tuned',
-                'borongan' => 'prophet_borongan',
-            ],
-        ];
-
-        return $map[$framework][$normalizedType] ?? ($framework . '_' . $normalizedType);
-    }
-
-    private function formatMetric(?float $value): string
-    {
-        if ($value === null) {
-            return 'N/A';
-        }
-
-        return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
-    }
-
-    /**
-     * Calculate Simple Moving Average (fallback)
-     */
-    private function calculateSMA(array $salesData): float
-    {
-        $values = $salesData['terjual'];
-
-        if ($values->isEmpty()) {
-            return 0;
-        }
-
-        $lastThree = $values->slice(-3);
-        return $lastThree->avg();
     }
 
     /**

@@ -7,7 +7,7 @@ CIME | Halaman Daftar Roster
 <div class="col-md-4">
     <div class="position-relative search-box-wrapper">
         <i class="bx bx-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted fs-5" style="z-index: 5;"></i>
-        <input type="text" id="produkSearchInput" class="form-control border-0 bg-light ps-5 rounded-3" 
+        <input type="text" id="produkSearchInput" class="form-control border-0 bg-light ps-5 rounded-3"
             style="height: 42px;" placeholder="Cari motif atau tipe produk...">
     </div>
 </div>
@@ -157,7 +157,7 @@ CIME | Halaman Daftar Roster
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                <a href="{{ route('admin.detail_allitems', $produk->IdRoster) }}" class="btn btn-info" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
+                                <a href="{{ route('admin.detail_allproduk', $produk->IdRoster) }}" class="btn btn-info" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
                                     <i class="fas fa-info-circle me-1"></i> Detail
                                 </a>
                                 <a href="{{ route('editproduk', $produk->IdRoster) }}" class="btn btn-sm btn-warning" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
@@ -227,11 +227,11 @@ CIME | Halaman Daftar Roster
                     .map(cell => cell.textContent.trim())
                     .join(' ')
                     .toLowerCase();
-                
+
                 const jenis = row.cells[2]?.textContent.trim();
                 const tipe = row.cells[3]?.textContent.trim();
                 const motif = row.cells[4]?.textContent.trim();
-                
+
                 const matchesSearch = rowText.includes(term);
                 const matchesJenis = !selJenis || jenis === selJenis;
                 const matchesTipe = !selTipe || tipe === selTipe;

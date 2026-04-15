@@ -130,34 +130,34 @@ CIME | Daftar Transaksi
         color: #ffffff !important;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    
+
     /* Ensure badge text is always white for better contrast */
     .status-badge.bg-warning {
         color: #000000 !important;
         font-weight: 700 !important;
         background-color: #ffc107 !important;
     }
-    
+
     .status-badge.bg-success {
         background-color: #198754 !important;
         color: #ffffff !important;
     }
-    
+
     .status-badge.bg-danger {
         background-color: #dc3545 !important;
         color: #ffffff !important;
     }
-    
+
     .status-badge.bg-info {
         background-color: #0dcaf0 !important;
         color: #ffffff !important;
     }
-    
+
     .status-badge.bg-primary {
         background-color: #0d6efd !important;
         color: #ffffff !important;
     }
-    
+
     .status-badge.bg-secondary {
         background-color: #6c757d !important;
         color: #ffffff !important;
@@ -238,7 +238,7 @@ CIME | Daftar Transaksi
         font-weight: 700 !important;
         color: #198754 !important;
     }
-    
+
     .table-enhanced tbody td strong {
         color: #212529 !important;
         font-weight: 600;
@@ -451,7 +451,7 @@ CIME | Daftar Transaksi
     </div>
 
     {{-- Export Buttons --}}
-    <div class="card mb-3">
+    {{-- <div class="card mb-3">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">
@@ -467,7 +467,7 @@ CIME | Daftar Transaksi
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     {{-- Pesan sukses atau error --}}
     {{-- Session messages are automatically displayed via CustomModal --}}
@@ -543,9 +543,9 @@ CIME | Daftar Transaksi
                         <i class='bx bxs-printer me-1'></i> Print Laporan
                     </a>
 
-                    <button type="button" class="btn btn-success btn-enhanced" data-bs-toggle="modal" data-bs-target="#exportExcelModal">
+                    {{-- <button type="button" class="btn btn-success btn-enhanced" data-bs-toggle="modal" data-bs-target="#exportExcelModal">
                         <i class='bx bxs-file-export me-1'></i> Export Excel
-                    </button>
+                    </button> --}}
                 </div>
             </form>
         </div>
@@ -747,15 +747,15 @@ CIME | Daftar Transaksi
         if (searchInput) {
             searchInput.addEventListener('keyup', function() {
                 const searchTerm = searchInput.value.toLowerCase();
-                
+
                 tableRows.forEach(row => {
                     const idCell = row.cells[0]; // ID Transaksi
                     const nameCell = row.cells[2]; // Nama Customer is index 2
-                    
+
                     let combinedText = '';
                     if (idCell) combinedText += idCell.textContent.toLowerCase() + ' ';
                     if (nameCell) combinedText += nameCell.textContent.toLowerCase();
-                    
+
                     row.style.display = combinedText.includes(searchTerm) ? '' : 'none';
                 });
             });

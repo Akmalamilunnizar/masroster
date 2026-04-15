@@ -7,7 +7,7 @@
                     <h4 class="fw-bold mb-3" style="color: #2B3674; font-size: 23px; letter-spacing: 1.2px;">
                         ID Transaksi: <span class="text-primary">{{ $item->IdTransaksi }}</span>
                     </h4>
-                    <p class="mb-1"><strong>Nama:</strong> {{ $item->user->f_name ?? '-' }}</p>
+                    <p class="mb-1"><strong>Nama:</strong> {{ $item->customer->f_name ?? '-' }}</p>
                     <p class="mb-1"><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($item->tglTransaksi)->format('d M Y H:i') }}</p>
                     <p class="mb-1"><strong>Grand Total:</strong> Rp {{ number_format($item->GrandTotal, 0, ',', '.') }}</p>
                     <p class="mb-1"><strong>Status Pembayaran:</strong>
