@@ -5,7 +5,7 @@
 @section('search')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <style>
         /* Enhanced styling for disabled action buttons */
         .btn-info.disabled-bulk,
@@ -15,7 +15,7 @@
             cursor: not-allowed !important;
             position: relative;
         }
-        
+
         .btn-info.disabled-bulk::after,
         .btn-warning.disabled-bulk::after {
             content: "⛔";
@@ -33,7 +33,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         /* Tooltip for disabled buttons */
         .btn-info.disabled-bulk:hover::before,
         .btn-warning.disabled-bulk:hover::before {
@@ -51,18 +51,18 @@
             z-index: 1000;
             margin-bottom: 5px;
         }
-        
+
         /* Enhanced batch delete button */
         #batchDeleteBtn {
             transition: all 0.3s ease;
             position: relative;
         }
-        
+
         #batchDeleteBtn:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
         }
-        
+
         /* Selection indicator */
         .selection-active {
             background-color: rgba(13, 110, 253, 0.1) !important;
@@ -89,18 +89,18 @@
                 <a href="{{ route('exititems') }}" class="btn btn-danger" style="border-radius: 8px;">
                     + Barang Keluar
                 </a>
-                <button id="selectAllBtn" class="btn btn-outline-secondary" style="border-radius: 8px;" 
+                <button id="selectAllBtn" class="btn btn-outline-secondary" style="border-radius: 8px;"
                         title="Pilih semua item untuk operasi batch. Detail dan Edit button akan dinonaktifkan.">
                     <i class="fas fa-check-square me-1"></i> Pilih Semua
                 </button>
                 <button id="batchDeleteBtn" class="btn btn-danger" style="border-radius: 8px; display: none;">
                     <i class="fas fa-trash-alt me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                 </button>
-                
+
                 <!-- Bulk Selection Notification -->
                 <div id="bulkSelectionNotification" class="alert alert-info mt-3" style="display: none; border-radius: 8px;">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Mode Seleksi Aktif:</strong> Detail dan Edit button telah dinonaktifkan. 
+                    <strong>Mode Seleksi Aktif:</strong> Detail dan Edit button telah dinonaktifkan.
                     Hanya operasi Hapus yang tersedia untuk item yang dipilih.
                     <button type="button" class="btn-close float-end" onclick="clearSelection()"></button>
                 </div>
@@ -347,7 +347,7 @@
                 const checkedCount = Array.from(itemCheckboxes).filter(cb => cb.checked).length;
                 const isAnySelected = checkedCount > 0;
                 const notification = document.getElementById('bulkSelectionNotification');
-                
+
                 actionButtons.forEach(btn => {
                     if (isAnySelected) {
                         // Disable Detail and Edit buttons when items are selected
@@ -359,12 +359,12 @@
                         btn.title = '';
                     }
                 });
-                
+
                 // Show/hide notification
                 if (notification) {
                     notification.style.display = isAnySelected ? 'block' : 'none';
                 }
-                
+
                 // Add visual indicator to table rows when items are selected
                 const tableRows = document.querySelectorAll('tbody tr');
                 tableRows.forEach((row, index) => {
@@ -375,7 +375,7 @@
                     }
                 });
             }
-            
+
             // Function to clear all selections
             function clearSelection() {
                 itemCheckboxes.forEach(checkbox => {
@@ -449,7 +449,7 @@
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '{{ route("batch.delete.items") }}';
-                        
+
                         const csrfToken = document.createElement('input');
                         csrfToken.type = 'hidden';
                         csrfToken.name = '_token';
@@ -499,7 +499,7 @@
 
             // Initialize on page load
             toggleActionButtons();
-            
+
             // Keyboard shortcut: Escape key to clear selection
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {

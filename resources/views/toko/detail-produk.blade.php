@@ -518,12 +518,12 @@ function addToCart() {
     const quantity = parseInt(document.getElementById('quantity').value) || 1;
     const price = parseInt(document.getElementById('product_price').value) || 0;
     const subtotal = quantity * price;
-    
+
     formData.append('id', '{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}');
     formData.append('ukuran', ukuranValue);
     formData.append('ukuran_label', ukuranLabel);
     formData.append('subtotal', subtotal);
-    
+
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
         headers: {
@@ -571,12 +571,12 @@ function buyNow() {
     const quantity = parseInt(document.getElementById('quantity').value) || 1;
     const price = parseInt(document.getElementById('product_price').value) || 0;
     const subtotal = quantity * price;
-    
+
     formData.append('id', '{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}');
     formData.append('ukuran', ukuranValue);
     formData.append('ukuran_label', ukuranLabel);
     formData.append('subtotal', subtotal);
-    
+
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
         headers: {

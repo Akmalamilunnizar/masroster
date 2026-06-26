@@ -340,7 +340,7 @@ trait MasrosterTestSchema
             // Updated trigger to work with produk_id (new schema) or IdRoster (legacy)
             DB::unprepared(<<<SQL
                 CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk BEGIN
-                    UPDATE produk SET stock = stock + NEW.QtyMasuk 
+                    UPDATE produk SET stock = stock + NEW.QtyMasuk
                     WHERE (
                         (NEW.IdRoster IS NOT NULL AND IdRoster = NEW.IdRoster)
                         OR (id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster))
@@ -350,7 +350,7 @@ trait MasrosterTestSchema
 
             DB::unprepared(<<<SQL
                 CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar BEGIN
-                    UPDATE produk SET stock = stock - NEW.QtyKeluar 
+                    UPDATE produk SET stock = stock - NEW.QtyKeluar
                     WHERE (
                         (NEW.IdRoster IS NOT NULL AND IdRoster = NEW.IdRoster)
                         OR (id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster))
