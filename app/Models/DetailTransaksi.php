@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class DetailTransaksi extends Model
 {
@@ -14,6 +15,7 @@ class DetailTransaksi extends Model
     protected $fillable = [
         'IdTransaksi',
         'IdRoster',
+        'produk_id',
         'id_ukuran',
         'QtyProduk',
         'data_type',
@@ -27,7 +29,9 @@ class DetailTransaksi extends Model
 
     public function produk()
     {
-        return $this->belongsTo(Produk::class, 'IdRoster', 'IdRoster');
+        $foreignKey = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'IdRoster';
+
+        return $this->belongsTo(Produk::class, $foreignKey, (new Produk())->getKeyName());
     }
 
     public function size()

@@ -202,7 +202,7 @@
                         @foreach ($items as $item)
                             <tr>
                                 <td class="text-center">
-                                    <input type="checkbox" class="form-check-input item-checkbox" value="{{ $item->IdRoster }}">
+                                    <input type="checkbox" class="form-check-input item-checkbox" value="{{ $item->sku ?? $item->IdRoster ?? $item->id }}">
                                 </td>
                                 <td class="text-center">{{ $item->latestDetailMasuk?->IdMasuk ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailMasuk ? \Carbon\Carbon::parse($item->latestDetailMasuk->created_at)->format('d-m-Y H:i') : '-' }}</td>
@@ -211,19 +211,19 @@
                                 <td class="text-center">{{ $item->latestDetailMasuk?->HargaSatuan ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailMasuk?->SubTotal ?? '-' }}</td>
                                 <td class="text-center">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#tambahQtyModal{{ $item->IdRoster }}">
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#tambahQtyModal{{ $item->sku ?? $item->IdRoster ?? $item->id }}">
                                         {{ $item->NamaBarang }}
                                     </a>
 
-                                    <div class="modal fade" id="tambahQtyModal{{ $item->IdRoster }}" tabindex="-1"
-                                        aria-labelledby="tambahQtyLabel{{ $item->IdRoster }}" aria-hidden="true">
+                                    <div class="modal fade" id="tambahQtyModal{{ $item->sku ?? $item->IdRoster ?? $item->id }}" tabindex="-1"
+                                        aria-labelledby="tambahQtyLabel{{ $item->sku ?? $item->IdRoster ?? $item->id }}" aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <form action="{{ route('barang.tambahQty') }}" method="POST">
                                                     @csrf
-                                                    <input type="hidden" name="IdRoster" value="{{ $item->IdRoster }}">
+                                                    <input type="hidden" name="IdRoster" value="{{ $item->sku ?? $item->IdRoster ?? $item->id }}">
                                                     <div class="modal-header">
-                                                        <h5 class="modal-title" id="tambahQtyLabel{{ $item->IdRoster }}">Tambah
+                                                        <h5 class="modal-title" id="tambahQtyLabel{{ $item->sku ?? $item->IdRoster ?? $item->id }}">Tambah
                                                             Qty - {{ $item->NamaBarang }}</h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Tutup"></button>
@@ -250,13 +250,13 @@
                                 <td class="text-center">{{ $item->latestDetailKeluar?->IdKeluar ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailKeluar ? \Carbon\Carbon::parse($item->latestDetailKeluar->created_at)->format('d-m-Y H:i') : '-' }}</td>
                                 <td class="text-center">
-                                <a href="{{ route('admin.detail_allitems', $item->IdRoster) }}" class="btn btn-info" style="border-radius: 8px;">
+                                <a href="{{ route('admin.detail_allitems', $item->sku ?? $item->IdRoster ?? $item->id) }}" class="btn btn-info" style="border-radius: 8px;">
                                         <i class="fas fa-info-circle me-1"></i> Detail
                                     </a>
-                                    <a href="{{ route('edititem', $item->IdRoster) }}" class="btn btn-warning" style="border-radius: 8px;">
+                                    <a href="{{ route('edititem', $item->sku ?? $item->IdRoster ?? $item->id) }}" class="btn btn-warning" style="border-radius: 8px;">
                                         <i class="fas fa-edit me-1"></i> Edit
                                     </a>
-                                    <a href="{{ route('deleteitem', $item->IdRoster) }}" class="btn btn-danger"
+                                    <a href="{{ route('deleteitem', $item->sku ?? $item->IdRoster ?? $item->id) }}" class="btn btn-danger"
                                         onclick="return confirm('Yakin ingin hapus data ini?')">
                                         <i class="fas fa-trash-alt me-1"></i> Delete
                                     </a>

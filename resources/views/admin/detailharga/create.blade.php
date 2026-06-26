@@ -40,7 +40,7 @@
                         <select name="id_roster" id="id_roster" class="form-select" required>
                             <option value="">Pilih Roster</option>
                             @foreach($rosters as $roster)
-                                <option value="{{ $roster->IdRoster }}">
+                                <option value="{{ $roster->sku ?? $roster->IdRoster ?? $roster->id }}">
                                     {{ $roster->NamaRoster }} - {{ $roster->jenisRoster ? $roster->jenisRoster->JenisBarang : '-' }}
                                     @if($roster->motif)
                                         - {{ $roster->motif->nama_motif }}

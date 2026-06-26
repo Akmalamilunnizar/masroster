@@ -30,7 +30,7 @@ CIME | Halaman Forecasting
                             <select id="id_roster" class="form-select select2" onchange="loadFromDatabase(this.value)">
                                 <option value="">-- Pilih Produk --</option>
                                 @foreach($products as $product)
-                                    <option value="{{ $product->IdRoster }}">{{ $product->NamaProduk }} ({{ $product->IdRoster }})</option>
+                                    <option value="{{ $product->sku ?? $product->IdRoster ?? $product->id }}">{{ $product->NamaProduk }} ({{ $product->sku ?? $product->IdRoster ?? $product->id }})</option>
                                 @endforeach
                             </select>
                             <div class="form-text mt-1 text-muted">Data penjualan produk akan otomatis dimuat setelah dipilih.</div>

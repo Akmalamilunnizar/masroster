@@ -249,7 +249,7 @@
                                     <span class="text-xl font-bold text-blue-600">
                                         Rp {{ number_format($minHarga, 0, ',', '.') }}
                                     </span>
-                                    <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}"
+                                    <a href="{{ route('detail.produk', ['id' => $item->sku ?? $item->IdRoster ?? $item->id]) }}"
                                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                                         Pesan
                                     </a>

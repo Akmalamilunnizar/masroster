@@ -395,7 +395,7 @@ $(document).ready(function () {
                         modalBeliSekarangBtn.innerHTML = 'Pesan Sekarang';
                         return;
                     }
-                    var productId = '{{ $produk->IdRoster }}';
+                    var productId = '{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}';
                     var productName = '{{ $produk->NamaRoster }}';
                     var size = sizeSelect.value;
                     var ukuranLabel = selectedOption.text;
@@ -1412,7 +1412,7 @@ $(document).ready(function () {
             }
 
             // Get product details
-            const productId = '{{ $produk->IdRoster }}';
+            const productId = '{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}';
                             const productName = '{{ $produk->NamaRoster }}';
             const productPrice = {{ $produk->HargaProduk }};
             const productImg = '{{ $produk->Img }}';

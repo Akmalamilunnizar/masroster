@@ -334,7 +334,7 @@
             <tbody>
                 @foreach($orders->detailTransaksi as $item)
                 <tr>
-                    <td class="text-center">{{ $item->produk->IdRoster ?? '-' }}</td>
+                    <td class="text-center">{{ $item->produk->sku ?? $item->produk->IdRoster ?? $item->produk->id ?? '-' }}</td>
                     <td>{{ $item->produk->NamaProduk ?? '-' }}</td>
                     <td class="text-center">{{ $item->QtyProduk }}</td>
                     <td class="text-center">Pcs</td>
