@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Transaksi;
-use App\Models\DetailTransaksi;
 use App\Models\Customer;
+use App\Models\DetailTransaksi;
+use App\Models\Transaksi;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -23,26 +23,28 @@ class OrderController extends Controller
         DB::beginTransaction();
         try {
             // Check if user is authenticated
-            if (!Auth::check()) {
+            if (! Auth::check()) {
                 Log::warning('User not authenticated');
+
                 return response()->json([
-                    'error' => 'Silakan login terlebih dahulu!'
+                    'error' => 'Silakan login terlebih dahulu!',
                 ], 401);
             }
 
             // Get authenticated user
             $user = Auth::user();
-            if (!$user) {
+            if (! $user) {
                 Log::error('User object is null after Auth::check()');
+
                 return response()->json([
-                    'error' => 'Terjadi kesalahan autentikasi'
+                    'error' => 'Terjadi kesalahan autentikasi',
                 ], 401);
             }
 
             // Add debugging (log keys only to avoid sensitive data in logs)
             Log::info('Confirm Order Request Received', [
                 'user' => $user->username,
-                'request_keys' => array_keys($request->all())
+                'request_keys' => $request->keys(),
             ]);
 
             // Get cart data from session
@@ -50,10 +52,11 @@ class OrderController extends Controller
             $cartCount = is_array($cart) ? count($cart) : ($cart ? collect($cart)->count() : 0);
             Log::info('Cart summary', ['count' => $cartCount]);
 
-            if (!$cart || empty($cart)) {
+            if (! $cart || empty($cart)) {
                 Log::warning('Cart is empty');
+
                 return response()->json([
-                    'error' => 'Keranjang kosong!'
+                    'error' => 'Keranjang kosong!',
                 ], 400);
             }
 
@@ -64,13 +67,13 @@ class OrderController extends Controller
                     'NamaCust' => $user->f_name,
                     'NoTelp' => $user->nomor_telepon ?? '',
                     'Email' => $user->email,
-                    'Alamat' => $user->alamat ?? ''
+                    'Alamat' => $user->alamat ?? '',
                 ]
             );
             Log::info('Customer created/retrieved', ['id' => $customer->id, 'name' => $customer->NamaCust ?? null]);
 
             // Generate transaction ID
-            $transactionId = 'TR' . str_pad(Transaksi::count() + 1, 4, '0', STR_PAD_LEFT);
+            $transactionId = 'TR'.str_pad(Transaksi::count() + 1, 4, '0', STR_PAD_LEFT);
             Log::info('Generated transaction ID:', ['id' => $transactionId]);
 
             // Get payment method and calculate total
@@ -89,7 +92,7 @@ class OrderController extends Controller
             $address = \App\Models\Address::find($selectedAddressId);
 
             // Create transaction
-            $transaction = new Transaksi();
+            $transaction = new Transaksi;
             $transaction->IdTransaksi = $transactionId;
             $transaction->id_admin = 0;
             $transaction->id_customer = $user->id;
@@ -142,17 +145,18 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Pesanan berhasil dikonfirmasi!',
                 'transaction_id' => $transactionId,
-                'redirect' => route('tokodashboard')
+                'redirect' => route('tokodashboard'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in confirmOrder: ' . $e->getMessage(), [
+            Log::error('Error in confirmOrder: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user' => Auth::user() ? Auth::user()->username : 'not authenticated',
-                'request_keys' => array_keys($request->all())
+                'request_keys' => $request->keys(),
             ]);
+
             return response()->json([
-                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'error' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -169,7 +173,7 @@ class OrderController extends Controller
         if ($selectedAddressId) {
             $selectedAddress = \App\Models\Address::find($selectedAddressId);
         }
-        if (!$selectedAddress) {
+        if (! $selectedAddress) {
             $selectedAddress = \App\Models\Address::where('user_id', auth()->id())
                 ->where('is_default', true)
                 ->first();

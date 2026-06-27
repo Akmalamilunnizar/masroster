@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
-use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -21,16 +21,16 @@ class PaymentController extends Controller
 
         Log::info('Midtrans configuration initialized', [
             'is_production' => Config::$isProduction,
-            'server_key_present' => !empty(Config::$serverKey),
-            'merchant_id_present' => !empty(config('midtrans.merchant_id')),
-            'client_key_present' => !empty(config('midtrans.client_key')),
+            'server_key_present' => ! empty(Config::$serverKey),
+            'merchant_id_present' => ! empty(config('midtrans.merchant_id')),
+            'client_key_present' => ! empty(config('midtrans.client_key')),
         ]);
     }
 
     public function createSnapToken(Request $request)
     {
         try {
-            if (!Auth::check()) {
+            if (! Auth::check()) {
                 return response()->json(['error' => 'Unauthorized.'], 401);
             }
 
@@ -42,8 +42,8 @@ class PaymentController extends Controller
             }
 
             $orderId = session('midtrans_order_id');
-            if (!$orderId) {
-                $orderId = 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999);
+            if (! $orderId) {
+                $orderId = 'ORD-'.now()->format('YmdHis').'-'.random_int(1000, 9999);
                 session(['midtrans_order_id' => $orderId]);
             }
 
@@ -58,7 +58,7 @@ class PaymentController extends Controller
                 $grossAmount += $subtotal;
 
                 $itemDetails[] = [
-                    'id' => (string) ($item['id'] ?? 'item-' . count($itemDetails)),
+                    'id' => (string) ($item['id'] ?? 'item-'.count($itemDetails)),
                     'price' => $price,
                     'quantity' => $quantity,
                     'name' => substr((string) ($item['nama'] ?? 'Produk'), 0, 50),
@@ -113,10 +113,10 @@ class PaymentController extends Controller
 
             return response()->json(['snap_token' => $snapToken]);
         } catch (\Throwable $e) {
-            Log::error('Midtrans error: ' . $e->getMessage(), [
+            Log::error('Midtrans error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user' => Auth::check() ? (Auth::user()->username ?? Auth::user()->name ?? 'authenticated') : 'not authenticated',
-                'request_keys' => array_keys($request->all()),
+                'request_keys' => $request->keys(),
             ]);
 
             return response()->json(['error' => $e->getMessage()], 500);
@@ -210,7 +210,7 @@ class PaymentController extends Controller
             return false;
         }
 
-        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . (string) config('midtrans.server_key'));
+        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.(string) config('midtrans.server_key'));
 
         return hash_equals($expectedSignature, $signatureKey);
     }
@@ -234,6 +234,7 @@ class PaymentController extends Controller
         }
         $shippingCost = session('shipping_cost', 0);
         $grandTotal = $subtotal + $shippingCost;
+
         return view('toko.payment', compact('cart', 'subtotal', 'shippingCost', 'grandTotal'));
     }
 }

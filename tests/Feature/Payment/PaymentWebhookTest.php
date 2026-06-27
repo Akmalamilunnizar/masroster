@@ -49,7 +49,7 @@ class PaymentWebhookTest extends TestCase
             'StatusPesanan' => 'Menunggu Konfirmasi',
         ]);
 
-        $signatureKey = hash('sha512', $transaction->IdTransaksi . '200' . '126000' . 'test-server-key');
+        $signatureKey = hash('sha512', $transaction->IdTransaksi.'200'.'126000'.'test-server-key');
 
         $response = $this->postJson('/payment/notification', [
             'order_id' => $transaction->IdTransaksi,
@@ -82,7 +82,7 @@ class PaymentWebhookTest extends TestCase
             'StatusPesanan' => 'Menunggu Konfirmasi',
         ]);
 
-        $signatureKey = hash('sha512', $transaction->IdTransaksi . '200' . '999999' . 'test-server-key');
+        $signatureKey = hash('sha512', $transaction->IdTransaksi.'200'.'999999'.'test-server-key');
 
         $response = $this->postJson('/payment/notification', [
             'order_id' => $transaction->IdTransaksi,

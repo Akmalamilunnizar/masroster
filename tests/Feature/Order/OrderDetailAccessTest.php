@@ -35,7 +35,7 @@ class OrderDetailAccessTest extends TestCase
             'data_type' => 'Eceran',
         ]);
 
-        $response = $this->actingAs($customer)->get('/pesanan/' . $transaction->IdTransaksi);
+        $response = $this->actingAs($customer)->get('/pesanan/'.$transaction->IdTransaksi);
 
         $response->assertOk()
             ->assertSee('Detail Pesanan #TX200001')
@@ -75,7 +75,7 @@ class OrderDetailAccessTest extends TestCase
         ]);
 
         $this->actingAs($intruder)
-            ->get('/pesanan/' . $transaction->IdTransaksi)
+            ->get('/pesanan/'.$transaction->IdTransaksi)
             ->assertNotFound();
     }
 
@@ -112,7 +112,7 @@ class OrderDetailAccessTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->get('/pesanan/' . $transaction->IdTransaksi)
+            ->get('/pesanan/'.$transaction->IdTransaksi)
             ->assertOk()
             ->assertSee('Detail Pesanan #TX200003');
     }

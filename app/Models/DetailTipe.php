@@ -10,6 +10,7 @@ class DetailTipe extends Model
     use HasFactory;
 
     protected $table = 'detail_tipe';
+
     public $timestamps = false;
 
     protected $fillable = [

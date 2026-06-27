@@ -3,36 +3,40 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\DetailTransaksi;
 use App\Models\Order;
-use Illuminate\Support\Facades\Session;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Transaksi;
-use App\Models\DetailTransaksi;
+use Illuminate\Support\Facades\Session;
 
 class OrderController extends Controller
 {
     public function cart()
     {
         Session::put('order_step', 1);
+
         return view('order.cart');
     }
 
     public function persiapan()
     {
         Session::put('order_step', 2);
+
         return view('order.persiapan');
     }
 
     public function cetak()
     {
         Session::put('order_step', 3);
+
         return view('order.cetak');
     }
 
     public function kirim()
     {
         Session::put('order_step', 4);
+
         return view('order.kirim');
     }
 
@@ -63,7 +67,7 @@ class OrderController extends Controller
             $selectedAddressId = session('selected_address_id');
             $address = \App\Models\Address::find($selectedAddressId);
 
-            $transaction = new Transaksi();
+            $transaction = new Transaksi;
             $transaction->IdTransaksi = $transactionId;
             $transaction->username = $user->username;
             $transaction->id = $user->id;
@@ -87,7 +91,7 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Pesanan berhasil dikonfirmasi!',
                 'transaction_id' => $transactionId,
-                'redirect' => route('tokodashboard')
+                'redirect' => route('tokodashboard'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

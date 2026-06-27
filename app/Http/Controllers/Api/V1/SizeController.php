@@ -9,17 +9,21 @@ use Illuminate\Http\Request;
 
 class SizeController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $sizes = Size::all();
+
         return view('admin.allukuran', compact('sizes'));
     }
 
-    public function create() {
+    public function create()
+    {
         // Satuan removed; view should not require it
         return view('admin.addukuran');
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'nama' => 'required|string|max:50',
             'panjang' => 'required|integer',
@@ -28,15 +32,19 @@ class SizeController extends Controller
         ]);
 
         Size::create($validated);
+
         return redirect()->route('allukuran')->with('message', 'Ukuran berhasil ditambahkan!');
     }
 
-    public function edit($id) {
+    public function edit($id)
+    {
         $size = Size::findOrFail($id);
+
         return view('admin.editukuran', compact('size'));
     }
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $validated = $request->validate([
             'nama' => 'required|string|max:50',
             'panjang' => 'required|integer',
@@ -46,14 +54,15 @@ class SizeController extends Controller
 
         $size = Size::findOrFail($id);
         $size->update($validated);
-        
+
         return redirect()->route('allukuran')->with('message', 'Ukuran berhasil diperbarui!');
     }
 
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $size = Size::findOrFail($id);
         $size->delete();
-        
+
         return redirect()->route('allukuran')->with('message', 'Ukuran berhasil dihapus!');
     }
 
@@ -63,13 +72,13 @@ class SizeController extends Controller
             $request->validate([
                 'nama' => 'required|string|max:50',
                 'panjang' => 'required|integer',
-                'lebar' => 'required|integer'
+                'lebar' => 'required|integer',
             ]);
 
             $size = Size::create([
                 'nama' => $request->nama,
                 'panjang' => $request->panjang,
-                'lebar' => $request->lebar
+                'lebar' => $request->lebar,
             ]);
 
             return response()->json([
@@ -77,12 +86,12 @@ class SizeController extends Controller
                 'id' => $size->id_ukuran,
                 'name' => $size->nama,
                 'panjang' => $size->panjang,
-                'lebar' => $size->lebar
+                'lebar' => $size->lebar,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

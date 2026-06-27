@@ -2,12 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Size;
-use App\Models\LaporanTransaksi;
-use App\Models\TipeRoster;
-use App\Models\ModelHistory;
 use Illuminate\Support\Facades\Schema;
 
 class Produk extends Model
@@ -34,7 +29,7 @@ class Produk extends Model
         'forecast_model',
         'safety_stock',
         'forecast_status',
-        'last_forecast_at'
+        'last_forecast_at',
     ];
 
     protected $casts = [
@@ -92,19 +87,18 @@ class Produk extends Model
         return $this->belongsTo(Size::class, 'ukuran', 'id_ukuran');
     }
 
-
     public function sizes()
     {
         return $this->belongsToMany(\App\Models\Size::class, 'produk_size', $this->getProductForeignKey(), 'id_ukuran')
-                    ->withPivot('harga')
-                    ->withTimestamps();
+            ->withPivot('harga')
+            ->withTimestamps();
     }
+
     public function transaksi()
     {
         return $this->belongsToMany(Transaksi::class, 'detail_transaksi', $this->getProductForeignKey(), 'IdTransaksi')
             ->withPivot(['QtyProduk', 'SubTotal'])
-            ->withTimestamps()
-        ;
+            ->withTimestamps();
     }
 
     public function modelHistories()
@@ -177,9 +171,9 @@ class Produk extends Model
         });
 
         static::created(function ($produk) {
-            if ($produk->usesModernIdentity() && empty($produk->sku) && !empty($produk->id)) {
+            if ($produk->usesModernIdentity() && empty($produk->sku) && ! empty($produk->id)) {
                 $produk->forceFill([
-                    'sku' => 'MAS' . str_pad((string) $produk->id, 3, '0', STR_PAD_LEFT),
+                    'sku' => 'MAS'.str_pad((string) $produk->id, 3, '0', STR_PAD_LEFT),
                 ])->saveQuietly();
             }
         });
@@ -207,5 +201,4 @@ class Produk extends Model
     {
         return Schema::hasColumn('model_histories', 'produk_id') ? 'produk_id' : 'id_roster';
     }
-
 }

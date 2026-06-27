@@ -26,7 +26,7 @@ class SizeManagementTest extends TestCase
         $this->assertSame(40, $size->lebar);
         $this->assertObjectNotHasProperty('id_satuan', $size);
 
-        $this->actingAs($admin)->put('/admin/update-ukuran/' . $size->id_ukuran, [
+        $this->actingAs($admin)->put('/admin/update-ukuran/'.$size->id_ukuran, [
             'nama' => 'XXL',
             'panjang' => 35,
             'lebar' => 45,
@@ -41,7 +41,7 @@ class SizeManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete('/admin/delete-ukuran/' . $size->id_ukuran)
+            ->delete('/admin/delete-ukuran/'.$size->id_ukuran)
             ->assertRedirect(route('allukuran'));
 
         $this->assertDatabaseMissing('size', [

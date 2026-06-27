@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Laporan;
 
 class Supplier extends Model
 {
@@ -33,7 +32,7 @@ class Supplier extends Model
         'username',
         'password',
         'user',
-        'img'
+        'img',
     ];
 
     // Scope untuk hanya mengambil user dengan role "User" (suppliers)
@@ -45,7 +44,7 @@ class Supplier extends Model
     // Accessor untuk IdSupplier (menggunakan id)
     public function getIdSupplierAttribute()
     {
-        return 'SP' . str_pad($this->id, 4, '0', STR_PAD_LEFT);
+        return 'SP'.str_pad($this->id, 4, '0', STR_PAD_LEFT);
     }
 
     // Accessor untuk NamaSupplier (menggunakan f_name)

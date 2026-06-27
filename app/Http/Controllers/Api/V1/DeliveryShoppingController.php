@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 class DeliveryShoppingController extends Controller
@@ -11,6 +10,7 @@ class DeliveryShoppingController extends Controller
     {
         $cartItems = [/* ... */];
         $shippingOptions = [/* ... */];
+
         return view('admin.deliveryshopping', compact('cartItems', 'shippingOptions'));
     }
 }

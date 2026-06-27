@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\DetailHarga;
+use App\Models\MotifRoster;
 use App\Models\Produk;
-use App\Models\User;
 use App\Models\Size;
 use App\Models\TypeItems;
-use App\Models\MotifRoster;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DetailHargaController extends Controller
@@ -37,15 +37,15 @@ class DetailHargaController extends Controller
                 ->leftJoin('motif_roster', 'produk.id_motif', '=', 'motif_roster.IdMotif')
                 ->where(function ($q) use ($search, $collation) {
                     $q->orWhere(DB::raw("detail_harga.id_roster COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("detail_harga.id_user COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("detail_harga.id_ukuran COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("produk.NamaRoster COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("produk.IdRoster COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("jenisbarang.JenisBarang COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("motif_roster.nama_motif COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("users.f_name COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("users.id COLLATE $collation"), 'LIKE', "%$search%")
-                      ->orWhere(DB::raw("size.nama COLLATE $collation"), 'LIKE', "%$search%");
+                        ->orWhere(DB::raw("detail_harga.id_user COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("detail_harga.id_ukuran COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("produk.NamaRoster COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("produk.IdRoster COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("jenisbarang.JenisBarang COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("motif_roster.nama_motif COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("users.f_name COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("users.id COLLATE $collation"), 'LIKE', "%$search%")
+                        ->orWhere(DB::raw("size.nama COLLATE $collation"), 'LIKE', "%$search%");
                 })
                 ->select('detail_harga.*');
         }
@@ -58,7 +58,7 @@ class DetailHargaController extends Controller
     public function create()
     {
         $rosters = Produk::with(['jenisRoster', 'motif'])->get();
-        $users = User::where('user', 'User')->get(); 
+        $users = User::where('user', 'User')->get();
         $sizes = Size::all();
         $jenisList = TypeItems::all();
         $motifList = MotifRoster::all();
@@ -104,7 +104,7 @@ class DetailHargaController extends Controller
 
             return redirect()->route('detailharga.index')->with('message', $message);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -147,7 +147,7 @@ class DetailHargaController extends Controller
                 return redirect()->back()->with('error', 'Record tidak ditemukan');
             }
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -161,7 +161,7 @@ class DetailHargaController extends Controller
 
             return redirect()->route('detailharga.index')->with('message', 'Harga berhasil dihapus!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -174,7 +174,7 @@ class DetailHargaController extends Controller
 
         $rosters = Produk::with(['jenisRoster', 'motif', 'sizes'])
             ->where('IdJenisBarang', $jenisId)
-            ->when($motifId, function($query) use ($motifId) {
+            ->when($motifId, function ($query) use ($motifId) {
                 return $query->where('id_motif', $motifId);
             })
             ->get();
@@ -186,7 +186,7 @@ class DetailHargaController extends Controller
     public function getUserLastPrices(Request $request)
     {
         $userId = $request->user_id;
-        
+
         $lastPrices = DetailHarga::with(['roster.jenisRoster', 'roster.motif', 'user'])
             ->where('id_user', $userId)
             ->get();
@@ -199,7 +199,7 @@ class DetailHargaController extends Controller
     {
         $request->validate([
             'harga_ids' => 'required|array',
-            'harga_ids.*' => 'required|string'
+            'harga_ids.*' => 'required|string',
         ]);
 
         $deletedCount = 0;
@@ -211,6 +211,7 @@ class DetailHargaController extends Controller
                 $parts = explode('_', $hargaId);
                 if (count($parts) !== 3) {
                     $errors[] = "Invalid ID format: $hargaId";
+
                     continue;
                 }
 
@@ -230,12 +231,12 @@ class DetailHargaController extends Controller
                     $errors[] = "Record not found for roster: $idRoster, user: $idUser, ukuran: $idUkuran";
                 }
             } catch (\Exception $e) {
-                $errors[] = "Gagal menghapus record dengan ID: $hargaId - " . $e->getMessage();
+                $errors[] = "Gagal menghapus record dengan ID: $hargaId - ".$e->getMessage();
             }
         }
 
         if (count($errors) > 0) {
-            return redirect()->route('detailharga.index')->with('error', 'Beberapa record gagal dihapus: ' . implode(', ', $errors));
+            return redirect()->route('detailharga.index')->with('error', 'Beberapa record gagal dihapus: '.implode(', ', $errors));
         }
 
         return redirect()->route('detailharga.index')->with('message', "Berhasil menghapus $deletedCount record harga!");

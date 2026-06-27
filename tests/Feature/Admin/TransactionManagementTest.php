@@ -32,7 +32,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post('/admin/all-transaksi/' . $acceptTransaction->IdTransaksi . '/terima')
+            ->post('/admin/all-transaksi/'.$acceptTransaction->IdTransaksi.'/terima')
             ->assertRedirect(route('alltransaksi'));
 
         $this->assertDatabaseHas('transaksi', [
@@ -41,7 +41,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post('/admin/all-transaksi/' . $rejectTransaction->IdTransaksi . '/tolak')
+            ->post('/admin/all-transaksi/'.$rejectTransaction->IdTransaksi.'/tolak')
             ->assertRedirect(route('alltransaksi'));
 
         $this->assertDatabaseHas('transaksi', [
@@ -63,7 +63,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($customer)
-            ->post('/admin/all-transaksi/' . $transaction->IdTransaksi . '/terima')
+            ->post('/admin/all-transaksi/'.$transaction->IdTransaksi.'/terima')
             ->assertForbidden();
 
         $this->assertDatabaseHas('transaksi', [
@@ -112,7 +112,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post('/admin/all-transaksi/' . $transaction->IdTransaksi . '/update-invoice', [
+            ->post('/admin/all-transaksi/'.$transaction->IdTransaksi.'/update-invoice', [
                 'invoice_number' => 'INV-2026-0001',
             ])
             ->assertRedirect();
@@ -123,7 +123,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->get('/admin/print-invoice/' . $transaction->IdTransaksi)
+            ->get('/admin/print-invoice/'.$transaction->IdTransaksi)
             ->assertOk()
             ->assertSee($transaction->IdTransaksi);
     }

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
@@ -16,6 +16,7 @@ class AdminProfileController extends Controller
     public function index()
     {
         $profile = Auth::user();
+
         return view('admin.adminprofile', compact('profile'));
     }
 
@@ -37,7 +38,7 @@ class AdminProfileController extends Controller
     {
         $request->validate([
             'f_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $id,
+            'email' => 'required|email|max:255|unique:users,email,'.$id,
             'email_verified_at' => 'nullable|date',
         ]);
 
@@ -54,7 +55,8 @@ class AdminProfileController extends Controller
 
             return redirect()->route('admin.profiles.index')->with('success', 'Profil berhasil diperbarui.');
         } catch (\Exception $e) {
-            Log::error('Error updating profile: ' . $e->getMessage());
+            Log::error('Error updating profile: '.$e->getMessage());
+
             return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat memperbarui profil.']);
         }
     }
@@ -63,13 +65,14 @@ class AdminProfileController extends Controller
     public function StoreProfile(Request $request)
     {
         // Debug: Log the incoming request keys only (avoid logging sensitive values)
-        Log::info('Profile Update Request Keys:', ['keys' => array_keys($request->all())]);
-        
+        Log::info('Profile Update Request Keys:', ['keys' => $request->keys()]);
+
         $id = Auth::user()->username;
         $profile = User::find($id);
 
-        if (!$profile) {
-            Log::error('User not found with ID: ' . $id);
+        if (! $profile) {
+            Log::error('User not found with ID: '.$id);
+
             return redirect()->back()->withErrors(['error' => 'User not found.']);
         }
 
@@ -77,14 +80,14 @@ class AdminProfileController extends Controller
         Log::info('Current User Data:', [
             'id' => $profile->id,
             'name' => $profile->f_name,
-            'email' => $profile->email
+            'email' => $profile->email,
         ]);
 
         try {
             $validated = $request->validate(
                 [
                     'f_name' => 'required|string|max:255',
-                    'email' => 'required|email|max:255|unique:users,email,' . $id,
+                    'email' => 'required|email|max:255|unique:users,email,'.$id,
                     'currentPassword' => 'nullable|min:6',
                     'newPassword' => 'nullable|min:6|confirmed',
                     'img' => 'nullable|image|mimes:png,jpg,gif,jpeg|max:2048',
@@ -122,7 +125,7 @@ class AdminProfileController extends Controller
 
             // Verifikasi dan update password jika ada
             if ($request->filled('newPassword')) {
-                if (!Hash::check($request->input('currentPassword'), $profile->password)) {
+                if (! Hash::check($request->input('currentPassword'), $profile->password)) {
                     return redirect()->back()->withErrors(['currentPassword' => 'Password saat ini tidak valid.']);
                 }
 
@@ -133,21 +136,21 @@ class AdminProfileController extends Controller
             if ($request->hasFile('img')) {
                 // Delete old image if exists
                 if ($profile->img) {
-                    $del = public_path('uploads/users/' . $profile->img);
+                    $del = public_path('uploads/users/'.$profile->img);
                     if (File::exists($del)) {
                         File::delete($del);
                     }
                 }
 
                 $file = $request->file('img');
-                $filename = 'images/' . time() . '.' . $file->getClientOriginalExtension();
-                
+                $filename = 'images/'.time().'.'.$file->getClientOriginalExtension();
+
                 // Ensure the directory exists
                 $directory = public_path('uploads/users/images');
-                if (!File::exists($directory)) {
+                if (! File::exists($directory)) {
                     File::makeDirectory($directory, 0755, true);
                 }
-                
+
                 $file->move(public_path('uploads/users/images'), basename($filename));
                 $profile->img = $filename;
             }
@@ -155,13 +158,14 @@ class AdminProfileController extends Controller
             $profile->save();
 
             // Debug: Log successful update
-            Log::info('Profile updated successfully for user ID: ' . $id);
+            Log::info('Profile updated successfully for user ID: '.$id);
 
             return redirect()->route('profile')->with('success', 'Profil berhasil diperbarui.');
         } catch (\Exception $e) {
             // Debug: Log the error
-            Log::error('Error updating profile: ' . $e->getMessage());
-            Log::error('Error trace: ' . $e->getTraceAsString());
+            Log::error('Error updating profile: '.$e->getMessage());
+            Log::error('Error trace: '.$e->getTraceAsString());
+
             return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat memperbarui profil.']);
         }
     }
@@ -173,7 +177,7 @@ class AdminProfileController extends Controller
             $profile = User::findOrFail($id);
 
             // Hapus gambar profil jika ada
-            $imgPath = public_path('uploads/users/' . $profile->img);
+            $imgPath = public_path('uploads/users/'.$profile->img);
             if (File::exists($imgPath)) {
                 File::delete($imgPath);
             }
@@ -182,7 +186,8 @@ class AdminProfileController extends Controller
 
             return redirect()->route('admin.profiles.index')->with('success', 'Profil berhasil dihapus.');
         } catch (\Exception $e) {
-            Log::error('Error deleting profile: ' . $e->getMessage());
+            Log::error('Error deleting profile: '.$e->getMessage());
+
             return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat menghapus profil.']);
         }
     }

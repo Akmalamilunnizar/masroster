@@ -1,49 +1,38 @@
 <?php
 
-use App\Http\Controllers\Api\V1\CustomerController;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Api\V1\CategoryController;
-use App\Http\Controllers\Api\V1\DashboardController;
-use App\Http\Controllers\Api\V1\SatuanController;
-use App\Http\Controllers\Api\V1\FoodTypeController;
-use App\Http\Controllers\Api\V1\OrderController;
-use App\Http\Controllers\Api\V1\ItemsController; /* */
-use App\Http\Controllers\Api\V1\ParameterReportController;
-use App\Http\Controllers\Api\V1\DiseaseReportController;
-// use App\Http\Controllers\Api\V1\ProductController;
-use App\Http\Controllers\Api\V1\SubCategoryController;
-use App\Http\Controllers\Api\V1\UserController;
-use App\Http\Controllers\Api\V1\TransaksiController; // Pastikan ini di-import
-use App\Http\Controllers\HomeController;
-// use App\Http\Controllers\ProfileController; // Commented out - doesn't exist
-use App\Models\Items; /* */
-use App\Models\ParameterReport;
-use App\Models\DiseaseReport;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\DiagnosaController;
-use App\Http\Controllers\Api\V1\AdminProfileController;
-use App\Http\Controllers\Api\V1\TypeItemsController;
-use App\Http\Controllers\Api\V1\MotifRosterController;
-use App\Http\Controllers\Api\V1\TipeRosterController;
-use App\Http\Controllers\Api\V1\SupplierController;
-use App\Models\TypeItems;
-use App\Http\Controllers\Api\V1\TokoController;
-use App\Models\Produk;
-use App\Models\Supplier; /* */
-use App\Http\Controllers\Api\V1\ProdukController;
-use App\Http\Controllers\Api\V1\DeliveryShoppingController;
-use Illuminate\Support\Facades\Session;
-use App\Http\Controllers\Api\V1\CartController;
-use App\Http\Controllers\Api\V1\ForecastController;
 use App\Http\Controllers\Api\V1\AddressController;
-use App\Http\Controllers\Api\V1\PesananController;
-use App\Http\Controllers\Api\V1\PaymentController;
-use App\Http\Controllers\Api\V1\DetailProdukController;
+use App\Http\Controllers\Api\V1\AdminProfileController;
+use App\Http\Controllers\Api\V1\CartController;
+use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\DashboardController; /* */
+use App\Http\Controllers\Api\V1\DeliveryShoppingController;
+// use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\DetailHargaController;
+use App\Http\Controllers\Api\V1\DetailProdukController; // Pastikan ini di-import
+// use App\Http\Controllers\ProfileController; // Commented out - doesn't exist
+use App\Http\Controllers\Api\V1\DiagnosaController; /* */
+use App\Http\Controllers\Api\V1\ForecastController;
+use App\Http\Controllers\Api\V1\ItemsController;
+use App\Http\Controllers\Api\V1\MotifRosterController;
+use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\ParameterReportController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PesananController;
+use App\Http\Controllers\Api\V1\ProdukController;
 use App\Http\Controllers\Api\V1\SizeController;
-// use App\Http\Controllers\Api\V1\DiskonController;
+use App\Http\Controllers\Api\V1\SupplierController; /* */
+use App\Http\Controllers\Api\V1\TipeRosterController;
+use App\Http\Controllers\Api\V1\TokoController;
+use App\Http\Controllers\Api\V1\TransaksiController;
+use App\Http\Controllers\Api\V1\TypeItemsController;
+use App\Http\Controllers\Api\V1\UserController;
+use App\Models\Items;
+use App\Models\Produk;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\Artisan;
-
+use Illuminate\Support\Facades\Auth;
+// use App\Http\Controllers\Api\V1\DiskonController;
+use Illuminate\Support\Facades\Route;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -52,7 +41,8 @@ Route::get('/optimize-kebut', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
-    return "Kecepatan maksimal diaktifkan! Config, Route, dan View berhasil di-cache.";
+
+    return 'Kecepatan maksimal diaktifkan! Config, Route, dan View berhasil di-cache.';
 });
 
 Route::get('/customer/{id}', [CustomerController::class, 'customerDetails'])->name('customerDetails');
@@ -60,6 +50,7 @@ Route::get('/customer/{id}', [CustomerController::class, 'customerDetails'])->na
 Route::get('/', function () {
     $produk = Produk::orderBy('IdRoster', 'desc')->take(8)->get();
     $produkTerlaris = Produk::orderBy('IdRoster', 'desc')->take(4)->get();
+
     return view('welcome', compact('produk', 'produkTerlaris'));
 });
 
@@ -93,7 +84,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::post('/admin/store-produk', [ProdukController::class, 'storeProduk'])->name('storeproduk');
 });
-
 
 Route::controller(DetailProdukController::class)->group(function () {
     Route::get('/detail-produk/{id}', [DetailProdukController::class, 'show'])->name('detail.produk');
@@ -129,7 +119,6 @@ Route::controller(DetailHargaController::class)->group(function () {
     Route::get('/admin/detail-harga/roster-prices', 'getRosterPrices')->name('detailharga.roster-prices');
 });
 
-
 // Route::controller(ItemsController::class)->group(function () {
 //     Route::get('/admin/all-item', 'Index')->name('allitems'); /* */
 //     Route::get('/admin/all-item/exportpdf', 'exportPdf')->name('allitems.exportpdf');
@@ -153,7 +142,6 @@ Route::controller(DetailHargaController::class)->group(function () {
 // });
 
 Route::post('/predict', [ForecastController::class, 'predict']);
-
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::controller(TransaksiController::class)->group(function () {
@@ -179,20 +167,20 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/export-lstm', 'exportLstm')->name('export.lstm');
         Route::get('/export-prophet', 'exportProphet')->name('export.prophet');
 
-
         // Test route for ID generation
         Route::get('/admin/test-id-generation', function () {
             $lastTransaksi = \App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first();
             if ($lastTransaksi) {
                 $numericPart = (int) substr($lastTransaksi->IdTransaksi, 2) + 1;
-                $newId = 'TX' . str_pad($numericPart, 6, '0', STR_PAD_LEFT);
+                $newId = 'TX'.str_pad($numericPart, 6, '0', STR_PAD_LEFT);
             } else {
                 $newId = 'TX000001';
             }
+
             return response()->json([
                 'last_id' => $lastTransaksi ? $lastTransaksi->IdTransaksi : 'None',
                 'new_id' => $newId,
-                'new_id_length' => strlen($newId)
+                'new_id_length' => strlen($newId),
             ]);
         })->name('test.id.generation');
     });
@@ -212,13 +200,11 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-
 Route::controller(TokoController::class)->group(function () {
     Route::get('/tokodashboard', function () {
         return view('toko.dashboardToko');
     })->name('tokodashboard');
     Route::get('/tokodashboard', [TokoController::class, 'tokodashboard'])->name('tokodashboard');
-
 
     Route::get('/shop', function () {
         return view('toko.dashboardToko');
@@ -241,11 +227,10 @@ Route::controller(ParameterReportController::class)->group(function () {
     Route::get('/admin/parameter-report', 'Index')->name('parameterreport');
 });
 
-
 Route::controller(ProdukController::class)->group(function () {
     // Tampilkan semua produk
     Route::get('/admin/all-produk', 'index')->name('allproduk');
-        Route::get('/admin/all-produk/detail/{id}', 'detail')->name('admin.detail_allproduk');
+    Route::get('/admin/all-produk/detail/{id}', 'detail')->name('admin.detail_allproduk');
     // Tampilkan form tambah produk
     Route::get('/admin/add-produk', 'addProduk')->name('addproduk');
     // Proses form tambah produk
@@ -261,7 +246,6 @@ Route::controller(ProdukController::class)->group(function () {
     // API get list produk (JSON)
     Route::get('/api/produk', 'get_produk_list')->name('getproduk');
 });
-
 
 Route::controller(SupplierController::class)->group(function () {
     // Tampilkan semua supplier
@@ -285,7 +269,6 @@ Route::controller(CustomerController::class)->group(function () {
     // Tampilkan form tambah supplier
 });
 
-
 Route::controller(UserController::class)->group(function () {
     Route::get('/admin/all-users', 'Index')->name('allusers');
     Route::get('/admin/search-users/search', 'SearchUsers')->name('searchusers');
@@ -307,7 +290,6 @@ Route::controller(UserController::class)->group(function () {
 //     Route::get('/admin/show-diagnosa/{id}', 'showDiagnosa')->name('showdiagnosa');
 // });
 
-
 // Route::controller(OrderController::class)->group(function () {
 //     Route::get('/admin/pending-order', 'Index')->name('pendingorder');
 //     Route::get('/admin/pending-order/search', 'SearchPending')->name('searchorder');
@@ -316,12 +298,10 @@ Route::controller(UserController::class)->group(function () {
 //     Route::get('/admin/delete-order/{id}', 'DeleteOrder')->name('deleteorder');
 // });
 
-
 Route::controller(AdminProfileController::class)->group(function () {
     Route::get('/admin/admin-profile', 'Index')->name('profile');
     Route::post('/admin/store-profile', 'StoreProfile')->name('storeprofile');
 });
-
 
 Route::controller(AdminProfileController::class)->group(function () {
     Route::get('/admin/admin-profile', 'Index')->name('profile');
@@ -329,7 +309,6 @@ Route::controller(AdminProfileController::class)->group(function () {
     Route::get('/admin/pending-order/search', 'SearchPending')->name('searchorder');
     Route::get('/admin/history-order', 'IndexHistory')->name('historyorder');
 });
-
 
 // Forecast routes
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -345,13 +324,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/forecast/flask-health', [ForecastController::class, 'checkFlaskHealth'])->name('forecast.flask-health');
 });
 
-
-
 Route::get('/routes', function () {
     $routeCollection = Route::getRoutes();
     foreach ($routeCollection as $value) {
         echo $value->getActionName();
-        echo "<br/>";
+        echo '<br/>';
     }
 });
 
@@ -366,8 +343,6 @@ Route::controller(TokoController::class)->group(function () {
 });
 
 Route::get('/pesanan/{id}', [PesananController::class, 'detail'])->middleware('auth')->name('pesanan.detail');
-
-
 
 // Cart and Order routes
 Route::middleware(['auth'])->group(function () {
@@ -424,16 +399,13 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-
 Route::get('/routes', function () {
     $routeCollection = Route::getRoutes();
     foreach ($routeCollection as $value) {
         echo $value->getActionName();
-        echo "<br/>";
+        echo '<br/>';
     }
 });
-
-
 
 Route::get('/userprofile', [DashboardController::class, 'Index'])->name('userprofile');
 Route::middleware('auth')->group(function () {
@@ -447,8 +419,6 @@ Route::middleware('auth')->group(function () {
     // Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
 });
-
-
 
 // require __DIR__.'/auth.php'; // Ini harusnya tidak komentar jika Anda menggunakan auth bawaan Laravel
 Route::get('password/reset/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])
@@ -464,7 +434,6 @@ Auth::routes();
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::get('/checkout', [DeliveryShoppingController::class, 'index'])->name('checkout');
-
 
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
@@ -489,7 +458,7 @@ Route::get('/test-transaction', function () {
         'users' => App\Models\User::where('user', '!=', 'Admin')->count(),
         'products' => App\Models\Produk::count(),
         'sizes' => App\Models\Size::count(),
-        'last_transaction' => App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first()?->IdTransaksi ?? 'None'
+        'last_transaction' => App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first()?->IdTransaksi ?? 'None',
     ]);
 })->middleware(['auth', 'role:admin']);
 

@@ -43,7 +43,6 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
@@ -61,7 +60,6 @@ class RegisterController extends Controller
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
      * @return \App\Models\User
      */
     protected function create(array $data)
@@ -70,7 +68,7 @@ class RegisterController extends Controller
         $statusVerifikasi = $tipeUser === 'retailer' ? 'pending' : 'approved';
         $fotoTokoPath = null;
 
-        if (!empty($data['foto_toko']) && is_object($data['foto_toko']) && method_exists($data['foto_toko'], 'store')) {
+        if (! empty($data['foto_toko']) && is_object($data['foto_toko']) && method_exists($data['foto_toko'], 'store')) {
             $fotoTokoPath = $data['foto_toko']->store('foto-toko', 'public');
         }
 
@@ -81,7 +79,7 @@ class RegisterController extends Controller
         // Ensure username is unique by appending number if needed
         $counter = 1;
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
+            $username = $baseUsername.$counter;
             $counter++;
         }
 

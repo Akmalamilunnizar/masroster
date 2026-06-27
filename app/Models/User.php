@@ -6,18 +6,16 @@ namespace App\Models;
 
 use Illuminate\Auth\Authenticatable as AuthenticableTrait;
 use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
-
-use Laravel\Passport\HasApiTokens;
 use Laratrust\Traits\HasRolesAndPermissions;
-
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRolesAndPermissions, CanResetPassword, AuthenticableTrait;
+    use AuthenticableTrait, CanResetPassword, HasApiTokens, HasFactory, HasRolesAndPermissions, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -35,11 +33,11 @@ class User extends Authenticatable implements CanResetPasswordContract
         'img',           // Kolom untuk gambar profil
         'tipe_user',
         'status_verifikasi',
-        'foto_toko'
+        'foto_toko',
     ];
 
     protected $attributes = [
-        'img' => 'default-avatar.png'
+        'img' => 'default-avatar.png',
     ];
 
     /**

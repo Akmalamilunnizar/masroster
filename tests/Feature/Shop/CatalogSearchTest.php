@@ -23,7 +23,7 @@ class CatalogSearchTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('produk', function ($produk) use ($matched): bool {
-            if (!$produk instanceof Collection) {
+            if (! $produk instanceof Collection) {
                 return false;
             }
 

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -22,7 +22,7 @@ return new class extends Migration
         $driver = DB::connection()->getDriverName();
 
         if ($driver === 'mysql') {
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 UPDATE produk
                 SET id = (
                     SELECT COUNT(*)
@@ -35,7 +35,7 @@ return new class extends Migration
                 )
             SQL);
         } elseif ($driver === 'sqlite') {
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 UPDATE produk
                 SET id = (
                     SELECT ROW_NUMBER() OVER (ORDER BY IdRoster ASC)
@@ -44,7 +44,7 @@ return new class extends Migration
                 )
             SQL);
         } elseif ($driver === 'pgsql') {
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 UPDATE produk
                 SET id = row_number() OVER (ORDER BY "IdRoster" ASC)
             SQL);

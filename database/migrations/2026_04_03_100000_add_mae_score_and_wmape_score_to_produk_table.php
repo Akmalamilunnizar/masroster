@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('produk', 'mae_score')) {
+        if (! Schema::hasColumn('produk', 'mae_score')) {
             Schema::table('produk', function (Blueprint $table) {
                 if (Schema::hasColumn('produk', 'forecasted_demand')) {
                     $table->float('mae_score')->nullable()->after('forecasted_demand');
+
                     return;
                 }
 
@@ -22,10 +23,11 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasColumn('produk', 'wmape_score')) {
+        if (! Schema::hasColumn('produk', 'wmape_score')) {
             Schema::table('produk', function (Blueprint $table) {
                 if (Schema::hasColumn('produk', 'mae_score')) {
                     $table->float('wmape_score')->nullable()->after('mae_score');
+
                     return;
                 }
 

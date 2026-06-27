@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class DetailKeluar extends Model
 {
     use HasFactory;
+
     protected $table = 'detail_barangkeluar';
+
     protected $fillable = [
         'IdRoster', // ini buat id
         'IdKeluar',
-        'QtyKeluar'
+        'QtyKeluar',
     ];
 
     // relasi ke laporan

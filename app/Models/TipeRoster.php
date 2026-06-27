@@ -10,9 +10,13 @@ class TipeRoster extends Model
     use HasFactory;
 
     protected $table = 'tipe_roster';
+
     protected $primaryKey = 'IdTipe';
+
     public $incrementing = true;
+
     protected $keyType = 'int';
+
     public $timestamps = false;
 
     protected $fillable = [

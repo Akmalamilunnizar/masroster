@@ -47,7 +47,7 @@ class ProductCrudTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->put('/admin/all-produk/' . $product->IdRoster . '/update', [
+            ->put('/admin/all-produk/'.$product->IdRoster.'/update', [
                 'sizes' => [1],
                 'harga_per_size' => [70000],
                 'IdJenisBarang' => 2,
@@ -72,7 +72,7 @@ class ProductCrudTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete('/admin/all-produk/' . $product->IdRoster)
+            ->delete('/admin/all-produk/'.$product->IdRoster)
             ->assertRedirect(route('allproduk'));
 
         $this->assertDatabaseMissing('produk', [

@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\User; // Keep if you use User model directly for other methods
 use App\Models\Transaksi;
-use Illuminate\Support\Facades\Validator; // Keep if you use validation in other methods
-use Illuminate\Support\Facades\DB; // Keep if you use raw DB queries in other methods
-use Illuminate\Support\Facades\Log; // For debugging
-use Illuminate\Support\Facades\Schema;
+use App\Models\User; // Keep if you use User model directly for other methods
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon; // Keep if you use Carbon for date manipulations
+// Keep if you use validation in other methods
+use Carbon\Carbon; // Keep if you use raw DB queries in other methods
+use Illuminate\Http\Request; // For debugging
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema; // Keep if you use Carbon for date manipulations
+
 // Excel export will use HTML table streamed as .xls to avoid external type deps
 
 class TransaksiController extends Controller
@@ -22,7 +23,6 @@ class TransaksiController extends Controller
      * Menampilkan daftar transaksi dengan fitur filter bulan/tahun dan pencarian.
      * Menggunakan eager loading untuk relasi 'detail'.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
@@ -71,14 +71,14 @@ class TransaksiController extends Controller
      * Metode untuk menerima orderan transaksi.
      * Menggunakan POST request.
      *
-     * @param string $id ID dari transaksi yang akan diterima.
+     * @param  string  $id  ID dari transaksi yang akan diterima.
      * @return \Illuminate\Http\RedirectResponse
      */
     public function terimaOrderan($id)
     {
         $transaksi = Transaksi::find($id);
 
-        if (!$transaksi) {
+        if (! $transaksi) {
             return redirect()->route('alltransaksi')->with('error', 'Transaksi tidak ditemukan.');
         }
 
@@ -93,14 +93,14 @@ class TransaksiController extends Controller
      * Metode untuk menolak orderan transaksi.
      * Menggunakan POST request.
      *
-     * @param string $id ID dari transaksi yang akan ditolak.
+     * @param  string  $id  ID dari transaksi yang akan ditolak.
      * @return \Illuminate\Http\RedirectResponse
      */
     public function tolakOrderan($id)
     {
         $transaksi = Transaksi::find($id);
 
-        if (!$transaksi) {
+        if (! $transaksi) {
             return redirect()->route('alltransaksi')->with('error', 'Transaksi tidak ditemukan.');
         }
 
@@ -114,7 +114,6 @@ class TransaksiController extends Controller
     /**
      * Mengekspor data transaksi ke PDF dengan filter bulan/tahun.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function exportPdf(Request $request)
@@ -139,6 +138,7 @@ class TransaksiController extends Controller
 
         return $pdf->stream('laporan-transaksi.pdf');
     }
+
     public function exportExcel(Request $request)
     {
         $bulan = $request->query('bulan');
@@ -177,11 +177,11 @@ class TransaksiController extends Controller
         $totalPendapatan = (int) $transaksis->sum('GrandTotal');
         $labaBersih = $totalPendapatan - $biayaOperasional - $retur;
 
-        $filename = 'laporan-transaksi-' . now()->format('Ymd_His') . '.xls';
+        $filename = 'laporan-transaksi-'.now()->format('Ymd_His').'.xls';
 
         $headers = [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $html = view('admin.transaksi_excel', compact(
@@ -209,7 +209,7 @@ class TransaksiController extends Controller
         $filename = 'dataset_lstm.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($transactions) {
@@ -225,7 +225,7 @@ class TransaksiController extends Controller
                         $detail->produk ? $detail->produk->jenisRoster->JenisBarang ?? 'N/A' : 'N/A',
                         $detail->QtyProduk ?? 0,
                         $this->getStokAwal($detail->IdRoster ?? null),
-                        $this->getStokAkhir($detail->IdRoster ?? null)
+                        $this->getStokAkhir($detail->IdRoster ?? null),
                     ];
                     fputcsv($file, $row);
                 }
@@ -249,7 +249,7 @@ class TransaksiController extends Controller
         $filename = 'dataset_prophet.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($transactions) {
@@ -265,7 +265,7 @@ class TransaksiController extends Controller
                         $detail->QtyProduk ?? 0, // y field (jumlah_terjual)
                         $this->isHariLibur(\Carbon\Carbon::parse($transaksi->tglTransaksi)) ? 1 : 0,
                         $this->hasPromo($transaksi) ? 1 : 0,
-                        $detail->produk ? $detail->produk->jenisRoster->JenisBarang ?? 'N/A' : 'N/A'
+                        $detail->produk ? $detail->produk->jenisRoster->JenisBarang ?? 'N/A' : 'N/A',
                     ];
                     fputcsv($file, $row);
                 }
@@ -338,14 +338,13 @@ class TransaksiController extends Controller
     /**
      * Update invoice number for a transaction
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param string $id ID of the transaction
+     * @param  string  $id  ID of the transaction
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateInvoice(Request $request, $id)
     {
         $request->validate([
-            'invoice_number' => 'required|string|max:50'
+            'invoice_number' => 'required|string|max:50',
         ]);
 
         $transaksi = Transaksi::findOrFail($id);
@@ -368,7 +367,7 @@ class TransaksiController extends Controller
         if ($lastTransaksi) {
             // Extract the numeric part and increment
             $numericPart = (int) substr($lastTransaksi->IdTransaksi, 2) + 1;
-            $newId = 'TX' . str_pad($numericPart, 6, '0', STR_PAD_LEFT);
+            $newId = 'TX'.str_pad($numericPart, 6, '0', STR_PAD_LEFT);
         } else {
             $newId = 'TX000001';
         }
@@ -506,14 +505,16 @@ class TransaksiController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('alltransaksi')->with('message', 'Transaksi berhasil ditambahkan!');
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Transaction creation failed:', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage())->withInput();
         }
     }
 
@@ -649,10 +650,12 @@ class TransaksiController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('alltransaksi')->with('message', 'Transaksi berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage())->withInput();
         }
     }
 
@@ -670,10 +673,12 @@ class TransaksiController extends Controller
             Transaksi::findOrFail($id)->delete();
 
             DB::commit();
+
             return redirect()->route('alltransaksi')->with('message', 'Transaksi berhasil dihapus!');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 

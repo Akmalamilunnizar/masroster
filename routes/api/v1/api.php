@@ -1,11 +1,10 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\DaftarKoiController;
 // use App\Http\Controllers\Api\V1\Auth\CustomerAuthController;
 // use App\Http\Controllers\Api\V1\ProductController;
-use App\Http\Controllers\Api\V1\DaftarKoiController;
 use App\Http\Controllers\Api\V1\ProdukController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +16,6 @@ use App\Http\Controllers\Api\V1\ProdukController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
 
 // API MOBILE
 Route::group(['namespace' => 'Api\V1'], function () {
@@ -47,13 +45,11 @@ Route::group(['namespace' => 'Api\V1'], function () {
     //     Route::get('ponds', 'DaftarKoiController@getKoiByPondId');
     // });
 
-
     // registration and login - commented out due to missing controllers
     // Route::group(['prefix' => 'auth'], function () {
     //     Route::post('register', 'Auth\CustomerAuthController@register');
     //     Route::post('login', 'Auth\CustomerAuthController@login');
     // });
-
 
     // Route::group(['prefix' => 'customer', 'middleware' => 'auth:api'], function () {
     //     Route::get('notifications', 'NotificationController@get_notifications');
@@ -80,11 +76,10 @@ Route::group(['namespace' => 'Api\V1'], function () {
     // });
 });
 
-
-    // Route::group(['prefix' => 'config'], function () {
-    //     Route::get('/', 'ConfigController@configuration');
-    //     Route::get('/get-zone-id', 'ConfigController@get_zone');
-    //     Route::get('place-api-autocomplete', 'ConfigController@place_api_autocomplete');
-    //     Route::get('distance-api', 'ConfigController@distance_api');
-    //     Route::get('place-api
+// Route::group(['prefix' => 'config'], function () {
+//     Route::get('/', 'ConfigController@configuration');
+//     Route::get('/get-zone-id', 'ConfigController@get_zone');
+//     Route::get('place-api-autocomplete', 'ConfigController@place_api_autocomplete');
+//     Route::get('distance-api', 'ConfigController@distance_api');
+//     Route::get('place-api
 // routes/api.php

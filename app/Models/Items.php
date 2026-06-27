@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Items extends Model
 {
     use HasFactory;
+
     protected $table = 'produk';
+
     protected $primaryKey = 'IdRoster';
+
     protected $fillable = [
         'IdRoster',
         'id_jenis',
@@ -21,12 +24,11 @@ class Items extends Model
     ];
 
     public $timestamps = true;
+
     public function jenisRoster()
     {
         return $this->belongsTo(TypeItems::class, 'id_jenis', 'IdJenisBarang');
     }
-
-
 
     public function detailBarangMasuk()
     {
@@ -44,6 +46,7 @@ class Items extends Model
     {
         return $this->belongsTo(Items::class, 'id_bahan', 'IdBarang');
     }
+
     public function size()
     {
         return $this->belongsTo(Size::class, 'ukuran', 'id_ukuran');

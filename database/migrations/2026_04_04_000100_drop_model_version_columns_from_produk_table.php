@@ -23,7 +23,7 @@ return new class extends Migration
                     $drops[] = 'active_prophet_version';
                 }
 
-                if (!empty($drops)) {
+                if (! empty($drops)) {
                     $table->dropColumn($drops);
                 }
             });
@@ -36,11 +36,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('produk', function (Blueprint $table) {
-            if (!Schema::hasColumn('produk', 'active_lstm_version')) {
+            if (! Schema::hasColumn('produk', 'active_lstm_version')) {
                 $table->string('active_lstm_version', 60)->nullable()->after('forecast_model');
             }
 
-            if (!Schema::hasColumn('produk', 'active_prophet_version')) {
+            if (! Schema::hasColumn('produk', 'active_prophet_version')) {
                 $table->string('active_prophet_version', 60)->nullable()->after('active_lstm_version');
             }
         });

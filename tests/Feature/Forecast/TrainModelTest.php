@@ -21,7 +21,7 @@ class TrainModelTest extends TestCase
 
         for ($i = 6; $i >= 1; $i--) {
             $transaction = $this->createMasrosterTransaction([
-                'IdTransaksi' => 'TXT' . $i . '001',
+                'IdTransaksi' => 'TXT'.$i.'001',
                 'id_admin' => $admin->id,
                 'id_customer' => $admin->id,
                 'Bayar' => 0,

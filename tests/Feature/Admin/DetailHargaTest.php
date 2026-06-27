@@ -44,7 +44,7 @@ class DetailHargaTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->put('/admin/detail-harga/' . $product->IdRoster . '/' . $customer->id . '/1', [
+            ->put('/admin/detail-harga/'.$product->IdRoster.'/'.$customer->id.'/1', [
                 'harga' => '70.000',
                 'produk_id' => 777777,
             ])

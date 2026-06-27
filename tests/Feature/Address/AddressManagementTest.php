@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Address;
 
-use App\Models\Address;
 use Tests\TestCase;
 
 class AddressManagementTest extends TestCase
@@ -40,7 +39,7 @@ class AddressManagementTest extends TestCase
         ]);
 
         $this->actingAs($customer)
-            ->postJson('/addresses/' . $newAddressId . '/default')
+            ->postJson('/addresses/'.$newAddressId.'/default')
             ->assertOk()
             ->assertJsonPath('success', true);
 
@@ -57,7 +56,7 @@ class AddressManagementTest extends TestCase
         $this->assertSame($newAddressId, session('selected_address_id'));
 
         $this->actingAs($customer)
-            ->postJson('/addresses/' . $newAddressId, [
+            ->postJson('/addresses/'.$newAddressId, [
                 'label' => 'Kantor Pusat',
                 'recipient_name' => $customer->f_name,
                 'phone_number' => '081234560000',
@@ -77,7 +76,7 @@ class AddressManagementTest extends TestCase
         ]);
 
         $this->actingAs($customer)
-            ->deleteJson('/addresses/' . $newAddressId)
+            ->deleteJson('/addresses/'.$newAddressId)
             ->assertOk()
             ->assertJsonPath('success', true);
 
@@ -102,11 +101,11 @@ class AddressManagementTest extends TestCase
         ]);
 
         $this->actingAs($intruder)
-            ->postJson('/addresses/' . $ownerAddress->id . '/default')
+            ->postJson('/addresses/'.$ownerAddress->id.'/default')
             ->assertForbidden();
 
         $this->actingAs($intruder)
-            ->deleteJson('/addresses/' . $ownerAddress->id)
+            ->deleteJson('/addresses/'.$ownerAddress->id)
             ->assertForbidden();
 
         $this->assertDatabaseHas('addresses', [
@@ -131,7 +130,7 @@ class AddressManagementTest extends TestCase
         ]);
 
         $this->actingAs($intruder)
-            ->postJson('/addresses/' . $ownerAddress->id, [
+            ->postJson('/addresses/'.$ownerAddress->id, [
                 'label' => 'Kantor Update',
                 'recipient_name' => 'Intruder',
                 'phone_number' => '081234567899',

@@ -12,6 +12,7 @@ class AddressController extends Controller
     public function index()
     {
         $addresses = Auth::user()->addresses;
+
         return view('toko.details', compact('addresses'));
     }
 
@@ -24,14 +25,14 @@ class AddressController extends Controller
             'city' => 'required|string|max:255',
             'postal_code' => 'required|string|max:10',
             'full_address' => 'required|string',
-            'is_default' => 'boolean'
+            'is_default' => 'boolean',
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // If this is set as default, unset any existing default
-        if (!empty($validated['is_default'])) {
+        if (! empty($validated['is_default'])) {
             $user->addresses()->update(['is_default' => false]);
         }
 
@@ -41,7 +42,7 @@ class AddressController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Address saved successfully',
-                'address' => $address
+                'address' => $address,
             ]);
         }
 
@@ -65,9 +66,10 @@ class AddressController extends Controller
         $address->update(['is_default' => true]);
 
         session(['selected_address_id' => $address->id]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Default address updated'
+            'message' => 'Default address updated',
         ]);
     }
 
@@ -82,7 +84,7 @@ class AddressController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Address deleted successfully'
+            'message' => 'Address deleted successfully',
         ]);
     }
 
@@ -101,6 +103,7 @@ class AddressController extends Controller
             'full_address' => 'required',
         ]);
         $address->update($validated);
+
         return response()->json(['success' => true]);
     }
 
@@ -117,4 +120,4 @@ class AddressController extends Controller
 
         return response()->json(['success' => true]);
     }
-} 
+}

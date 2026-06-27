@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -31,7 +30,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'nomor_telepon' => fake()->numerify('08##########'),
             'email_verified_at' => now(),
-            'username' => Str::slug($name) . '-' . fake()->unique()->numberBetween(100, 999),
+            'username' => Str::slug($name).'-'.fake()->unique()->numberBetween(100, 999),
             'password' => static::$password ??= Hash::make('password'),
             'user' => 'User',
             'img' => 'default-avatar.png',
@@ -43,8 +42,8 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->state(fn () => [
-            'f_name' => 'Admin ' . fake()->firstName(),
-            'username' => 'admin-' . fake()->unique()->numberBetween(100, 999),
+            'f_name' => 'Admin '.fake()->firstName(),
+            'username' => 'admin-'.fake()->unique()->numberBetween(100, 999),
             'user' => 'Admin',
         ]);
     }

@@ -10,6 +10,7 @@ class DetailMotif extends Model
     use HasFactory;
 
     protected $table = 'detail_motif';
+
     public $timestamps = false;
 
     protected $fillable = [

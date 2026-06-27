@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -35,7 +35,7 @@ return new class extends Migration
         }
 
         // Step 2: Rename IdRoster to sku only if the legacy column still exists.
-        if (Schema::hasColumn('produk', 'IdRoster') && !Schema::hasColumn('produk', 'sku')) {
+        if (Schema::hasColumn('produk', 'IdRoster') && ! Schema::hasColumn('produk', 'sku')) {
             Schema::table('produk', function (Blueprint $table) use ($driver) {
                 if ($driver !== 'sqlite') {
                     $table->renameColumn('IdRoster', 'sku');
@@ -43,14 +43,14 @@ return new class extends Migration
             });
 
             if ($driver === 'sqlite') {
-                DB::statement(<<<SQL
+                DB::statement(<<<'SQL'
                     ALTER TABLE produk RENAME COLUMN IdRoster TO sku
                 SQL);
             }
         }
 
         // Step 3: Add UNIQUE index on sku
-        if (!$this->hasUniqueIndex('produk', 'produk_sku_unique')) {
+        if (! $this->hasUniqueIndex('produk', 'produk_sku_unique')) {
             Schema::table('produk', function (Blueprint $table) {
                 $table->unique('sku', 'produk_sku_unique');
             });

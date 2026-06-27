@@ -10,7 +10,9 @@ class MotifRoster extends Model
     use HasFactory;
 
     protected $table = 'motif_roster';
+
     protected $primaryKey = 'IdMotif';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -29,5 +31,3 @@ class MotifRoster extends Model
         return $this->hasMany(Produk::class, 'id_motif', 'IdMotif');
     }
 }
-
-
