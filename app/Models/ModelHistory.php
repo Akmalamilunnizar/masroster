@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class ModelHistory extends Model
 {
@@ -11,6 +12,7 @@ class ModelHistory extends Model
 
     protected $fillable = [
         'id_roster',
+        'produk_id',
         'model_type',
         'version_id',
         'wmape_score',
@@ -28,7 +30,9 @@ class ModelHistory extends Model
 
     public function produk()
     {
-        return $this->belongsTo(Produk::class, 'id_roster', 'IdRoster');
+        $foreignKey = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'id_roster';
+
+        return $this->belongsTo(Produk::class, $foreignKey, (new Produk())->getKeyName());
     }
 
     public function scopeActive($query)
@@ -38,7 +42,9 @@ class ModelHistory extends Model
 
     public function scopeForRoster($query, string $idRoster)
     {
-        return $query->where('id_roster', $idRoster);
+        $column = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'id_roster';
+
+        return $query->where($column, $idRoster);
     }
 
     public function scopeForType($query, string $modelType)

@@ -28,6 +28,9 @@ trait MasrosterTestSchema
                 $table->rememberToken();
                 $table->string('img', 255);
                 $table->string('alamat')->nullable();
+                $table->enum('tipe_user', ['end_customer', 'retailer'])->default('end_customer');
+                $table->enum('status_verifikasi', ['pending', 'approved', 'rejected'])->default('pending');
+                $table->string('foto_toko')->nullable();
                 $table->timestamps();
             });
         }
@@ -125,7 +128,9 @@ trait MasrosterTestSchema
 
         if (!Schema::hasTable('produk')) {
             Schema::create('produk', function (Blueprint $table): void {
-                $table->string('IdRoster', 13)->primary();
+                $table->unsignedBigInteger('id')->primary();
+                $table->string('sku', 13)->unique();
+                $table->string('IdRoster', 13)->nullable();
                 $table->string('NamaProduk')->nullable();
                 $table->integer('id_jenis');
                 $table->integer('id_tipe')->nullable();
@@ -149,7 +154,8 @@ trait MasrosterTestSchema
         if (!Schema::hasTable('model_histories')) {
             Schema::create('model_histories', function (Blueprint $table): void {
                 $table->id();
-                $table->string('id_roster', 13);
+                $table->unsignedBigInteger('produk_id')->nullable();
+                $table->string('id_roster', 13)->nullable();
                 $table->string('model_type', 20);
                 $table->string('version_id', 60);
                 $table->float('wmape_score')->nullable();
@@ -171,6 +177,7 @@ trait MasrosterTestSchema
                 $table->dateTime('tglTransaksi');
                 $table->string('StatusPembayaran', 20);
                 $table->string('StatusPesanan', 20)->nullable();
+                $table->string('workflow_status', 30)->default('Draft');
                 $table->string('invoice_number', 50)->nullable();
                 $table->dateTime('tglUpdate')->nullable();
                 $table->timestamps();
@@ -220,7 +227,8 @@ trait MasrosterTestSchema
 
         if (!Schema::hasTable('detail_harga')) {
             Schema::create('detail_harga', function (Blueprint $table): void {
-                $table->string('id_roster', 13);
+                $table->unsignedBigInteger('produk_id')->nullable();
+                $table->string('id_roster', 13)->nullable();
                 $table->unsignedBigInteger('id_user');
                 $table->integer('id_ukuran');
                 $table->integer('harga');
@@ -229,7 +237,8 @@ trait MasrosterTestSchema
 
         if (!Schema::hasTable('produk_size')) {
             Schema::create('produk_size', function (Blueprint $table): void {
-                $table->string('IdRoster', 13);
+                $table->unsignedBigInteger('produk_id')->nullable();
+                $table->string('IdRoster', 13)->nullable();
                 $table->integer('id_ukuran');
                 $table->integer('harga');
                 $table->timestamps();
@@ -239,6 +248,7 @@ trait MasrosterTestSchema
         if (!Schema::hasTable('detail_transaksi')) {
             Schema::create('detail_transaksi', function (Blueprint $table): void {
                 $table->string('IdTransaksi', 10)->nullable();
+                $table->unsignedBigInteger('produk_id')->nullable();
                 $table->string('IdRoster', 13)->nullable();
                 $table->integer('id_ukuran')->nullable();
                 $table->integer('QtyProduk')->nullable();
@@ -325,20 +335,50 @@ trait MasrosterTestSchema
 
     protected function createInventoryTriggers(): void
     {
-        if (DB::connection()->getDriverName() !== 'sqlite') {
-            return;
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            DB::unprepared('DROP TRIGGER IF EXISTS stokMasuk');
+            DB::unprepared('DROP TRIGGER IF EXISTS stokKeluar');
+
+            // Updated trigger to work with produk_id (new schema) or IdRoster (legacy)
+            DB::unprepared(<<<SQL
+                CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk BEGIN
+                    UPDATE produk SET stock = stock + NEW.QtyMasuk
+                    WHERE (
+                        (NEW.IdRoster IS NOT NULL AND IdRoster = NEW.IdRoster)
+                        OR (id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster))
+                    );
+                END;
+            SQL);
+
+            DB::unprepared(<<<SQL
+                CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar BEGIN
+                    UPDATE produk SET stock = stock - NEW.QtyKeluar
+                    WHERE (
+                        (NEW.IdRoster IS NOT NULL AND IdRoster = NEW.IdRoster)
+                        OR (id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster))
+                    );
+                END;
+            SQL);
+        } elseif ($driver === 'mysql') {
+            DB::statement('DROP TRIGGER IF EXISTS stokMasuk');
+            DB::statement('DROP TRIGGER IF EXISTS stokKeluar');
+
+            DB::statement(<<<SQL
+                CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk
+                FOR EACH ROW BEGIN
+                    UPDATE produk SET stock = stock + NEW.QtyMasuk WHERE IdRoster = NEW.IdRoster OR id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster);
+                END;
+            SQL);
+
+            DB::statement(<<<SQL
+                CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar
+                FOR EACH ROW BEGIN
+                    UPDATE produk SET stock = stock - NEW.QtyKeluar WHERE IdRoster = NEW.IdRoster OR id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster);
+                END;
+            SQL);
         }
-
-        DB::unprepared('DROP TRIGGER IF EXISTS stokMasuk');
-        DB::unprepared('DROP TRIGGER IF EXISTS stokKeluar');
-
-        DB::unprepared('CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk BEGIN
-            UPDATE produk SET stock = stock + NEW.QtyMasuk WHERE IdRoster = NEW.IdRoster;
-        END;');
-
-        DB::unprepared('CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar BEGIN
-            UPDATE produk SET stock = stock - NEW.QtyKeluar WHERE IdRoster = NEW.IdRoster;
-        END;');
     }
 
     protected function createMasrosterUser(array $attributes = [], string $role = 'User'): User
@@ -408,8 +448,12 @@ trait MasrosterTestSchema
 
     protected function createMasrosterProduct(array $attributes = []): Produk
     {
+        $rosterCode = 'MAS' . fake()->unique()->numberBetween(100, 999);
+
         return Produk::create(array_merge([
-            'IdRoster' => 'MAS' . fake()->unique()->numberBetween(100, 999),
+            'id' => null,
+            'sku' => $rosterCode,
+            'IdRoster' => $rosterCode,
             'NamaProduk' => 'Roster Test Product',
             'id_jenis' => 1,
             'id_tipe' => 1,
@@ -431,6 +475,7 @@ trait MasrosterTestSchema
     protected function createModelHistory(array $attributes = []): \App\Models\ModelHistory
     {
         return \App\Models\ModelHistory::create(array_merge([
+            'produk_id' => null,
             'id_roster' => 'MAS001',
             'model_type' => 'prophet',
             'version_id' => 'v001',

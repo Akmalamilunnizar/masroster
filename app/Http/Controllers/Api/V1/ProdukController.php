@@ -10,6 +10,7 @@ use App\Models\DetailMasuk;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class ProdukController extends Controller
@@ -24,23 +25,11 @@ class ProdukController extends Controller
     public function detail($IdRoster)
     {
         // Ambil data produk dengan relasi yang dibutuhkan untuk detail dan ukuran
-        $produk = Produk::with(['jenisRoster', 'tipeRoster', 'motif', 'sizes'])
-            ->where('IdRoster', $IdRoster)
-            ->firstOrFail();
+        $produk = $this->resolveProduk($IdRoster);
 
-        // Ambil histori detail barang masuk (DetailMasuk) yang terkait barang ini, terbaru dulu
-        $historiMasuk = DetailMasuk::with('supplier')
-            ->where('IdRoster', $IdRoster)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Ambil histori detail barang keluar dari tabel detail_barangkeluar
-        $historiKeluar = DB::table('detail_barangkeluar as dbk')
-            ->join('barangkeluar as bk', 'dbk.IdKeluar', '=', 'bk.IdKeluar')
-            ->select('dbk.*', 'bk.tglKeluar')
-            ->where('dbk.IdRoster', $IdRoster)
-            ->orderBy('bk.tglKeluar', 'desc')
-            ->get();
+        // Inventori legacy akan dihapus; pertahankan kontrak view dengan koleksi kosong
+        $historiMasuk = collect();
+        $historiKeluar = collect();
 
         // Kirim ke view
         return view('admin.detail_allproduk', compact('produk', 'historiMasuk', 'historiKeluar'));
@@ -48,17 +37,13 @@ class ProdukController extends Controller
     // Menampilkan form tambah produk
     public function addProduk()
     {
-        // Ambil ID produk terakhir dari database
-        $lastProduk = Produk::orderBy('IdRoster', 'desc')->first();
-        $newId = $lastProduk ? 'MAS' . str_pad((substr($lastProduk->IdRoster, 3) + 1), 3, '0', STR_PAD_LEFT) : 'MAS001';
-
         // Ambil data ukuran untuk dropdown
         $sizeList = Size::all();
         $jenisList = \App\Models\TypeItems::all();
         $tipeList = \App\Models\TipeRoster::all();
         $motifList = \App\Models\MotifRoster::all();
 
-        return view('admin.addproduk', compact('newId', 'sizeList', 'jenisList', 'tipeList', 'motifList'));
+        return view('admin.addproduk', compact('sizeList', 'jenisList', 'tipeList', 'motifList'));
     }
 
     // Menyimpan produk baru
@@ -84,18 +69,16 @@ class ProdukController extends Controller
 
             $this->ensureMotifMatchesTipe($request->id_tipe, $request->id_motif);
             $syncData = $this->buildSizeSyncData($request->sizes, $request->harga_per_size);
+            $usesModernIdentity = Schema::hasColumn('produk', 'id') && Schema::hasColumn('produk', 'sku');
 
             DB::beginTransaction();
-            // Ambil ID produk terakhir dari database
-            $lastProduk = Produk::orderBy('IdRoster', 'desc')->first();
-            $newId = $lastProduk ? 'MAS' . str_pad((substr($lastProduk->IdRoster, 3) + 1), 3, '0', STR_PAD_LEFT) : 'MAS001';
-
             // Upload gambar
             $path = $request->file('Img')->store('produk', 'public');
 
             // Simpan data produk ke database
             $produk = Produk::create([
-                'IdRoster' => $newId,
+                'IdRoster' => $usesModernIdentity ? null : $this->generateLegacyRosterCode(),
+                'sku' => $usesModernIdentity ? null : null,
                 'id_jenis' => $request->IdJenisBarang,
                 'id_tipe' => $request->id_tipe,
                 'id_motif' => $request->id_motif,
@@ -103,6 +86,12 @@ class ProdukController extends Controller
                 'Img' => $path,
                 'deskripsi' => $request->deskripsi,
             ]);
+
+            if ($usesModernIdentity && !empty($produk->id)) {
+                $produk->forceFill([
+                    'sku' => 'MAS' . str_pad((string) $produk->id, 3, '0', STR_PAD_LEFT),
+                ])->saveQuietly();
+            }
 
             // Attach ukuran dan harga pivot agar data size tetap konsisten di Produk
             $produk->sizes()->attach($syncData);
@@ -120,7 +109,7 @@ class ProdukController extends Controller
     // Menampilkan form edit produk
     public function editProduk($id)
     {
-        $produk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->findOrFail($id);
+        $produk = $this->resolveProduk($id);
         $sizeList = Size::all();
         $jenisList = \App\Models\TypeItems::all();
         $tipeList = \App\Models\TipeRoster::all();
@@ -131,7 +120,7 @@ class ProdukController extends Controller
     // Memperbarui data produk
     public function updateProduk(Request $request, $id)
     {
-        $produk = Produk::findOrFail($id);
+        $produk = $this->resolveProduk($id);
 
         // Validasi input
         $request->validate([
@@ -188,7 +177,7 @@ class ProdukController extends Controller
     // Menghapus produk
     public function deleteProduk($id)
     {
-        $produk = Produk::findOrFail($id);
+        $produk = $this->resolveProduk($id);
 
         DB::beginTransaction();
         try {
@@ -222,10 +211,14 @@ class ProdukController extends Controller
     public function searchProduk(Request $request)
     {
         $search = $request->search;
+        $usesSku = Schema::hasColumn('produk', 'sku');
 
         $dataProduk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])
             ->where(function ($query) use ($search) {
                 $query->where('IdRoster', 'like', "%$search%")
+                    ->when($usesSku, function ($builder) use ($search) {
+                        $builder->orWhere('sku', 'like', "%$search%");
+                    })
                     ->orWhere('NamaProduk', 'like', "%$search%")
                     ->orWhere('deskripsi', 'like', "%$search%");
             })
@@ -240,7 +233,7 @@ class ProdukController extends Controller
 
     public function show($id)
     {
-        $produk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])->findOrFail($id);
+        $produk = $this->resolveProduk($id);
         return view('admin.showproduk', compact('produk'));
     }
 
@@ -259,7 +252,10 @@ class ProdukController extends Controller
             ->select('tipe_roster.IdTipe', 'tipe_roster.namaTipe')
             ->get();
 
-        Log::info('Connected tipe result: ' . $connectedTipe->toJson());
+        Log::info('Connected tipe result', [
+            'count' => $connectedTipe->count(),
+            'ids' => $connectedTipe->pluck('IdTipe')->take(10)->values()->all()
+        ]);
 
         return response()->json($connectedTipe);
     }
@@ -279,7 +275,10 @@ class ProdukController extends Controller
             ->select('motif_roster.IdMotif', 'motif_roster.nama_motif')
             ->get();
 
-        Log::info('Connected motif result: ' . $connectedMotif->toJson());
+        Log::info('Connected motif result', [
+            'count' => $connectedMotif->count(),
+            'ids' => $connectedMotif->pluck('IdMotif')->take(10)->values()->all()
+        ]);
 
         return response()->json($connectedMotif);
     }
@@ -326,5 +325,39 @@ class ProdukController extends Controller
         }
 
         return $syncData;
+    }
+
+    private function resolveProduk($identifier): Produk
+    {
+        $query = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif']);
+
+        if (is_numeric($identifier)) {
+            $produk = $query->find($identifier);
+
+            if ($produk) {
+                return $produk;
+            }
+        }
+
+        if (Schema::hasColumn('produk', 'sku')) {
+            $produk = $query->where('sku', $identifier)->first();
+
+            if ($produk) {
+                return $produk;
+            }
+        }
+
+        return $query->where('IdRoster', $identifier)->firstOrFail();
+    }
+
+    private function generateLegacyRosterCode(): string
+    {
+        $lastProduk = Produk::orderBy('IdRoster', 'desc')->first();
+
+        if (!$lastProduk || empty($lastProduk->IdRoster)) {
+            return 'MAS001';
+        }
+
+        return 'MAS' . str_pad(((int) substr($lastProduk->IdRoster, 3) + 1), 3, '0', STR_PAD_LEFT);
     }
 }

@@ -17,7 +17,8 @@ class CustomerAuthController extends Controller
 
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->only(['email', 'password']);
+        $validator = Validator::make($data, [
             'email' => 'required',
             'password' => 'required|min:6'
         ]);
@@ -26,8 +27,8 @@ class CustomerAuthController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
         $data = [
-            'email' => $request->email,
-            'password' => $request->password
+            'email' => $data['email'],
+            'password' => $data['password']
         ];
 
         if (auth()->attempt($data)) {
@@ -68,7 +69,8 @@ class CustomerAuthController extends Controller
 
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->only(['f_name', 'email', 'phone', 'password']);
+        $validator = Validator::make($data, [
             'f_name' => 'required|min:3',
             //'l_name' => 'required',
             'email' => 'required|unique:users',
@@ -84,11 +86,11 @@ class CustomerAuthController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
         $user = User::create([
-            'f_name' => $request->f_name,
+            'f_name' => $data['f_name'],
             //'l_name' => $request->l_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => bcrypt($request->password),
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'password' => bcrypt($data['password']),
             'email_verified_at' => now()
         ]);
         $user->addRole('user');

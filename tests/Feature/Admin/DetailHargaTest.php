@@ -31,6 +31,7 @@ class DetailHargaTest extends TestCase
                 'id_user' => $customer->id,
                 'id_ukuran' => 1,
                 'harga' => '63.000',
+                'produk_id' => 999999,
             ])
             ->assertRedirect(route('detailharga.index'));
 
@@ -39,11 +40,13 @@ class DetailHargaTest extends TestCase
             'id_user' => $customer->id,
             'id_ukuran' => 1,
             'harga' => 63000,
+            'produk_id' => null,
         ]);
 
         $this->actingAs($admin)
             ->put('/admin/detail-harga/' . $product->IdRoster . '/' . $customer->id . '/1', [
                 'harga' => '70.000',
+                'produk_id' => 777777,
             ])
             ->assertRedirect(route('detailharga.index'));
 

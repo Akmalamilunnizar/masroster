@@ -127,4 +127,70 @@ class TransactionManagementTest extends TestCase
             ->assertOk()
             ->assertSee($transaction->IdTransaksi);
     }
+
+    public function test_admin_can_store_manual_transaction_with_extra_payload_ignored(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'trx-store-admin@example.test',
+        ]);
+
+        $customer = $this->createCustomerUser([
+            'email' => 'trx-store-customer@example.test',
+        ]);
+
+        $address = $this->createMasrosterAddress($customer, [
+            'is_default' => true,
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'TXS001',
+            'NamaProduk' => 'Roster Store Test',
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/transaksi', [
+                'IdTransaksi' => 'TX200010',
+                'id_customer' => $customer->id,
+                'address_id' => $address->id,
+                'Bayar' => '141.000',
+                'GrandTotal' => '141.000',
+                'StatusPembayaran' => 'Transfer',
+                'StatusPesanan' => 'MENUNGGU KONFIRMASI',
+                'shipping_method' => 'Online',
+                'delivery_method' => 'Delivery',
+                'shipping_type' => 'Ongkir',
+                'ongkir' => '15.000',
+                'notes' => 'Manual test order',
+                'workflow_status' => 'Paid',
+                'id_admin' => 999,
+                'products' => [
+                    [
+                        'product_id' => $product->IdRoster,
+                        'size_id' => 1,
+                        'qty' => 2,
+                        'price' => 63000,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('alltransaksi'));
+
+        $this->assertDatabaseHas('transaksi', [
+            'IdTransaksi' => 'TX200010',
+            'id_admin' => 1,
+            'id_customer' => $customer->id,
+            'GrandTotal' => 141000,
+            'Bayar' => 141000,
+            'workflow_status' => 'Draft',
+            'StatusPesanan' => 'MENUNGGU KONFIRMASI',
+        ]);
+
+        $this->assertDatabaseHas('detail_transaksi', [
+            'IdTransaksi' => 'TX200010',
+            'IdRoster' => $product->IdRoster,
+            'id_ukuran' => 1,
+            'QtyProduk' => 2,
+            'SubTotal' => 126000,
+            'data_type' => 'Eceran',
+        ]);
+    }
 }

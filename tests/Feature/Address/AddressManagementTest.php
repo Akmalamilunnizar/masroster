@@ -64,6 +64,7 @@ class AddressManagementTest extends TestCase
                 'city' => 'Batu',
                 'postal_code' => '65311',
                 'full_address' => 'Jl. Diponegoro No. 1',
+                'user_id' => 999999,
             ])
             ->assertOk()
             ->assertJsonPath('success', true);
@@ -72,6 +73,7 @@ class AddressManagementTest extends TestCase
             'id' => $newAddressId,
             'city' => 'Batu',
             'label' => 'Kantor Pusat',
+            'user_id' => $customer->id,
         ]);
 
         $this->actingAs($customer)
@@ -113,6 +115,39 @@ class AddressManagementTest extends TestCase
         ]);
     }
 
+    public function test_customer_cannot_update_other_users_address(): void
+    {
+        $owner = $this->createCustomerUser([
+            'email' => 'address-update-owner@example.test',
+        ]);
+
+        $intruder = $this->createCustomerUser([
+            'email' => 'address-update-intruder@example.test',
+        ]);
+
+        $ownerAddress = $this->createMasrosterAddress($owner, [
+            'label' => 'Rumah Owner Update',
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($intruder)
+            ->postJson('/addresses/' . $ownerAddress->id, [
+                'label' => 'Kantor Update',
+                'recipient_name' => 'Intruder',
+                'phone_number' => '081234567899',
+                'city' => 'Batu',
+                'postal_code' => '65311',
+                'full_address' => 'Jl. Diponegoro No. 2',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $ownerAddress->id,
+            'label' => 'Rumah Owner Update',
+            'user_id' => $owner->id,
+        ]);
+    }
+
     public function test_set_selected_address_stores_session_value(): void
     {
         $customer = $this->createCustomerUser([
@@ -129,5 +164,28 @@ class AddressManagementTest extends TestCase
 
         $response->assertOk()->assertJsonPath('success', true);
         $this->assertSame($address->id, session('selected_address_id'));
+    }
+
+    public function test_customer_cannot_select_another_users_address(): void
+    {
+        $owner = $this->createCustomerUser([
+            'email' => 'selected-address-owner@example.test',
+        ]);
+
+        $intruder = $this->createCustomerUser([
+            'email' => 'selected-address-intruder@example.test',
+        ]);
+
+        $ownerAddress = $this->createMasrosterAddress($owner, [
+            'is_default' => false,
+        ]);
+
+        $this->actingAs($intruder)
+            ->postJson('/set-selected-address', [
+                'address_id' => $ownerAddress->id,
+            ])
+            ->assertForbidden();
+
+        $this->assertNull(session('selected_address_id'));
     }
 }

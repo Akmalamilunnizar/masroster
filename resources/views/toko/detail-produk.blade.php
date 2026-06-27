@@ -421,7 +421,7 @@
                 <div class="order-form">
                     <form id="orderForm">
                         @csrf
-                        <input type="hidden" name="id" value="{{ $produk->IdRoster }}">
+                        <input type="hidden" name="id" value="{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}">
                         <input type="hidden" name="nama" value="{{ $produk->NamaProduk }}">
                         <input type="hidden" name="harga" id="product_price" value="{{ isset($produk->sizes[0]) ? $produk->sizes[0]->pivot->harga : 0 }}">
                         <input type="hidden" name="img" value="{{ $produk->Img }}">
@@ -518,12 +518,12 @@ function addToCart() {
     const quantity = parseInt(document.getElementById('quantity').value) || 1;
     const price = parseInt(document.getElementById('product_price').value) || 0;
     const subtotal = quantity * price;
-    
-    formData.append('id', '{{ $produk->IdRoster }}');
+
+    formData.append('id', '{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}');
     formData.append('ukuran', ukuranValue);
     formData.append('ukuran_label', ukuranLabel);
     formData.append('subtotal', subtotal);
-    
+
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
         headers: {
@@ -571,12 +571,12 @@ function buyNow() {
     const quantity = parseInt(document.getElementById('quantity').value) || 1;
     const price = parseInt(document.getElementById('product_price').value) || 0;
     const subtotal = quantity * price;
-    
-    formData.append('id', '{{ $produk->IdRoster }}');
+
+    formData.append('id', '{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}');
     formData.append('ukuran', ukuranValue);
     formData.append('ukuran_label', ukuranLabel);
     formData.append('subtotal', subtotal);
-    
+
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
         headers: {

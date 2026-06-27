@@ -62,8 +62,8 @@ class AdminProfileController extends Controller
     // Mengupdate profil admin
     public function StoreProfile(Request $request)
     {
-        // Debug: Log the incoming request data
-        Log::info('Profile Update Request Data:', $request->all());
+        // Debug: Log the incoming request keys only (avoid logging sensitive values)
+        Log::info('Profile Update Request Keys:', ['keys' => array_keys($request->all())]);
         
         $id = Auth::user()->username;
         $profile = User::find($id);

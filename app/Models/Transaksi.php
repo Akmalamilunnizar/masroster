@@ -67,7 +67,7 @@ class Transaksi extends Model
 
     public function produk()
     {
-        return $this->belongsToMany(Produk::class, 'detail_transaksi', 'IdTransaksi', 'IdRoster')
+        return $this->belongsToMany(Produk::class, 'detail_transaksi', 'IdTransaksi', (new Produk())->getKeyName())
             ->withPivot(['QtyProduk', 'SubTotal']) // alias pivot
             // ->withTimestamps()
         ;

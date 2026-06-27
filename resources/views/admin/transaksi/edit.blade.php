@@ -11,15 +11,15 @@
     .form-section {
         margin-bottom: 1.5rem;
     }
-    
+
     .form-row {
         margin-bottom: 1rem;
     }
-    
+
     .form-group {
         margin-bottom: 0.75rem;
     }
-    
+
     .product-row {
         background-color: #f8f9fa;
         padding: 1rem;
@@ -27,48 +27,48 @@
         margin-bottom: 1rem;
         border: 1px solid #e9ecef;
     }
-    
+
     .product-row .row {
         align-items: end;
     }
-    
+
     .btn-remove-product {
         margin-top: 1.5rem;
     }
-    
+
     .subtotal-display {
         background-color: #e9ecef;
         font-weight: 600;
     }
-    
+
     /* Fix input alignment */
     .form-control, .form-select {
         height: 38px;
     }
-    
+
     .form-label {
         font-weight: 600;
         color: #495057;
         margin-bottom: 0.25rem;
     }
-    
+
     /* Fix card spacing */
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         border: 1px solid #dee2e6;
     }
-    
+
     .card-header {
         background-color: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
     }
-    
+
     /* Fix textarea height */
     textarea.form-control {
         height: auto;
         min-height: 80px;
     }
-    
+
     /* Fix sidebar overlap issue */
     .container-xxl {
         margin-left: 0 !important;
@@ -76,14 +76,14 @@
         width: 100% !important;
         max-width: none !important;
     }
-    
+
     /* Ensure content is not hidden behind sidebar */
     .layout-page {
         margin-left: 280px !important;
         width: calc(100% - 280px) !important;
         padding-left: 0.5rem !important;
     }
-    
+
     /* Fix form container spacing */
     .container-xxl.flex-grow-1.container-p-y {
         padding-left: 1rem !important;
@@ -113,7 +113,7 @@
             <form action="{{ route('transaksi.update', $transaksi->IdTransaksi) }}" method="POST" id="transactionForm">
                 @csrf
                 @method('PUT')
-                
+
                 <!-- Basic Transaction Info -->
                 <div class="row mb-4">
                     <div class="col-md-6">
@@ -185,7 +185,7 @@
                         <select class="form-select @error('address_id') is-invalid @enderror" id="address_id" name="address_id" required>
                             <option value="">Pilih Alamat</option>
                             @foreach($customerAddresses as $address)
-                                <option value="{{ $address->id }}" 
+                                <option value="{{ $address->id }}"
                                         {{ old('address_id', $transaksi->address_id) == $address->id ? 'selected' : '' }}>
                                     {{ $address->label ?? 'Alamat' }} - {{ $address->full_address }}, {{ $address->city }}, {{ $address->postal_code }}
                                 </option>
@@ -224,9 +224,9 @@
                                     <select class="form-select product-select" name="products[{{ $index }}][product_id]" required>
                                         <option value="">Pilih Produk</option>
                                         @foreach($products as $product)
-                                                                                         <option value="{{ $product->IdRoster }}" 
+                                                                                         <option value="{{ $product->sku ?? $product->IdRoster ?? $product->id }}"
                                                      data-sizes="{{ $product->sizes->toJson() }}"
-                                                     {{ $detail->IdRoster == $product->IdRoster ? 'selected' : '' }}>
+                                                     {{ ($detail->sku ?? $detail->IdRoster ?? $detail->id) == ($product->sku ?? $product->IdRoster ?? $product->id) ? 'selected' : '' }}>
                                                 {{ $product->jenisRoster->JenisBarang ?? 'N/A' }} - {{ $product->tipeRoster->namaTipe ?? 'N/A' }} - {{ $product->motif->nama_motif ?? 'N/A' }}
                                             </option>
                                         @endforeach
@@ -238,7 +238,7 @@
                                         <option value="">Pilih Ukuran</option>
                                         @if($detail->produk)
                                             @foreach($detail->produk->sizes as $size)
-                                                <option value="{{ $size->id_ukuran }}" 
+                                                <option value="{{ $size->id_ukuran }}"
                                                         data-price="{{ $size->pivot->harga }}"
                                                         {{ $detail->id_ukuran == $size->id_ukuran ? 'selected' : '' }}>
                                                     {{ $size->nama }} ({{ $size->panjang }}×{{ $size->lebar }} cm) - Rp {{ number_format($size->pivot->harga, 0, ',', '.') }}
@@ -249,12 +249,12 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Qty</label>
-                                    <input type="number" class="form-control qty-input" name="products[{{ $index }}][qty]" 
+                                    <input type="number" class="form-control qty-input" name="products[{{ $index }}][qty]"
                                            min="1" value="{{ $detail->QtyProduk }}" required>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Harga Satuan</label>
-                                    <input type="number" class="form-control price-input" name="products[{{ $index }}][price]" 
+                                    <input type="number" class="form-control price-input" name="products[{{ $index }}][price]"
                                            min="0" step="1000" value="{{ $detail->SubTotal / $detail->QtyProduk }}" required>
                                 </div>
                                 <div class="col-md-2">
@@ -283,8 +283,8 @@
                          <div class="input-group">
                              <span class="input-group-text">Rp</span>
                              <input type="text" class="form-control @error('ongkir') is-invalid @enderror"
-                                 id="ongkir" name="ongkir" 
-                                 placeholder="Masukkan biaya ongkir (contoh: 50,000)" 
+                                 id="ongkir" name="ongkir"
+                                 placeholder="Masukkan biaya ongkir (contoh: 50,000)"
                                  value="{{ number_format(old('ongkir', $transaksi->ongkir ?? 0), 0, ',', '.') }}" required
                                  oninput="formatNumber(this)" onblur="validateNumber(this)">
                          </div>
@@ -302,8 +302,8 @@
                          <div class="input-group">
                              <span class="input-group-text">Rp</span>
                              <input type="text" class="form-control @error('GrandTotal') is-invalid @enderror"
-                                 id="GrandTotal" name="GrandTotal" 
-                                 placeholder="Masukkan total (contoh: 1,260,000)" 
+                                 id="GrandTotal" name="GrandTotal"
+                                 placeholder="Masukkan total (contoh: 1,260,000)"
                                  value="{{ number_format(old('GrandTotal', $transaksi->GrandTotal), 0, ',', '.') }}" required
                                  oninput="formatNumber(this)" onblur="validateNumber(this)">
                              <input type="hidden" name="GrandTotal_raw" id="GrandTotal_raw" value="{{ old('GrandTotal', $transaksi->GrandTotal) }}">
@@ -318,8 +318,8 @@
                          <div class="input-group">
                              <span class="input-group-text">Rp</span>
                              <input type="text" class="form-control @error('Bayar') is-invalid @enderror"
-                                 id="Bayar" name="Bayar" 
-                                 placeholder="Masukkan jumlah dibayar (contoh: 1,300,000)" 
+                                 id="Bayar" name="Bayar"
+                                 placeholder="Masukkan jumlah dibayar (contoh: 1,300,000)"
                                  value="{{ number_format(old('Bayar', $transaksi->Bayar), 0, ',', '.') }}" required
                                  oninput="formatNumber(this)" onblur="validateNumber(this)">
                              <input type="hidden" name="Bayar_raw" id="Bayar_raw" value="{{ old('Bayar', $transaksi->Bayar) }}">
@@ -364,7 +364,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="notes" class="form-label">Catatan</label>
-                        <textarea class="form-control @error('notes') is-invalid @enderror" 
+                        <textarea class="form-control @error('notes') is-invalid @enderror"
                                   id="notes" name="notes" rows="3">{{ old('notes', $transaksi->notes) }}</textarea>
                         @error('notes')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const templateRow = document.querySelector('.product-row');
             if (container && templateRow) {
                 const newRow = templateRow.cloneNode(true);
-                
+
                 // Update row index
                 newRow.dataset.row = productRowCount;
                 newRow.querySelectorAll('select, input').forEach(element => {
@@ -409,16 +409,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     element.value = '';
                 });
-                
+
                 // Show remove button
                 const removeBtn = newRow.querySelector('.remove-product');
                 if (removeBtn) {
                     removeBtn.style.display = 'block';
                 }
-                
+
                 container.appendChild(newRow);
                 productRowCount++;
-                
+
                 // Reattach event listeners
                 attachProductRowListeners(newRow);
             }
@@ -443,23 +443,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-calculate total when form loads
     calculateTotal();
-    
+
     // Add customer selection listener for address loading
     const customerSelect = document.getElementById('id_customer');
     const addressSelect = document.getElementById('address_id');
     const addressPreview = document.getElementById('address_preview');
-    
+
     if (customerSelect && addressSelect && addressPreview) {
         // Load addresses for the current customer on page load
         if (customerSelect.value) {
             loadCustomerAddresses(customerSelect.value, '{{ $transaksi->address_id }}');
         }
-        
+
         customerSelect.addEventListener('change', function() {
             const customerId = this.value;
             loadCustomerAddresses(customerId);
         });
-        
+
         // Add address selection listener
         addressSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
@@ -479,7 +479,7 @@ function attachProductRowListeners(row) {
     const sizeSelect = row.querySelector('.size-select');
     const qtyInput = row.querySelector('.qty-input');
     const priceInput = row.querySelector('.price-input');
-    
+
     if (productSelect) {
         // Product selection
         productSelect.addEventListener('change', function() {
@@ -487,7 +487,7 @@ function attachProductRowListeners(row) {
             if (selectedOption && selectedOption.dataset.sizes) {
                 try {
                     const sizes = JSON.parse(selectedOption.dataset.sizes);
-                    
+
                     // Clear and populate size options
                     if (sizeSelect) {
                         sizeSelect.innerHTML = '<option value="">Pilih Ukuran</option>';
@@ -505,7 +505,7 @@ function attachProductRowListeners(row) {
             }
         });
     }
-    
+
     if (sizeSelect) {
         // Size selection
         sizeSelect.addEventListener('change', function() {
@@ -516,7 +516,7 @@ function attachProductRowListeners(row) {
             }
         });
     }
-    
+
     // Quantity and price changes
     if (qtyInput) {
         qtyInput.addEventListener('input', () => calculateSubtotal(row));
@@ -531,12 +531,12 @@ function calculateSubtotal(row) {
     const qtyInput = row.querySelector('.qty-input');
     const priceInput = row.querySelector('.price-input');
     const subtotalDisplay = row.querySelector('.subtotal-display');
-    
+
     if (qtyInput && priceInput && subtotalDisplay) {
         const qty = parseInt(qtyInput.value) || 0;
         const price = parseInt(priceInput.value) || 0;
         const subtotal = qty * price;
-        
+
         subtotalDisplay.value = subtotal.toLocaleString('id-ID');
         calculateTotal();
     }
@@ -546,21 +546,21 @@ function calculateSubtotal(row) {
 function calculateTotal() {
     let total = 0;
     let totalQty = 0;
-    
+
     document.querySelectorAll('.subtotal-display').forEach(display => {
         const value = display.value.replace(/[^\d]/g, '') || '0';
         total += parseInt(value);
     });
-    
+
     // Calculate total quantity
     document.querySelectorAll('.qty-input').forEach(qtyInput => {
         totalQty += parseInt(qtyInput.value) || 0;
     });
-    
+
     // Auto-update shipping type based on quantity
     const shippingTypeSelect = document.getElementById('shipping_type');
     const ongkirInput = document.getElementById('ongkir');
-    
+
     if (shippingTypeSelect && ongkirInput) {
         if (totalQty > 100) {
             shippingTypeSelect.value = 'Free Ongkir';
@@ -571,13 +571,13 @@ function calculateTotal() {
             ongkirInput.disabled = false;
         }
     }
-    
+
     // Add shipping cost to total
     if (ongkirInput) {
         const ongkirCost = parseInt(ongkirInput.value.replace(/[^\d]/g, '')) || 0;
         total += ongkirCost;
     }
-    
+
     const grandTotalInput = document.getElementById('GrandTotal');
     if (grandTotalInput) {
         grandTotalInput.value = total.toLocaleString('id-ID');
@@ -587,12 +587,12 @@ function calculateTotal() {
 function loadCustomerAddresses(customerId, currentAddressId = null) {
     const addressSelect = document.getElementById('address_id');
     const addressPreview = document.getElementById('address_preview');
-    
+
     if (addressSelect && addressPreview) {
         // Clear address dropdown and preview
         addressSelect.innerHTML = '<option value="">Pilih Alamat</option>';
         addressPreview.textContent = 'Pilih alamat customer untuk melihat preview';
-        
+
         if (customerId) {
             // Fetch customer addresses
             fetch(`/admin/get-customer-addresses/${customerId}`)
@@ -608,14 +608,14 @@ function loadCustomerAddresses(customerId, currentAddressId = null) {
                             const option = document.createElement('option');
                             option.value = address.id;
                             option.textContent = `${address.label || 'Alamat'} - ${address.full_address}, ${address.city}, ${address.postal_code}`;
-                            
+
                             // Pre-select the current address if provided
                             if (currentAddressId && address.id == currentAddressId) {
                                 option.selected = true;
                                 // Update preview with selected address
                                 addressPreview.textContent = `${address.full_address}, ${address.city}, ${address.postal_code}`;
                             }
-                            
+
                             addressSelect.appendChild(option);
                         });
                     } else {
@@ -641,26 +641,26 @@ function loadCustomerAddresses(customerId, currentAddressId = null) {
 function formatNumber(input) {
     // Remove all non-digit characters
     let value = input.value.replace(/[^\d]/g, '');
-    
+
     // Store raw value in hidden field first
     const rawFieldId = input.id + '_raw';
     const rawField = document.getElementById(rawFieldId);
     if (rawField) {
         rawField.value = value;
     }
-    
+
     // Format with commas for display
     if (value !== '') {
         value = parseInt(value).toLocaleString('id-ID');
     }
-    
+
     // Update display
     input.value = value;
 }
 
 function validateNumber(input) {
     let value = input.value.replace(/[^\d]/g, '');
-    
+
     if (value === '') {
         input.setCustomValidity('Field ini harus diisi');
     } else if (parseInt(value) < 0) {
@@ -680,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const bayarInput = document.getElementById('Bayar');
             const bayarRaw = document.getElementById('Bayar_raw');
             const ongkirInput = document.getElementById('ongkir');
-            
+
             // Set the raw values to the main inputs before submission
             if (grandTotalRaw && grandTotalRaw.value && grandTotalRaw.value.trim() !== '') {
                 grandTotalInput.value = grandTotalRaw.value;
@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     grandTotalInput.value = formattedValue;
                 }
             }
-            
+
             if (bayarRaw && bayarRaw.value && bayarRaw.value.trim() !== '') {
                 bayarInput.value = bayarRaw.value;
             } else if (bayarInput) {
@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     bayarInput.value = formattedValue;
                 }
             }
-            
+
             // Clean ongkir value
             if (ongkirInput) {
                 const ongkirValue = ongkirInput.value.replace(/[^\d]/g, '');

@@ -8,24 +8,17 @@ use App\Models\Size;
 use App\Models\LaporanTransaksi;
 use App\Models\TipeRoster;
 use App\Models\ModelHistory;
+use Illuminate\Support\Facades\Schema;
 
 class Produk extends Model
 {
     // Nama tabel
     protected $table = 'produk';
 
-    // Primary key bukan default 'id'
-    protected $primaryKey = 'IdRoster';
-
-    // Kalau primary key bukan auto-increment, disable incrementing
-    public $incrementing = false;
-
-    // Kalau primary key bukan integer
-    protected $keyType = 'string';
-
     // Kolom yang bisa diisi
     protected $fillable = [
         'IdRoster',
+        'sku',
         'id_jenis',
         'id_tipe',
         'id_motif',
@@ -44,8 +37,38 @@ class Produk extends Model
         'last_forecast_at'
     ];
 
+    protected $casts = [
+        'id' => 'integer',
+        'stock' => 'integer',
+        'mae_score' => 'float',
+        'rmse_score' => 'float',
+        'wmape_score' => 'float',
+        'forecasted_demand' => 'float',
+        'last_forecast_at' => 'datetime',
+    ];
+
     // Kalau tidak pakai timestamps (created_at, updated_at)
     public $timestamps = true;
+
+    public function getKeyName()
+    {
+        return $this->usesModernIdentity() ? 'id' : 'IdRoster';
+    }
+
+    public function getIncrementing()
+    {
+        return $this->usesModernIdentity();
+    }
+
+    public function getKeyType()
+    {
+        return $this->usesModernIdentity() ? 'int' : 'string';
+    }
+
+    public function getRouteKeyName()
+    {
+        return Schema::hasColumn($this->getTable(), 'sku') ? 'sku' : 'IdRoster';
+    }
 
     // Relationships
 
@@ -72,13 +95,13 @@ class Produk extends Model
 
     public function sizes()
     {
-        return $this->belongsToMany(\App\Models\Size::class, 'produk_size', 'IdRoster', 'id_ukuran')
+        return $this->belongsToMany(\App\Models\Size::class, 'produk_size', $this->getProductForeignKey(), 'id_ukuran')
                     ->withPivot('harga')
                     ->withTimestamps();
     }
     public function transaksi()
     {
-        return $this->belongsToMany(Transaksi::class, 'detail_transaksi', 'IdRoster', 'IdTransaksi')
+        return $this->belongsToMany(Transaksi::class, 'detail_transaksi', $this->getProductForeignKey(), 'IdTransaksi')
             ->withPivot(['QtyProduk', 'SubTotal'])
             ->withTimestamps()
         ;
@@ -86,12 +109,12 @@ class Produk extends Model
 
     public function modelHistories()
     {
-        return $this->hasMany(ModelHistory::class, 'id_roster', 'IdRoster');
+        return $this->hasMany(ModelHistory::class, $this->getModelHistoryForeignKey(), $this->getKeyName());
     }
 
     public function activeLstmHistory()
     {
-        return $this->hasOne(ModelHistory::class, 'id_roster', 'IdRoster')
+        return $this->hasOne(ModelHistory::class, $this->getModelHistoryForeignKey(), $this->getKeyName())
             ->where('model_type', 'lstm')
             ->where('is_active', true)
             ->latest('created_at');
@@ -99,7 +122,7 @@ class Produk extends Model
 
     public function activeProphetHistory()
     {
-        return $this->hasOne(ModelHistory::class, 'id_roster', 'IdRoster')
+        return $this->hasOne(ModelHistory::class, $this->getModelHistoryForeignKey(), $this->getKeyName())
             ->where('model_type', 'prophet')
             ->where('is_active', true)
             ->latest('created_at');
@@ -153,6 +176,14 @@ class Produk extends Model
             }
         });
 
+        static::created(function ($produk) {
+            if ($produk->usesModernIdentity() && empty($produk->sku) && !empty($produk->id)) {
+                $produk->forceFill([
+                    'sku' => 'MAS' . str_pad((string) $produk->id, 3, '0', STR_PAD_LEFT),
+                ])->saveQuietly();
+            }
+        });
+
         static::updating(function ($produk) {
             // Only auto-generate if NamaProduk is empty or if related fields changed
             if (empty($produk->NamaProduk) ||
@@ -160,6 +191,21 @@ class Produk extends Model
                 $produk->NamaProduk = $produk->generateNamaProduk();
             }
         });
+    }
+
+    private function usesModernIdentity(): bool
+    {
+        return Schema::hasColumn($this->getTable(), 'id');
+    }
+
+    private function getProductForeignKey(): string
+    {
+        return Schema::hasColumn('produk_size', 'produk_id') ? 'produk_id' : 'IdRoster';
+    }
+
+    private function getModelHistoryForeignKey(): string
+    {
+        return Schema::hasColumn('model_histories', 'produk_id') ? 'produk_id' : 'id_roster';
     }
 
 }

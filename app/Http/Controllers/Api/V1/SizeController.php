@@ -20,14 +20,14 @@ class SizeController extends Controller
     }
 
     public function store(Request $request) {
-        $request->validate([
+        $validated = $request->validate([
             'nama' => 'required|string|max:50',
             'panjang' => 'required|integer',
             'lebar' => 'required|integer',
             // 'id_satuan' => 'required|string|exists:satuan,IdSatuan',
         ]);
 
-        Size::create($request->all());
+        Size::create($validated);
         return redirect()->route('allukuran')->with('message', 'Ukuran berhasil ditambahkan!');
     }
 
@@ -37,7 +37,7 @@ class SizeController extends Controller
     }
 
     public function update(Request $request, $id) {
-        $request->validate([
+        $validated = $request->validate([
             'nama' => 'required|string|max:50',
             'panjang' => 'required|integer',
             'lebar' => 'required|integer',
@@ -45,7 +45,7 @@ class SizeController extends Controller
         ]);
 
         $size = Size::findOrFail($id);
-        $size->update($request->all());
+        $size->update($validated);
         
         return redirect()->route('allukuran')->with('message', 'Ukuran berhasil diperbarui!');
     }

@@ -52,6 +52,8 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'nomor_telepon' => ['required', 'string', 'min:11', 'unique:users'],
+            'tipe_user' => ['sometimes', 'required', 'in:end_customer,retailer'],
+            'foto_toko' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'required_if:tipe_user,retailer'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -64,6 +66,14 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        $tipeUser = $data['tipe_user'] ?? 'end_customer';
+        $statusVerifikasi = $tipeUser === 'retailer' ? 'pending' : 'approved';
+        $fotoTokoPath = null;
+
+        if (!empty($data['foto_toko']) && is_object($data['foto_toko']) && method_exists($data['foto_toko'], 'store')) {
+            $fotoTokoPath = $data['foto_toko']->store('foto-toko', 'public');
+        }
+
         // Generate username from name (remove spaces, lowercase)
         $baseUsername = strtolower(str_replace(' ', '', $data['name']));
         $username = $baseUsername;
@@ -82,7 +92,10 @@ class RegisterController extends Controller
             'username' => $username,
             'password' => Hash::make($data['password']),
             'user' => 'User', // Set default role
-            'img' => 'default-avatar.png'
+            'img' => 'default-avatar.png',
+            'tipe_user' => $tipeUser,
+            'status_verifikasi' => $statusVerifikasi,
+            'foto_toko' => $fotoTokoPath,
         ]);
 
         // Assign role using Laratrust

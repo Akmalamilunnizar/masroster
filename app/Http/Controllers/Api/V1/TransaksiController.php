@@ -381,39 +381,34 @@ class TransaksiController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug: Log the incoming request data
-        Log::info('Transaction store request received:', $request->all());
+        $requestData = $request->only([
+            'IdTransaksi',
+            'id_customer',
+            'address_id',
+            'Bayar',
+            'GrandTotal',
+            'StatusPembayaran',
+            'StatusPesanan',
+            'shipping_method',
+            'delivery_method',
+            'shipping_type',
+            'ongkir',
+            'notes',
+            'products',
+        ]);
 
-        // Clean up formatted values before validation
-        $requestData = $request->all();
-
-        // Convert formatted Bayar to raw number
-        if (isset($requestData['Bayar'])) {
-            $requestData['Bayar'] = (int) str_replace(['.', ','], '', $requestData['Bayar']);
+        foreach (['Bayar', 'GrandTotal', 'ongkir'] as $field) {
+            if (isset($requestData[$field])) {
+                $requestData[$field] = (int) str_replace(['.', ','], '', (string) $requestData[$field]);
+            }
         }
 
-        // Convert formatted GrandTotal to raw number
-        if (isset($requestData['GrandTotal'])) {
-            $requestData['GrandTotal'] = (int) str_replace(['.', ','], '', $requestData['GrandTotal']);
-        }
-
-        // Convert formatted ongkir to raw number
-        if (isset($requestData['ongkir'])) {
-            $requestData['ongkir'] = (int) str_replace(['.', ','], '', $requestData['ongkir']);
-        }
-
-        // Update the request with cleaned values
-        $request->merge($requestData);
-
-        Log::info('Cleaned request data:', $request->all());
+        Log::info('Transaction store request received', [
+            'keys' => array_keys($requestData),
+        ]);
 
         try {
-            // Set default shipping method for offline transactions
-            if ($request->shipping_method === 'Offline') {
-                $request->merge(['shipping_method' => 'Offline']);
-            }
-
-            $validated = $request->validate([
+            $validated = validator($requestData, [
                 'IdTransaksi' => 'required|unique:transaksi,IdTransaksi',
                 'id_customer' => 'required|exists:users,id',
                 'address_id' => 'required|exists:addresses,id',
@@ -431,44 +426,41 @@ class TransaksiController extends Controller
                 'products.*.size_id' => 'required|exists:size,id_ukuran',
                 'products.*.qty' => 'required|integer|min:1',
                 'products.*.price' => 'required|numeric|min:0',
-            ]);
+            ])->validate();
 
             Log::info('Validation passed:', $validated);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed:', [
                 'errors' => $e->errors(),
-                'request_data' => $request->all()
+                'request_keys' => array_keys($requestData),
             ]);
             throw $e;
         }
 
         DB::beginTransaction();
         try {
-            // Debug: Log the request data
-            Log::info('Transaction creation request:', $request->all());
-
             // Create transaction
             $transaksi = Transaksi::create([
-                'IdTransaksi' => $request->IdTransaksi,
-                'id_customer' => $request->id_customer,
+                'IdTransaksi' => $validated['IdTransaksi'],
+                'id_customer' => $validated['id_customer'],
                 'id_admin' => 1, // Set default admin ID - adjust as needed
-                'address_id' => $request->address_id,
-                'Bayar' => $request->Bayar,
-                'GrandTotal' => $request->GrandTotal,
+                'address_id' => $validated['address_id'],
+                'Bayar' => $validated['Bayar'],
+                'GrandTotal' => $validated['GrandTotal'],
                 'tglTransaksi' => now(),
-                'StatusPembayaran' => $request->StatusPembayaran,
-                'StatusPesanan' => $request->StatusPesanan,
-                'shipping_method' => $request->shipping_method,
-                'delivery_method' => $request->delivery_method,
-                'shipping_type' => $request->shipping_type,
-                'ongkir' => $request->ongkir,
-                'notes' => $request->notes,
+                'StatusPembayaran' => $validated['StatusPembayaran'],
+                'StatusPesanan' => $validated['StatusPesanan'],
+                'shipping_method' => $validated['shipping_method'],
+                'delivery_method' => $validated['delivery_method'],
+                'shipping_type' => $validated['shipping_type'],
+                'ongkir' => $validated['ongkir'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             Log::info('Transaction created successfully:', $transaksi->toArray());
 
             // Create detail transactions
-            foreach ($request->products as $product) {
+            foreach ($validated['products'] as $product) {
                 Log::info('Creating detail transaction:', $product);
                 $detailPayload = [
                     'IdTransaksi' => $transaksi->IdTransaksi,
@@ -490,7 +482,7 @@ class TransaksiController extends Controller
                     DB::table('detail_harga')->updateOrInsert(
                         [
                             'id_roster' => $product['product_id'],
-                            'id_user' => $request->id_customer,
+                            'id_user' => $validated['id_customer'],
                             'id_ukuran' => $product['size_id'],
                         ],
                         [
@@ -499,7 +491,7 @@ class TransaksiController extends Controller
                     );
                     Log::info('Detail harga upserted', [
                         'id_roster' => $product['product_id'],
-                        'id_user' => $request->id_customer,
+                        'id_user' => $validated['id_customer'],
                         'id_ukuran' => $product['size_id'],
                         'harga' => $hargaSatuan,
                     ]);
@@ -507,7 +499,7 @@ class TransaksiController extends Controller
                     Log::error('Failed to upsert detail_harga', [
                         'error' => $e->getMessage(),
                         'product' => $product,
-                        'id_customer' => $request->id_customer,
+                        'id_customer' => $validated['id_customer'],
                     ]);
                     throw $e;
                 }
@@ -548,12 +540,28 @@ class TransaksiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Set default shipping method for offline transactions
-        if ($request->shipping_method === 'Offline') {
-            $request->merge(['shipping_method' => 'Offline']);
+        $requestData = $request->only([
+            'id_customer',
+            'address_id',
+            'Bayar',
+            'GrandTotal',
+            'StatusPembayaran',
+            'StatusPesanan',
+            'shipping_method',
+            'delivery_method',
+            'shipping_type',
+            'ongkir',
+            'notes',
+            'products',
+        ]);
+
+        foreach (['Bayar', 'GrandTotal', 'ongkir'] as $field) {
+            if (isset($requestData[$field])) {
+                $requestData[$field] = (int) str_replace(['.', ','], '', (string) $requestData[$field]);
+            }
         }
 
-        $request->validate([
+        $validated = validator($requestData, [
             'id_customer' => 'required|exists:users,id',
             'address_id' => 'required|exists:addresses,id',
             'Bayar' => 'required|numeric|min:0',
@@ -570,7 +578,7 @@ class TransaksiController extends Controller
             'products.*.size_id' => 'required|exists:size,id_ukuran',
             'products.*.qty' => 'required|integer|min:1',
             'products.*.price' => 'required|numeric|min:0',
-        ]);
+        ])->validate();
 
         DB::beginTransaction();
         try {
@@ -578,17 +586,17 @@ class TransaksiController extends Controller
 
             // Update transaction
             $transaksi->update([
-                'id_customer' => $request->id_customer,
-                'address_id' => $request->address_id,
-                'Bayar' => $request->Bayar,
-                'GrandTotal' => $request->GrandTotal,
-                'StatusPembayaran' => $request->StatusPembayaran,
-                'StatusPesanan' => $request->StatusPesanan,
-                'shipping_method' => $request->shipping_method,
-                'delivery_method' => $request->delivery_method,
-                'shipping_type' => $request->shipping_type,
-                'ongkir' => $request->ongkir,
-                'notes' => $request->notes,
+                'id_customer' => $validated['id_customer'],
+                'address_id' => $validated['address_id'],
+                'Bayar' => $validated['Bayar'],
+                'GrandTotal' => $validated['GrandTotal'],
+                'StatusPembayaran' => $validated['StatusPembayaran'],
+                'StatusPesanan' => $validated['StatusPesanan'],
+                'shipping_method' => $validated['shipping_method'],
+                'delivery_method' => $validated['delivery_method'],
+                'shipping_type' => $validated['shipping_type'],
+                'ongkir' => $validated['ongkir'],
+                'notes' => $validated['notes'] ?? null,
                 'tglUpdate' => now(),
             ]);
 
@@ -596,7 +604,7 @@ class TransaksiController extends Controller
             \App\Models\DetailTransaksi::where('IdTransaksi', $id)->delete();
 
             // Create new detail transactions
-            foreach ($request->products as $product) {
+            foreach ($validated['products'] as $product) {
                 $detailPayload = [
                     'IdTransaksi' => $transaksi->IdTransaksi,
                     'IdRoster' => $product['product_id'],
@@ -617,7 +625,7 @@ class TransaksiController extends Controller
                     DB::table('detail_harga')->updateOrInsert(
                         [
                             'id_roster' => $product['product_id'],
-                            'id_user' => $request->id_customer,
+                            'id_user' => $validated['id_customer'],
                             'id_ukuran' => $product['size_id'],
                         ],
                         [
@@ -626,7 +634,7 @@ class TransaksiController extends Controller
                     );
                     Log::info('Detail harga upserted (update)', [
                         'id_roster' => $product['product_id'],
-                        'id_user' => $request->id_customer,
+                        'id_user' => $validated['id_customer'],
                         'id_ukuran' => $product['size_id'],
                         'harga' => $hargaSatuan,
                     ]);
@@ -634,7 +642,7 @@ class TransaksiController extends Controller
                     Log::error('Failed to upsert detail_harga on update', [
                         'error' => $e->getMessage(),
                         'product' => $product,
-                        'id_customer' => $request->id_customer,
+                        'id_customer' => $validated['id_customer'],
                     ]);
                     throw $e;
                 }

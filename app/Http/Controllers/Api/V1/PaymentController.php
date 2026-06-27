@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Midtrans\Config;
@@ -29,6 +30,10 @@ class PaymentController extends Controller
     public function createSnapToken(Request $request)
     {
         try {
+            if (!Auth::check()) {
+                return response()->json(['error' => 'Unauthorized.'], 401);
+            }
+
             $cart = session('cart', []);
             $shippingCost = (int) session('shipping_cost', 0);
 
@@ -81,6 +86,7 @@ class PaymentController extends Controller
                 ?? 'customer@example.com';
 
             $customerPhone = $user->phone
+                ?? $user->nomor_telepon
                 ?? session('customer_phone')
                 ?? null;
 
@@ -110,7 +116,7 @@ class PaymentController extends Controller
             Log::error('Midtrans error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user' => Auth::check() ? (Auth::user()->username ?? Auth::user()->name ?? 'authenticated') : 'not authenticated',
-                'request' => $request->all(),
+                'request_keys' => array_keys($request->all()),
             ]);
 
             return response()->json(['error' => $e->getMessage()], 500);
@@ -119,29 +125,94 @@ class PaymentController extends Controller
 
     public function handleNotification(Request $request)
     {
-        $payload = $request->all();
-        Log::info('Midtrans notification:', $payload);
+        // Only extract the fields we need from the webhook payload to avoid processing/storing unexpected keys
+        $payload = $request->only([
+            'order_id',
+            'status_code',
+            'gross_amount',
+            'signature_key',
+            'transaction_status',
+            'fraud_status',
+        ]);
 
-        $orderId = $payload['order_id'];
-        $transactionStatus = $payload['transaction_status'];
-        $fraudStatus = $payload['fraud_status'];
+        if (! $this->hasValidMidtransSignature($payload)) {
+            Log::warning('Invalid Midtrans notification signature', [
+                'order_id' => $payload['order_id'] ?? null,
+                'status_code' => $payload['status_code'] ?? null,
+            ]);
 
-        // Handle the notification based on transaction status
-        if ($transactionStatus == 'capture') {
-            if ($fraudStatus == 'challenge') {
-                // TODO: Handle challenge payment
-            } else if ($fraudStatus == 'accept') {
-                // TODO: Handle successful payment
-            }
-        } else if ($transactionStatus == 'settlement') {
-            // TODO: Handle settlement payment
-        } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
-            // TODO: Handle failed payment
-        } else if ($transactionStatus == 'pending') {
-            // TODO: Handle pending payment
+            return response()->json(['error' => 'Invalid notification signature.'], 403);
         }
 
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $transactionStatus = (string) ($payload['transaction_status'] ?? '');
+        $fraudStatus = (string) ($payload['fraud_status'] ?? '');
+
+        $transaction = Transaksi::where('IdTransaksi', $orderId)->first();
+        if (! $transaction) {
+            Log::warning('Midtrans notification for missing transaksi', [
+                'order_id' => $orderId,
+                'transaction_status' => $transactionStatus,
+            ]);
+
+            return response()->json(['error' => 'Transaction not found.'], 404);
+        }
+
+        $reportedGrossAmount = (int) ($payload['gross_amount'] ?? 0);
+        if ($reportedGrossAmount !== (int) $transaction->GrandTotal) {
+            Log::warning('Midtrans notification gross amount mismatch', [
+                'order_id' => $orderId,
+                'reported_gross_amount' => $reportedGrossAmount,
+                'expected_gross_amount' => (int) $transaction->GrandTotal,
+            ]);
+
+            return response()->json(['error' => 'Gross amount mismatch.'], 422);
+        }
+
+        $resolvedStatus = match ($transactionStatus) {
+            'capture' => $fraudStatus === 'challenge' ? 'Belum Lunas' : 'Lunas',
+            'settlement' => 'Lunas',
+            'pending' => 'Belum Lunas',
+            'cancel', 'deny', 'expire' => 'Belum Lunas',
+            default => $transaction->StatusPembayaran ?? 'Belum Lunas',
+        };
+
+        $transaction->StatusPembayaran = $resolvedStatus;
+        $transaction->tglUpdate = now();
+
+        if ($resolvedStatus === 'Lunas') {
+            $transaction->Bayar = $transaction->GrandTotal;
+            $transaction->workflow_status = 'Paid';
+        } else {
+            $transaction->workflow_status = 'Draft';
+        }
+
+        $transaction->save();
+
+        Log::info('Midtrans notification processed', [
+            'order_id' => $orderId,
+            'transaction_status' => $transactionStatus,
+            'fraud_status' => $fraudStatus,
+            'resolved_payment_status' => $resolvedStatus,
+        ]);
+
         return response()->json(['status' => 'success']);
+    }
+
+    private function hasValidMidtransSignature(array $payload): bool
+    {
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $statusCode = (string) ($payload['status_code'] ?? '');
+        $grossAmount = (string) ($payload['gross_amount'] ?? '');
+        $signatureKey = (string) ($payload['signature_key'] ?? '');
+
+        if ($orderId === '' || $statusCode === '' || $grossAmount === '' || $signatureKey === '') {
+            return false;
+        }
+
+        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . (string) config('midtrans.server_key'));
+
+        return hash_equals($expectedSignature, $signatureKey);
     }
 
     public function paymentSuccess()

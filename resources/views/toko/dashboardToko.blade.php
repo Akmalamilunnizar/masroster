@@ -457,12 +457,12 @@ CIME | Halaman Dashboard E-Commerce
                                         Rp {{ number_format($minHarga, 0, ',', '.') }}
                                     </div>
                                     <div class="product-actions">
-                                        <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}"
+                                        <a href="{{ route('detail.produk', ['id' => $item->sku ?? $item->IdRoster ?? $item->id]) }}"
                                            class="btn-view">
                                             <i class="bi bi-eye me-1"></i>View
                                         </a>
                                         <button class="btn-pesan pesan-btn"
-                                                data-id="{{ $item->IdRoster }}"
+                                                data-id="{{ $item->sku ?? $item->IdRoster ?? $item->id }}"
                                                 data-nama="{{ $item->NamaProduk }}"
                                                 data-harga="{{ $minHarga }}"
                                                 data-img="{{ $item->Img }}"
@@ -520,12 +520,12 @@ CIME | Halaman Dashboard E-Commerce
                                         Rp {{ number_format($minHarga, 0, ',', '.') }}
                                     </div>
                                     <div class="product-actions">
-                                        <a href="{{ route('detail.produk', ['id' => $item->IdRoster]) }}"
+                                        <a href="{{ route('detail.produk', ['id' => $item->sku ?? $item->IdRoster ?? $item->id]) }}"
                                            class="btn-view">
                                             <i class="bi bi-eye me-1"></i>View
                                         </a>
                                         <button class="btn-pesan pesan-btn"
-                                                data-id="{{ $item->IdRoster }}"
+                                                data-id="{{ $item->sku ?? $item->IdRoster ?? $item->id }}"
                                                 data-nama="{{ $item->NamaProduk }}"
                                                 data-harga="{{ $minHarga }}"
                                                 data-img="{{ $item->Img }}"

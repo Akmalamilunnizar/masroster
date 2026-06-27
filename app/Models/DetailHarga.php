@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class DetailHarga extends Model
 {
@@ -17,6 +18,7 @@ class DetailHarga extends Model
 
     protected $fillable = [
         'id_roster',
+        'produk_id',
         'id_user',
         'id_ukuran',
         'harga'
@@ -27,7 +29,9 @@ class DetailHarga extends Model
     // Relationships
     public function roster()
     {
-        return $this->belongsTo(Produk::class, 'id_roster', 'IdRoster');
+        $foreignKey = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'id_roster';
+
+        return $this->belongsTo(Produk::class, $foreignKey, (new Produk())->getKeyName());
     }
 
     public function user()

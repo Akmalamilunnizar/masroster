@@ -39,15 +39,16 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            // Add debugging
+            // Add debugging (log keys only to avoid sensitive data in logs)
             Log::info('Confirm Order Request Received', [
                 'user' => $user->username,
-                'request' => $request->all()
+                'request_keys' => array_keys($request->all())
             ]);
 
             // Get cart data from session
             $cart = session('cart');
-            Log::info('Cart data:', ['cart' => $cart]);
+            $cartCount = is_array($cart) ? count($cart) : ($cart ? collect($cart)->count() : 0);
+            Log::info('Cart summary', ['count' => $cartCount]);
 
             if (!$cart || empty($cart)) {
                 Log::warning('Cart is empty');
@@ -66,7 +67,7 @@ class OrderController extends Controller
                     'Alamat' => $user->alamat ?? ''
                 ]
             );
-            Log::info('Customer data:', ['customer' => $customer->toArray()]);
+            Log::info('Customer created/retrieved', ['id' => $customer->id, 'name' => $customer->NamaCust ?? null]);
 
             // Generate transaction ID
             $transactionId = 'TR' . str_pad(Transaksi::count() + 1, 4, '0', STR_PAD_LEFT);
@@ -113,7 +114,7 @@ class OrderController extends Controller
             $transaction->StatusPesanan = 'Menunggu Konfirmasi';
             $transaction->save();
 
-            Log::info('Transaction created:', ['transaction' => $transaction->toArray()]);
+            Log::info('Transaction created', ['id' => $transaction->IdTransaksi, 'grand_total' => $transaction->GrandTotal]);
 
             // Create transaction details
             foreach ($cart as $id => $details) {
@@ -125,7 +126,11 @@ class OrderController extends Controller
                     'SubTotal' => $details['harga'] * $details['quantity'],
                 ];
                 DetailTransaksi::create($detailData);
-                Log::info('Transaction detail created:', ['detail' => $detailData]);
+                Log::info('Transaction detail created', [
+                    'id_roster' => $detailData['IdRoster'] ?? null,
+                    'qty' => $detailData['QtyProduk'] ?? null,
+                    'subtotal' => $detailData['SubTotal'] ?? null,
+                ]);
             }
 
             // Clear cart and payment flags
@@ -144,7 +149,7 @@ class OrderController extends Controller
             Log::error('Error in confirmOrder: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user' => Auth::user() ? Auth::user()->username : 'not authenticated',
-                'request' => $request->all()
+                'request_keys' => array_keys($request->all())
             ]);
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()

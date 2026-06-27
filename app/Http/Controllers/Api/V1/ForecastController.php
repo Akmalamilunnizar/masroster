@@ -59,10 +59,10 @@ class ForecastController extends Controller
                 ->orderBy('bulan')
                 ->get();
 
-            Log::info('Raw sales data:', [
+            Log::info('Raw sales data summary', [
                 'data_type' => $resolvedDataType,
                 'count' => $salesData->count(),
-                'data' => $salesData->toArray(),
+                'sample' => $salesData->take(3)->map(function ($r) { return ['bulan' => $r->bulan, 'terjual' => $r->terjual]; })->values()->all(),
             ]);
 
             if (in_array($resolvedDataType, ['Eceran', 'Borongan'], true) && $salesData->count() < 12) {
@@ -91,7 +91,10 @@ class ForecastController extends Controller
                 $salesData = $finalData->sortBy('bulan')->values();
             }
 
-            Log::info('Final sales data:', ['data' => $salesData->toArray()]);
+            Log::info('Final sales data summary', [
+                'count' => is_countable($salesData) ? count($salesData) : $salesData->count(),
+                'sample' => collect($salesData)->take(3)->map(function ($r) { return ['bulan' => $r['bulan'] ?? ($r->bulan ?? null), 'terjual' => $r['terjual'] ?? ($r->terjual ?? null)]; })->values()->all(),
+            ]);
 
             return response()->json([
                 'status' => 'success',
@@ -129,7 +132,6 @@ class ForecastController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error in getSalesData: ' . $e->getMessage(), [
-                'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
 

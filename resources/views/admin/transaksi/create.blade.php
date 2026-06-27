@@ -215,7 +215,7 @@
                                     <select class="form-select product-select @error('products.0.product_id') is-invalid @enderror" name="products[0][product_id]" required>
                                         <option value="">Pilih Produk</option>
                                         @foreach($products as $product)
-                                            <option value="{{ $product->IdRoster }}" data-sizes="{{ $product->sizes->toJson() }}">
+                                            <option value="{{ $product->sku ?? $product->IdRoster ?? $product->id }}" data-sizes="{{ $product->sizes->toJson() }}">
                                                 {{ $product->jenisRoster->JenisBarang ?? 'N/A' }} - {{ $product->tipeRoster->namaTipe ?? 'N/A' }} - {{ $product->motif->nama_motif ?? 'N/A' }}
                                             </option>
                                         @endforeach

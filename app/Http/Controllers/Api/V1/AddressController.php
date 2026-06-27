@@ -17,7 +17,7 @@ class AddressController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'label' => 'required|string|max:255',
             'recipient_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
@@ -27,12 +27,15 @@ class AddressController extends Controller
             'is_default' => 'boolean'
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // If this is set as default, unset any existing default
-        if ($request->is_default) {
-            Auth::user()->addresses()->update(['is_default' => false]);
+        if (!empty($validated['is_default'])) {
+            $user->addresses()->update(['is_default' => false]);
         }
 
-        $address = Auth::user()->addresses()->create($request->all());
+        $address = $user->addresses()->create($validated);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -52,8 +55,11 @@ class AddressController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // Unset any existing default
-        Auth::user()->addresses()->update(['is_default' => false]);
+        $user->addresses()->update(['is_default' => false]);
 
         // Set this address as default
         $address->update(['is_default' => true]);
@@ -82,7 +88,11 @@ class AddressController extends Controller
 
     public function update(Request $request, Address $address)
     {
-        $request->validate([
+        if ($address->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
             'label' => 'required',
             'recipient_name' => 'required',
             'phone_number' => 'required',
@@ -90,14 +100,21 @@ class AddressController extends Controller
             'postal_code' => 'required',
             'full_address' => 'required',
         ]);
-        $address->update($request->all());
+        $address->update($validated);
         return response()->json(['success' => true]);
     }
 
     public function setSelectedAddress(Request $request)
     {
         $request->validate(['address_id' => 'required|integer|exists:addresses,id']);
-        session(['selected_address_id' => $request->address_id]);
+
+        $address = Address::findOrFail($request->address_id);
+        if ($address->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        session(['selected_address_id' => $address->id]);
+
         return response()->json(['success' => true]);
     }
 } 

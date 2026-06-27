@@ -28,14 +28,14 @@ CIME | Halaman Edit Produk
                     </div>
                 @endif
 
-                <form action="{{ route('updateproduk', $produk->IdRoster) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('updateproduk', $produk->sku ?? $produk->IdRoster ?? $produk->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
                     <div class="row mb-3">
                         <label class="col-sm-2 col-form-label" for="IdRoster">ID Produk</label>
                         <div class="col-sm-10">
-                            <input type="text" id="IdRoster" name="IdRoster" class="form-control" value="{{ $produk->IdRoster }}" readonly style="background-color: #e9ecef; cursor: default;">
+                            <input type="text" id="IdRoster" name="IdRoster" class="form-control" value="{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}" readonly style="background-color: #e9ecef; cursor: default;">
                         </div>
                     </div>
 

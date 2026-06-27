@@ -68,42 +68,36 @@ class DetailHargaController extends Controller
 
     public function store(Request $request)
     {
-        // Clean up formatted values before validation
-        $requestData = $request->all();
-        
-        // Convert formatted harga to raw number
-        if (isset($requestData['harga'])) {
-            $requestData['harga'] = (int) str_replace(['.', ','], '', $requestData['harga']);
+        $data = $request->only(['id_roster', 'id_user', 'id_ukuran', 'harga']);
+        if (isset($data['harga'])) {
+            $data['harga'] = (int) str_replace(['.', ','], '', (string) $data['harga']);
         }
-        
-        // Update the request with cleaned values
-        $request->merge($requestData);
-        
-        $request->validate([
+
+        $validated = validator($data, [
             'id_roster' => 'required|exists:produk,IdRoster',
             'id_user' => 'required|exists:users,id',
             'id_ukuran' => 'required|exists:size,id_ukuran',
             'harga' => 'required|integer|min:0',
-        ]);
+        ])->validate();
 
         try {
             // Check if combination already exists
-            $existing = DetailHarga::where('id_roster', $request->id_roster)
-                ->where('id_user', $request->id_user)
-                ->where('id_ukuran', $request->id_ukuran)
+            $existing = DetailHarga::where('id_roster', $validated['id_roster'])
+                ->where('id_user', $validated['id_user'])
+                ->where('id_ukuran', $validated['id_ukuran'])
                 ->first();
 
             if ($existing) {
                 // Update existing record
-                $existing->update(['harga' => $request->harga]);
+                $existing->update(['harga' => $validated['harga']]);
                 $message = 'Harga berhasil diperbarui!';
             } else {
                 // Create new record
                 DetailHarga::create([
-                    'id_roster' => $request->id_roster,
-                    'id_user' => $request->id_user,
-                    'id_ukuran' => $request->id_ukuran,
-                    'harga' => $request->harga,
+                    'id_roster' => $validated['id_roster'],
+                    'id_user' => $validated['id_user'],
+                    'id_ukuran' => $validated['id_ukuran'],
+                    'harga' => $validated['harga'],
                 ]);
                 $message = 'Harga berhasil ditambahkan!';
             }
@@ -130,20 +124,14 @@ class DetailHargaController extends Controller
 
     public function update(Request $request, $id_roster, $id_user, $id_ukuran)
     {
-        // Clean up formatted values before validation
-        $requestData = $request->all();
-        
-        // Convert formatted harga to raw number
-        if (isset($requestData['harga'])) {
-            $requestData['harga'] = (int) str_replace(['.', ','], '', $requestData['harga']);
+        $data = $request->only(['harga']);
+        if (isset($data['harga'])) {
+            $data['harga'] = (int) str_replace(['.', ','], '', (string) $data['harga']);
         }
-        
-        // Update the request with cleaned values
-        $request->merge($requestData);
-        
-        $request->validate([
+
+        $validated = validator($data, [
             'harga' => 'required|integer|min:0',
-        ]);
+        ])->validate();
 
         try {
             // Use DB query builder to avoid Eloquent primary key issues
@@ -151,7 +139,7 @@ class DetailHargaController extends Controller
                 ->where('id_roster', $id_roster)
                 ->where('id_user', $id_user)
                 ->where('id_ukuran', $id_ukuran)
-                ->update(['harga' => $request->harga]);
+                ->update(['harga' => $validated['harga']]);
 
             if ($updated) {
                 return redirect()->route('detailharga.index')->with('message', 'Harga berhasil diperbarui!');

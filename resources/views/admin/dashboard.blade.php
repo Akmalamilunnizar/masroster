@@ -253,7 +253,7 @@ CIME | Halaman Dashboard
                                         <tr>
                                             <td>
                                                 <div class="fw-semibold">{{ $item['NamaProduk'] ?: '-' }}</div>
-                                                <small class="text-muted">{{ $item['IdRoster'] }}</small>
+                                                <small class="text-muted">{{ $item['sku'] ?? $item['IdRoster'] }}</small>
                                             </td>
                                             <td class="text-center">
                                                 @if($item['status'] === 'critical')
@@ -340,7 +340,7 @@ CIME | Halaman Dashboard
 <script>
     // Top Stock Items Chart - Using Real Data Only
     var topStockData = {!! json_encode($topStockRoster->pluck('stock')) !!};
-    var topStockCategories = {!! json_encode($topStockRoster->pluck('IdRoster')) !!};
+    var topStockCategories = {!! json_encode($topStockRoster->map(fn($item) => $item->sku ?? $item->IdRoster)->values()) !!};
 
     var topStockOptions = {
         series: [{
@@ -472,7 +472,7 @@ CIME | Halaman Dashboard
         chart: { type: 'bar', height: 350 },
         plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
         dataLabels: { enabled: false },
-        xaxis: { categories: {!! json_encode($topSelling->pluck('IdRoster')) !!} },
+        xaxis: { categories: {!! json_encode($topSelling->map(fn($item) => $item->sku ?? $item->IdRoster)->values()) !!} },
         colors: ['#75FF33']
     };
     var topSellingChart = new ApexCharts(document.querySelector('#topSellingChart'), topSellingOptions);

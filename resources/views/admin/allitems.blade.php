@@ -5,7 +5,7 @@
 @section('search')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <style>
         /* Enhanced styling for disabled action buttons */
         .btn-info.disabled-bulk,
@@ -15,7 +15,7 @@
             cursor: not-allowed !important;
             position: relative;
         }
-        
+
         .btn-info.disabled-bulk::after,
         .btn-warning.disabled-bulk::after {
             content: "⛔";
@@ -33,7 +33,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         /* Tooltip for disabled buttons */
         .btn-info.disabled-bulk:hover::before,
         .btn-warning.disabled-bulk:hover::before {
@@ -51,18 +51,18 @@
             z-index: 1000;
             margin-bottom: 5px;
         }
-        
+
         /* Enhanced batch delete button */
         #batchDeleteBtn {
             transition: all 0.3s ease;
             position: relative;
         }
-        
+
         #batchDeleteBtn:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
         }
-        
+
         /* Selection indicator */
         .selection-active {
             background-color: rgba(13, 110, 253, 0.1) !important;
@@ -89,18 +89,18 @@
                 <a href="{{ route('exititems') }}" class="btn btn-danger" style="border-radius: 8px;">
                     + Barang Keluar
                 </a>
-                <button id="selectAllBtn" class="btn btn-outline-secondary" style="border-radius: 8px;" 
+                <button id="selectAllBtn" class="btn btn-outline-secondary" style="border-radius: 8px;"
                         title="Pilih semua item untuk operasi batch. Detail dan Edit button akan dinonaktifkan.">
                     <i class="fas fa-check-square me-1"></i> Pilih Semua
                 </button>
                 <button id="batchDeleteBtn" class="btn btn-danger" style="border-radius: 8px; display: none;">
                     <i class="fas fa-trash-alt me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                 </button>
-                
+
                 <!-- Bulk Selection Notification -->
                 <div id="bulkSelectionNotification" class="alert alert-info mt-3" style="display: none; border-radius: 8px;">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Mode Seleksi Aktif:</strong> Detail dan Edit button telah dinonaktifkan. 
+                    <strong>Mode Seleksi Aktif:</strong> Detail dan Edit button telah dinonaktifkan.
                     Hanya operasi Hapus yang tersedia untuk item yang dipilih.
                     <button type="button" class="btn-close float-end" onclick="clearSelection()"></button>
                 </div>
@@ -202,7 +202,7 @@
                         @foreach ($items as $item)
                             <tr>
                                 <td class="text-center">
-                                    <input type="checkbox" class="form-check-input item-checkbox" value="{{ $item->IdRoster }}">
+                                    <input type="checkbox" class="form-check-input item-checkbox" value="{{ $item->sku ?? $item->IdRoster ?? $item->id }}">
                                 </td>
                                 <td class="text-center">{{ $item->latestDetailMasuk?->IdMasuk ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailMasuk ? \Carbon\Carbon::parse($item->latestDetailMasuk->created_at)->format('d-m-Y H:i') : '-' }}</td>
@@ -211,19 +211,19 @@
                                 <td class="text-center">{{ $item->latestDetailMasuk?->HargaSatuan ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailMasuk?->SubTotal ?? '-' }}</td>
                                 <td class="text-center">
-                                    <a href="#" data-bs-toggle="modal" data-bs-target="#tambahQtyModal{{ $item->IdRoster }}">
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#tambahQtyModal{{ $item->sku ?? $item->IdRoster ?? $item->id }}">
                                         {{ $item->NamaBarang }}
                                     </a>
 
-                                    <div class="modal fade" id="tambahQtyModal{{ $item->IdRoster }}" tabindex="-1"
-                                        aria-labelledby="tambahQtyLabel{{ $item->IdRoster }}" aria-hidden="true">
+                                    <div class="modal fade" id="tambahQtyModal{{ $item->sku ?? $item->IdRoster ?? $item->id }}" tabindex="-1"
+                                        aria-labelledby="tambahQtyLabel{{ $item->sku ?? $item->IdRoster ?? $item->id }}" aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <form action="{{ route('barang.tambahQty') }}" method="POST">
                                                     @csrf
-                                                    <input type="hidden" name="IdRoster" value="{{ $item->IdRoster }}">
+                                                    <input type="hidden" name="IdRoster" value="{{ $item->sku ?? $item->IdRoster ?? $item->id }}">
                                                     <div class="modal-header">
-                                                        <h5 class="modal-title" id="tambahQtyLabel{{ $item->IdRoster }}">Tambah
+                                                        <h5 class="modal-title" id="tambahQtyLabel{{ $item->sku ?? $item->IdRoster ?? $item->id }}">Tambah
                                                             Qty - {{ $item->NamaBarang }}</h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Tutup"></button>
@@ -250,13 +250,13 @@
                                 <td class="text-center">{{ $item->latestDetailKeluar?->IdKeluar ?? '-' }}</td>
                                 <td class="text-center">{{ $item->latestDetailKeluar ? \Carbon\Carbon::parse($item->latestDetailKeluar->created_at)->format('d-m-Y H:i') : '-' }}</td>
                                 <td class="text-center">
-                                <a href="{{ route('admin.detail_allitems', $item->IdRoster) }}" class="btn btn-info" style="border-radius: 8px;">
+                                <a href="{{ route('admin.detail_allitems', $item->sku ?? $item->IdRoster ?? $item->id) }}" class="btn btn-info" style="border-radius: 8px;">
                                         <i class="fas fa-info-circle me-1"></i> Detail
                                     </a>
-                                    <a href="{{ route('edititem', $item->IdRoster) }}" class="btn btn-warning" style="border-radius: 8px;">
+                                    <a href="{{ route('edititem', $item->sku ?? $item->IdRoster ?? $item->id) }}" class="btn btn-warning" style="border-radius: 8px;">
                                         <i class="fas fa-edit me-1"></i> Edit
                                     </a>
-                                    <a href="{{ route('deleteitem', $item->IdRoster) }}" class="btn btn-danger"
+                                    <a href="{{ route('deleteitem', $item->sku ?? $item->IdRoster ?? $item->id) }}" class="btn btn-danger"
                                         onclick="return confirm('Yakin ingin hapus data ini?')">
                                         <i class="fas fa-trash-alt me-1"></i> Delete
                                     </a>
@@ -347,7 +347,7 @@
                 const checkedCount = Array.from(itemCheckboxes).filter(cb => cb.checked).length;
                 const isAnySelected = checkedCount > 0;
                 const notification = document.getElementById('bulkSelectionNotification');
-                
+
                 actionButtons.forEach(btn => {
                     if (isAnySelected) {
                         // Disable Detail and Edit buttons when items are selected
@@ -359,12 +359,12 @@
                         btn.title = '';
                     }
                 });
-                
+
                 // Show/hide notification
                 if (notification) {
                     notification.style.display = isAnySelected ? 'block' : 'none';
                 }
-                
+
                 // Add visual indicator to table rows when items are selected
                 const tableRows = document.querySelectorAll('tbody tr');
                 tableRows.forEach((row, index) => {
@@ -375,7 +375,7 @@
                     }
                 });
             }
-            
+
             // Function to clear all selections
             function clearSelection() {
                 itemCheckboxes.forEach(checkbox => {
@@ -449,7 +449,7 @@
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '{{ route("batch.delete.items") }}';
-                        
+
                         const csrfToken = document.createElement('input');
                         csrfToken.type = 'hidden';
                         csrfToken.name = '_token';
@@ -499,7 +499,7 @@
 
             // Initialize on page load
             toggleActionButtons();
-            
+
             // Keyboard shortcut: Escape key to clear selection
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {

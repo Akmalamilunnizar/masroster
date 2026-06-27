@@ -96,7 +96,7 @@ CIME | Halaman Daftar Roster
                 <tbody>
                     @foreach ($dataProduk as $produk)
                     <tr class="align-middle">
-                        <td class="text-center fw-semibold">{{ $produk->IdRoster }}</td>
+                        <td class="text-center fw-semibold">{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}</td>
 
                         <td class="text-center">
                             @if ($produk->Img)
@@ -157,16 +157,16 @@ CIME | Halaman Daftar Roster
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                <a href="{{ route('admin.detail_allproduk', $produk->IdRoster) }}" class="btn btn-info" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
+                                <a href="{{ route('admin.detail_allproduk', $produk->sku ?? $produk->IdRoster ?? $produk->id) }}" class="btn btn-info" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
                                     <i class="fas fa-info-circle me-1"></i> Detail
                                 </a>
-                                <a href="{{ route('editproduk', $produk->IdRoster) }}" class="btn btn-sm btn-warning" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
+                                <a href="{{ route('editproduk', $produk->sku ?? $produk->IdRoster ?? $produk->id) }}" class="btn btn-sm btn-warning" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">
                                     <i class="fas fa-edit me-1"></i> Edit
                                 </a>
-                                <form action="{{ route('deleteproduk', $produk->IdRoster) }}" method="POST" style="display:inline;" id="delete-form-{{ $produk->IdRoster }}">
+                                <form action="{{ route('deleteproduk', $produk->sku ?? $produk->IdRoster ?? $produk->id) }}" method="POST" style="display:inline;" id="delete-form-{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}">
                                     @csrf
                                     @method('DELETE')
-                                    <a href="#" class="btn btn-sm btn-danger" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;" onclick="event.preventDefault(); if(confirm('Yakin ingin menghapus produk ini?')) document.getElementById('delete-form-{{ $produk->IdRoster }}').submit();">
+                                    <a href="#" class="btn btn-sm btn-danger" style="border-radius: 6px; width: 80px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;" onclick="event.preventDefault(); if(confirm('Yakin ingin menghapus produk ini?')) document.getElementById('delete-form-{{ $produk->sku ?? $produk->IdRoster ?? $produk->id }}').submit();">
                                         <i class="fas fa-trash-alt me-1"></i> Delete
                                     </a>
                                 </form>

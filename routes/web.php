@@ -471,8 +471,14 @@ Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'
 // Midtrans Payment Routes
 
 Route::controller(PaymentController::class)->group(function () {
-    Route::post('/payment/create-snap-token', 'createSnapToken')->name('payment.create-snap-token');
-    Route::post('/payment/notification', 'handleNotification')->name('payment.notification');
+    Route::post('/payment/create-snap-token', 'createSnapToken')
+        ->middleware(['auth', 'throttle:10,1'])
+        ->name('payment.create-snap-token');
+
+    Route::post('/payment/notification', 'handleNotification')
+        ->middleware('throttle:60,1')
+        ->name('payment.notification');
+
     Route::get('/payment/success', 'paymentSuccess')->name('payment.success');
     Route::get('/payment/error', 'paymentError')->name('payment.error');
 });
@@ -485,23 +491,27 @@ Route::get('/test-transaction', function () {
         'sizes' => App\Models\Size::count(),
         'last_transaction' => App\Models\Transaksi::orderBy('IdTransaksi', 'desc')->first()?->IdTransaksi ?? 'None'
     ]);
-});
+})->middleware(['auth', 'role:admin']);
 
 Route::post('/set-midtrans-paid', function (Illuminate\Http\Request $request) {
-    session(['midtrans_paid' => $request->paid]);
+    session(['midtrans_paid' => $request->boolean('paid')]);
+
     return response()->json(['success' => true]);
-});
+})->middleware(['auth', 'throttle:10,1']);
 
 Route::post('/set-payment-method', function (Illuminate\Http\Request $request) {
     session(['payment_method' => $request->input('method')]);
-    session(['midtrans_paid' => $request->paid]);
+    session(['midtrans_paid' => $request->boolean('paid')]);
+
     return response()->json(['success' => true]);
-});
+})->middleware(['auth', 'throttle:10,1']);
 
 // Detail Produk Routes
 Route::post('/cart/add', [App\Http\Controllers\Api\V1\CartController::class, 'add'])->name('cart.add');
 
-Route::post('/set-selected-address', [AddressController::class, 'setSelectedAddress'])->name('set.selected.address');
+Route::post('/set-selected-address', [AddressController::class, 'setSelectedAddress'])
+    ->middleware('auth')
+    ->name('set.selected.address');
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

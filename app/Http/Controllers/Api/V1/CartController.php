@@ -18,40 +18,45 @@ class CartController extends Controller
     public function add(Request $request)
     {
         try {
+            $validated = $request->validate([
+                'id' => 'required|exists:produk,IdRoster',
+                'ukuran' => 'required|exists:size,id_ukuran',
+                'ukuran_label' => 'nullable|string|max:100',
+                'quantity' => 'nullable|integer|min:1',
+                'harga' => 'nullable|numeric|min:0',
+                'nama' => 'nullable|string|max:200',
+                'img' => 'nullable|string|max:255',
+                'subtotal' => 'nullable|numeric|min:0',
+            ]);
+
             $cart = session()->get('cart', []);
 
-            $productId = $request->id;
-            $ukuran = $request->ukuran;
-            $ukuran_label = $request->ukuran_label ?? 'Ukuran Standar';
-
-            if (!$productId || !$ukuran) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Produk dan ukuran wajib dipilih.',
-                ], 422);
-            }
+            $productId = (string) $validated['id'];
+            $ukuran = (int) $validated['ukuran'];
+            $ukuran_label = $validated['ukuran_label'] ?? 'Ukuran Standar';
 
             // Make a unique key for product+ukuran
             $cartKey = $productId . '|' . $ukuran;
 
-            $quantity = $request->quantity ?? 1;
-            $subtotal = $request->subtotal ?? ($request->harga * $quantity);
+            $quantity = isset($validated['quantity']) ? (int) $validated['quantity'] : 1;
+            $price = isset($validated['harga']) ? (int) round($validated['harga']) : 0;
+
+            // Calculate subtotal server-side to avoid client tampering
+            $subtotal = $price * $quantity;
 
             if (isset($cart[$cartKey])) {
-                // Jika produk+ukuran sudah ada, tambahkan jumlah
                 $cart[$cartKey]['quantity'] += $quantity;
                 $cart[$cartKey]['subtotal'] = $cart[$cartKey]['harga'] * $cart[$cartKey]['quantity'];
             } else {
-                // Jika produk+ukuran belum ada, tambahkan baru
                 $cart[$cartKey] = [
-                    "id" => $request->id,
-                    "quantity" => $quantity,
-                    "nama" => $request->nama,
-                    "harga" => $request->harga,
-                    "img" => $request->img,
-                    "ukuran" => $ukuran,
-                    "ukuran_label" => $ukuran_label,
-                    "subtotal" => $subtotal,
+                    'id' => $productId,
+                    'quantity' => $quantity,
+                    'nama' => $validated['nama'] ?? null,
+                    'harga' => $price,
+                    'img' => $validated['img'] ?? null,
+                    'ukuran' => $ukuran,
+                    'ukuran_label' => $ukuran_label,
+                    'subtotal' => $subtotal,
                 ];
             }
 
@@ -143,7 +148,10 @@ class CartController extends Controller
     {
         // Save notes to session if it's a POST request
         if ($request->isMethod('post') && $request->has('notes')) {
-            session(['order_notes' => $request->notes]);
+            $notes = $request->validate([
+                'notes' => 'nullable|string|max:2000',
+            ]);
+            session(['order_notes' => $notes['notes'] ?? null]);
         }
 
         $addresses = \App\Models\Address::where('user_id', auth()->id())->get();
@@ -188,14 +196,19 @@ class CartController extends Controller
 
     public function saveShipping(Request $request)
     {
-        $shippingData = $request->all();
-        session(['shipping_method' => $shippingData['method']]);
-        session(['shipping_type' => $shippingData['type'] ?? null]);
-        session(['shipping_cost' => $shippingData['cost']]);
+        $validated = $request->validate([
+            'method' => 'required|string|in:Online,Offline',
+            'type' => 'nullable|string|in:Pickup,Delivery',
+            'cost' => 'required|numeric|min:0',
+            'address_id' => 'nullable|exists:addresses,id',
+        ]);
 
-        $selectedAddressId = $request->address_id;
-        if ($request->has('address_id')) {
-            session(['selected_address_id' => $selectedAddressId]);
+        session(['shipping_method' => $validated['method']]);
+        session(['shipping_type' => $validated['type'] ?? null]);
+        session(['shipping_cost' => (int) round($validated['cost'])]);
+
+        if (!empty($validated['address_id'])) {
+            session(['selected_address_id' => (int) $validated['address_id']]);
         }
 
         return response()->json(['success' => true]);
