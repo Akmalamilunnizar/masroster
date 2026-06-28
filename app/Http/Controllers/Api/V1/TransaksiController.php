@@ -279,30 +279,61 @@ class TransaksiController extends Controller
 
     private function getStokAwal($productId)
     {
-        // TODO: Implement stock calculation logic
-        // For now, return a default value
-        return 100;
+        if (! $productId) {
+            return 0;
+        }
+
+        $product = DB::table('produk')
+            ->where('IdRoster', $productId)
+            ->orWhere('sku', $productId)
+            ->first(['stock']);
+
+        if (! $product) {
+            return 0;
+        }
+
+        $currentStock = (int) ($product->stock ?? 0);
+        $soldQuantity = (int) DB::table('detail_transaksi')
+            ->where('IdRoster', $productId)
+            ->sum('QtyProduk');
+
+        return max(0, $currentStock + $soldQuantity);
     }
 
     private function getStokAkhir($productId)
     {
-        // TODO: Implement stock calculation logic
-        // For now, return a default value
-        return 80;
+        if (! $productId) {
+            return 0;
+        }
+
+        $product = DB::table('produk')
+            ->where('IdRoster', $productId)
+            ->orWhere('sku', $productId)
+            ->first(['stock']);
+
+        return (int) ($product->stock ?? 0);
     }
 
     private function isHariLibur($date)
     {
-        // TODO: Implement holiday detection logic
-        // For now, check if it's weekend
         return $date->isWeekend();
     }
 
     private function hasPromo($transaksi)
     {
-        // TODO: Implement promo detection logic
-        // For now, return false
-        return 0;
+        $totalItem = (int) DB::table('detail_transaksi')
+            ->where('IdTransaksi', $transaksi->IdTransaksi)
+            ->sum('SubTotal');
+        $ongkir = (int) preg_replace('/\D/', '', (string) ($transaksi->ongkir ?? 0));
+        $grandTotal = (int) preg_replace('/\D/', '', (string) ($transaksi->GrandTotal ?? 0));
+
+        if ($grandTotal > 0 && ($totalItem + $ongkir) > 0 && $grandTotal < ($totalItem + $ongkir)) {
+            return true;
+        }
+
+        $notes = strtolower(trim((string) ($transaksi->notes ?? '')));
+
+        return $notes !== '' && preg_match('/promo|diskon|voucher|potong/i', $notes) === 1;
     }
 
     public function showTransaction($id)
