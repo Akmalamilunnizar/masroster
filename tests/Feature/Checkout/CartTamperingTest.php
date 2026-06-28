@@ -88,4 +88,56 @@ class CartTamperingTest extends TestCase
         $this->assertEquals(75000, $item['harga']);
         $this->assertEquals(75000 * 2, $item['subtotal']);
     }
+
+    public function test_cart_update_recalculates_subtotal_server_side(): void
+    {
+        $customer = $this->createCustomerUser([
+            'email' => 'cart-update-customer@example.test',
+            'password' => 'password',
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'MASSAFE3',
+            'NamaProduk' => 'Roster Update Test',
+            'stock' => 100,
+        ]);
+
+        DB::table('produk_size')->insert([
+            'produk_id' => null,
+            'IdRoster' => $product->IdRoster,
+            'id_ukuran' => 1,
+            'harga' => 42000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($customer)
+            ->post('/cart/add', [
+                'id' => $product->IdRoster,
+                'quantity' => 1,
+                'nama' => $product->NamaProduk,
+                'harga' => 999999,
+                'img' => $product->Img,
+                'ukuran' => 1,
+                'ukuran_label' => 'Standard',
+                'subtotal' => 999999,
+            ])
+            ->assertOk();
+
+        $this->actingAs($customer)
+            ->post('/cart/update/'.$product->IdRoster.'|1', [
+                'type' => 'set',
+                'quantity' => 4,
+                'subtotal' => 1,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('cartCount', 4);
+
+        $cart = session('cart');
+        $item = $cart[$product->IdRoster.'|1'];
+
+        $this->assertSame(4, $item['quantity']);
+        $this->assertSame(42000 * 4, $item['subtotal']);
+    }
 }

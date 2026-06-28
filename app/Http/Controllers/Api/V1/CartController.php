@@ -113,7 +113,6 @@ class CartController extends Controller
     {
         $cart = session('cart', []);
 
-        // dd(session('cart'));
         return view('toko.cart', compact('cart'));
 
     }
@@ -160,22 +159,34 @@ class CartController extends Controller
 
     public function update(Request $request, $id)
     {
-        $cart = session()->get('cart');
+        $validated = $request->validate([
+            'type' => 'required|in:increase,decrease,set',
+            'quantity' => 'nullable|integer|min:1',
+        ]);
+
+        $cart = session()->get('cart', []);
         if (isset($cart[$id])) {
-            if ($request->type == 'increase') {
+            if ($validated['type'] === 'increase') {
                 $cart[$id]['quantity'] += 1;
-            } elseif ($request->type == 'decrease') {
+            } elseif ($validated['type'] === 'decrease') {
                 $cart[$id]['quantity'] -= 1;
                 if ($cart[$id]['quantity'] <= 0) {
                     unset($cart[$id]);
                 }
-            } elseif ($request->type == 'set' && $request->has('quantity')) {
-                $cart[$id]['quantity'] = max(1, (int) $request->quantity);
+            } elseif ($validated['type'] === 'set' && isset($validated['quantity'])) {
+                $cart[$id]['quantity'] = max(1, (int) $validated['quantity']);
+            }
+
+            if (isset($cart[$id])) {
+                $cart[$id]['subtotal'] = (int) $cart[$id]['harga'] * (int) $cart[$id]['quantity'];
             }
             session()->put('cart', $cart);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'cartCount' => array_sum(array_column($cart, 'quantity')),
+        ]);
     }
 
     public function details(Request $request)
