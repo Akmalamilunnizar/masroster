@@ -48,7 +48,7 @@ class LoginController extends Controller
     protected function authenticated(Request $request, $user)
     {
         // Check user role and redirect accordingly
-        if ($user->user === 'Admin') {
+        if ($user->isAdmin()) {
             return redirect()->intended('/admin/dashboard');
         } else {
             return redirect()->intended('/tokodashboard');

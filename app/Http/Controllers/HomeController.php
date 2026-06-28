@@ -24,7 +24,7 @@ class HomeController extends Controller
     public function index()
     {
         // Check user role and redirect accordingly
-        if (Auth::user()->user === 'Admin') {
+        if (Auth::user()?->isAdmin()) {
             return redirect('/admin/dashboard');
         } else {
             return redirect('/tokodashboard');

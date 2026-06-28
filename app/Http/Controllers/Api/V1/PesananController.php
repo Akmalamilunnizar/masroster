@@ -12,7 +12,7 @@ class PesananController extends Controller
     {
         $query = Transaksi::with('customer')->where('IdTransaksi', $id);
 
-        if (Auth::user()?->user !== 'Admin') {
+        if (! Auth::user()?->isAdmin()) {
             $query->where('id_customer', Auth::id());
         }
 
@@ -25,7 +25,7 @@ class PesananController extends Controller
     {
         $query = Transaksi::with(['customer', 'detailTransaksi.produk'])->where('IdTransaksi', $id);
 
-        if (Auth::user()?->user !== 'Admin') {
+        if (! Auth::user()?->isAdmin()) {
             $query->where('id_customer', Auth::id());
         }
 

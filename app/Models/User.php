@@ -117,4 +117,19 @@ class User extends Authenticatable implements CanResetPasswordContract
     {
         return $this->hasOne(Address::class, 'user_id', 'id')->latestOfMany();
     }
+
+    public function isAdmin(): bool
+    {
+        return strtolower((string) $this->user) === 'admin' || $this->hasRole('admin');
+    }
+
+    public function isCustomer(): bool
+    {
+        return strtolower((string) $this->user) === 'user' || $this->hasRole('user');
+    }
+
+    public function isRetailer(): bool
+    {
+        return strtolower((string) $this->tipe_user) === 'retailer';
+    }
 }
