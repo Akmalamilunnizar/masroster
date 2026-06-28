@@ -168,14 +168,32 @@ class DetailHargaController extends Controller
     // Get roster prices by type, size, and motif
     public function getRosterPrices(Request $request)
     {
-        $jenisId = $request->jenis_id;
-        $motifId = $request->motif_id;
-        $sizeId = $request->size_id;
+        $validated = $request->validate([
+            'jenis_id' => 'required|integer|exists:jenisbarang,IdJenisBarang',
+            'motif_id' => 'nullable|integer|exists:motif_roster,IdMotif',
+            'size_id' => 'nullable|integer|exists:size,id_ukuran',
+        ]);
+
+        $jenisId = (int) $validated['jenis_id'];
+        $motifId = $validated['motif_id'] ?? null;
+        $sizeId = $validated['size_id'] ?? null;
 
         $rosters = Produk::with(['jenisRoster', 'motif', 'sizes'])
-            ->where('IdJenisBarang', $jenisId)
+            ->where('id_jenis', $jenisId)
             ->when($motifId, function ($query) use ($motifId) {
                 return $query->where('id_motif', $motifId);
+            })
+            ->when($sizeId, function ($query) use ($sizeId) {
+                return $query->where(function ($sizeQuery) use ($sizeId) {
+                    $sizeQuery->whereHas('sizes', function ($pivotQuery) use ($sizeId) {
+                        $pivotQuery->where('size.id_ukuran', $sizeId);
+                    })->orWhereExists(function ($legacyPivotQuery) use ($sizeId) {
+                        $legacyPivotQuery->select(DB::raw(1))
+                            ->from('produk_size')
+                            ->whereColumn('produk_size.IdRoster', 'produk.IdRoster')
+                            ->where('produk_size.id_ukuran', $sizeId);
+                    });
+                });
             })
             ->get();
 
@@ -185,10 +203,12 @@ class DetailHargaController extends Controller
     // Get user last prices
     public function getUserLastPrices(Request $request)
     {
-        $userId = $request->user_id;
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
 
         $lastPrices = DetailHarga::with(['roster.jenisRoster', 'roster.motif', 'user'])
-            ->where('id_user', $userId)
+            ->where('id_user', $validated['user_id'])
             ->get();
 
         return response()->json($lastPrices);
@@ -199,7 +219,7 @@ class DetailHargaController extends Controller
     {
         $request->validate([
             'harga_ids' => 'required|array',
-            'harga_ids.*' => 'required|string',
+            'harga_ids.*' => ['required', 'string', 'regex:/^[^_]+_[^_]+_[^_]+$/'],
         ]);
 
         $deletedCount = 0;
