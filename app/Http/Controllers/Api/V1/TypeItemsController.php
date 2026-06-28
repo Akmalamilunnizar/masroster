@@ -12,30 +12,36 @@ class TypeItemsController extends Controller
 {
     public function Index()
     {
-        // Ambil jumlah ikan per kolam berdasarkan pond_id
-        // $jml_ikan = DB::table('detail_koi')
-        //     ->selectRaw('count(*) as jml_ikan, pond_id')
-        //     ->groupBy('pond_id')
-        //     ->get();
-
-        // Ambil data kolam
         $type = TypeItems::all();
 
-        // Kirim data ke view
         return view('admin.alltype', compact('type'));
+    }
+
+    public function SearchType(Request $request)
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
+
+        if ($search === '') {
+            $type = TypeItems::all();
+
+            return view('admin.alltype', compact('type', 'search'));
+        }
+
+        $type = TypeItems::where(function ($query) use ($search) {
+            $query->where('IdJenisBarang', 'like', "%{$search}%")
+                ->orWhere('JenisBarang', 'like', "%{$search}%");
+        })->get();
+
+        return view('admin.alltype', compact('type', 'search'));
     }
 
     public function SearchItem(Request $request)
     {
-        $search = $request->search;
-
-        $type = TypeItems::where(function ($query) use ($search) {
-
-            $query->where('id', 'like', "%$search%")
-                ->orWhere('name', 'like', "%$search%");
-        })->get();
-
-        return view('admin.alltype', compact('type', 'search'));
+        return $this->SearchType($request);
     }
 
     public function AddType()
@@ -47,8 +53,6 @@ class TypeItemsController extends Controller
 
     public function StoreType(Request $request)
     {
-        // debug dd removed to avoid dumping full request
-
         $request->validate([
             'JenisBarang' => 'required|unique:jenisbarang,JenisBarang',
         ]);
@@ -62,12 +66,9 @@ class TypeItemsController extends Controller
 
     public function EditType($IdJenisBarang)
     {
-
         $typeinfo = TypeItems::findOrFail($IdJenisBarang);
         $category_parent = $typeinfo->IdJenisBarang;
-        // dd($category_parent);
         $parent_title = TypeItems::where('IdJenisBarang', $category_parent)->first();
-        // dd($iteminfo);
         $typeid = TypeItems::all();
 
         return view('admin.edittype', compact('typeinfo', 'typeid', 'parent_title'));
