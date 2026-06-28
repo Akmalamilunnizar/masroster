@@ -298,16 +298,16 @@ Route::controller(UserController::class)->group(function () {
 //     Route::get('/admin/delete-order/{id}', 'DeleteOrder')->name('deleteorder');
 // });
 
-Route::controller(AdminProfileController::class)->group(function () {
-    Route::get('/admin/admin-profile', 'Index')->name('profile');
-    Route::post('/admin/store-profile', 'StoreProfile')->name('storeprofile');
-});
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::controller(AdminProfileController::class)->group(function () {
+        Route::get('/admin/admin-profile', 'Index')->name('profile');
+        Route::post('/admin/store-profile', 'StoreProfile')->name('storeprofile');
+    });
 
-Route::controller(AdminProfileController::class)->group(function () {
-    Route::get('/admin/admin-profile', 'Index')->name('profile');
-    Route::post('/admin/store-profile', 'StoreProfile')->name('storeprofile');
-    Route::get('/admin/pending-order/search', 'SearchPending')->name('searchorder');
-    Route::get('/admin/history-order', 'IndexHistory')->name('historyorder');
+    Route::controller(TransaksiController::class)->group(function () {
+        Route::get('/admin/pending-order/search', 'index')->name('searchorder');
+        Route::get('/admin/history-order', 'index')->name('historyorder');
+    });
 });
 
 // Forecast routes
