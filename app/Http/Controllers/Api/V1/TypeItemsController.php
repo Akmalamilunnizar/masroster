@@ -76,29 +76,30 @@ class TypeItemsController extends Controller
 
     public function UpdateType(Request $request)
     {
-        // Ambil data lama dari database
-        $oldData = TypeItems::where('IdJenisBarang', $request->original_id)->first();
+        $validated = $request->validate([
+            'original_id' => 'required|integer|exists:jenisbarang,IdJenisBarang',
+            'JenisBarang' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('jenisbarang', 'JenisBarang')->ignore($request->original_id, 'IdJenisBarang'),
+            ],
+        ]);
+
+        $oldData = TypeItems::where('IdJenisBarang', $validated['original_id'])->first();
 
         if (! $oldData) {
             return redirect()->route('alltype')->with('error', 'Data tidak ditemukan.');
         }
 
-        // Validasi
-        $request->validate([
-            'JenisBarang' => [
-                'required',
-                Rule::unique('jenisbarang', 'JenisBarang')->ignore($request->original_id, 'IdJenisBarang'),
-            ],
-        ]);
-
         // Cek apakah ada perubahan
-        if ($oldData->JenisBarang === $request->JenisBarang) {
+        if ($oldData->JenisBarang === $validated['JenisBarang']) {
             return redirect()->route('alltype')->with('message', 'Tidak ada perubahan yang dilakukan.');
         }
 
         // Update data jika ada perubahan (hanya JenisBarang)
-        TypeItems::where('IdJenisBarang', $request->original_id)->update([
-            'JenisBarang' => $request->JenisBarang,
+        TypeItems::where('IdJenisBarang', $validated['original_id'])->update([
+            'JenisBarang' => $validated['JenisBarang'],
         ]);
 
         return redirect()->route('alltype')->with('message', 'Update Informasi Jenis Barang Berhasil!');
@@ -214,7 +215,7 @@ class TypeItemsController extends Controller
     {
         $request->validate([
             'type_ids' => 'required|array',
-            'type_ids.*' => 'required|string',
+            'type_ids.*' => 'required|integer|exists:jenisbarang,IdJenisBarang',
         ]);
 
         $deletedCount = 0;
@@ -249,12 +250,12 @@ class TypeItemsController extends Controller
     public function quickAddJenis(Request $request)
     {
         try {
-            $request->validate([
+            $validated = $request->validate([
                 'JenisBarang' => 'required|unique:jenisbarang,JenisBarang',
             ]);
 
             $jenis = TypeItems::create([
-                'JenisBarang' => $request->JenisBarang,
+                'JenisBarang' => $validated['JenisBarang'],
             ]);
 
             return response()->json([

@@ -24,4 +24,32 @@ class TypeManagementTest extends TestCase
         $response->assertSee('Roster Premium');
         $response->assertDontSee('Bovenlis Standard');
     }
+
+    public function test_admin_can_update_type_item_using_validated_original_id(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'type-update-admin@example.test',
+        ]);
+
+        DB::table('jenisbarang')->insert([
+            ['IdJenisBarang' => 20, 'JenisBarang' => 'Roster Lama'],
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/update-type', [
+            'original_id' => 20,
+            'JenisBarang' => 'Roster Baru',
+            'IdJenisBarang' => 999,
+        ]);
+
+        $response->assertRedirect(route('alltype'));
+
+        $this->assertDatabaseHas('jenisbarang', [
+            'IdJenisBarang' => 20,
+            'JenisBarang' => 'Roster Baru',
+        ]);
+
+        $this->assertDatabaseMissing('jenisbarang', [
+            'IdJenisBarang' => 999,
+        ]);
+    }
 }
