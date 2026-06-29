@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\DetailHarga;
 use App\Models\DetailTransaksi;
+use App\Models\Produk;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
@@ -82,7 +85,10 @@ class OrderController extends Controller
             $total = 0;
             $shippingCost = session('shipping_cost', 0);
             foreach ($cart as $item) {
-                $total += $item['harga'] * $item['quantity'];
+                $quantity = (int) ($item['quantity'] ?? 0);
+                $price = $this->resolveCartLinePrice($item, $user->id);
+
+                $total += $price * $quantity;
             }
             $total += $shippingCost;
             Log::info('Calculated total:', ['total' => $total]);
@@ -132,12 +138,15 @@ class OrderController extends Controller
 
             // Create transaction details
             foreach ($cart as $id => $details) {
+                $linePrice = $this->resolveCartLinePrice($details, $user->id);
+                $quantity = (int) ($details['quantity'] ?? 0);
+
                 $detailData = [
                     'IdTransaksi' => $transactionId,
                     'IdRoster' => $details['id'],
                     'id_ukuran' => isset($details['ukuran']) ? (int) $details['ukuran'] : null,
-                    'QtyProduk' => $details['quantity'],
-                    'SubTotal' => $details['harga'] * $details['quantity'],
+                    'QtyProduk' => $quantity,
+                    'SubTotal' => $linePrice * $quantity,
                 ];
                 DetailTransaksi::create($detailData);
                 Log::info('Transaction detail created', [
@@ -170,6 +179,64 @@ class OrderController extends Controller
                 'error' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    private function resolveCartLinePrice(array $details, int $userId): int
+    {
+        $productIdentifier = (string) ($details['id'] ?? '');
+        $sizeId = isset($details['ukuran']) ? (int) $details['ukuran'] : null;
+
+        if ($productIdentifier === '' || $sizeId === null) {
+            return (int) round($details['harga'] ?? 0);
+        }
+
+        $product = Produk::query()
+            ->where('IdRoster', $productIdentifier)
+            ->orWhere('sku', $productIdentifier)
+            ->first();
+
+        if (! $product) {
+            return (int) round($details['harga'] ?? 0);
+        }
+
+        foreach ([
+            'produk_id' => $product->getKey(),
+            'id_roster' => $productIdentifier,
+        ] as $priceForeignKey => $priceIdentifier) {
+            if (! Schema::hasColumn('detail_harga', $priceForeignKey)) {
+                continue;
+            }
+
+            $detailHarga = DetailHarga::query()
+                ->where($priceForeignKey, $priceIdentifier)
+                ->where('id_user', $userId)
+                ->where('id_ukuran', $sizeId)
+                ->first();
+
+            if ($detailHarga && isset($detailHarga->harga)) {
+                return (int) $detailHarga->harga;
+            }
+        }
+
+        foreach ([
+            'produk_id' => $product->getKey(),
+            'IdRoster' => $productIdentifier,
+        ] as $pivotForeignKey => $pivotIdentifier) {
+            if (! Schema::hasTable('produk_size') || ! Schema::hasColumn('produk_size', $pivotForeignKey)) {
+                continue;
+            }
+
+            $pivotPrice = DB::table('produk_size')
+                ->where($pivotForeignKey, $pivotIdentifier)
+                ->where('id_ukuran', $sizeId)
+                ->value('harga');
+
+            if ($pivotPrice !== null) {
+                return (int) $pivotPrice;
+            }
+        }
+
+        return (int) round($details['harga'] ?? 0);
     }
 
     public function review()
