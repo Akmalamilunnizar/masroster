@@ -247,19 +247,21 @@ Route::controller(ProdukController::class)->group(function () {
     Route::get('/api/produk', 'get_produk_list')->name('getproduk');
 });
 
-Route::controller(SupplierController::class)->group(function () {
-    // Tampilkan semua supplier
-    Route::get('/admin/daftar-supplier', 'index')->name('allsuppliers');
-    // Tampilkan form tambah supplier
-    Route::get('/admin/daftar-supplier/add', 'addSupplier')->name('addsupplier');
-    // Proses form tambah supplier
-    Route::post('/admin/daftar-supplier/add', 'storeSupplier')->name('storesupplier');
-    // Form edit supplier
-    Route::get('/admin/daftar-supplier/{id}/edit', 'editSupplier')->name('editsupplier');
-    Route::put('/admin/daftar-supplier/{id}/update', 'updateSupplier')->name('updatesupplier');
-    Route::delete('/admin/daftar-supplier/{id}', 'deleteSupplier')->name('deletesupplier');
-    Route::get('/admin/search-supplier', 'searchSupplier')->name('searchsupplier');
-    Route::get('/api/suppliers', 'get_supplier_list')->name('getsuppliers');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::controller(SupplierController::class)->group(function () {
+        // Tampilkan semua supplier
+        Route::get('/admin/daftar-supplier', 'index')->name('allsuppliers');
+        // Tampilkan form tambah supplier
+        Route::get('/admin/daftar-supplier/add', 'addSupplier')->name('addsupplier');
+        // Proses form tambah supplier
+        Route::post('/admin/daftar-supplier/add', 'storeSupplier')->name('storesupplier');
+        // Form edit supplier
+        Route::get('/admin/daftar-supplier/{id}/edit', 'editSupplier')->name('editsupplier');
+        Route::put('/admin/daftar-supplier/{id}/update', 'updateSupplier')->name('updatesupplier');
+        Route::delete('/admin/daftar-supplier/{id}', 'deleteSupplier')->name('deletesupplier');
+        Route::get('/admin/search-supplier', 'searchSupplier')->name('searchsupplier');
+        Route::get('/api/suppliers', 'get_supplier_list')->name('getsuppliers');
+    });
 });
 
 Route::controller(CustomerController::class)->group(function () {

@@ -19,7 +19,11 @@ class SupplierController extends Controller
 
     public function searchSupplier(Request $request)
     {
-        $search = $request->search;
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
 
         $suppliers = Supplier::suppliers()->where(function ($query) use ($search) {
             $query->where('id', 'like', "%$search%")
