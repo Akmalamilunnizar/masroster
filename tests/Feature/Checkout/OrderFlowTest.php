@@ -135,6 +135,13 @@ class OrderFlowTest extends TestCase
             'type' => 'Delivery',
             'cost' => 15000,
             'address_id' => $intruderAddress->id,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['address_id']);
+
+        $this->actingAs($customer)->postJson('/save-shipping', [
+            'method' => 'Online',
+            'type' => 'Delivery',
+            'cost' => 15000,
+            'address_id' => $customerDefaultAddress->id,
         ])->assertOk();
 
         $response = $this->actingAs($customer)->postJson('/confirm-order');

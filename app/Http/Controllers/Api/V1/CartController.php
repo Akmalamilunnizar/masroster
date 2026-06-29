@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class CartController extends Controller
 {
@@ -246,7 +247,11 @@ class CartController extends Controller
             'method' => 'required|string|in:Online,Offline',
             'type' => 'nullable|string|in:Pickup,Delivery',
             'cost' => 'required|numeric|min:0',
-            'address_id' => 'nullable|exists:addresses,id',
+            'address_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('addresses', 'id')->where(fn ($query) => $query->where('user_id', Auth::id())),
+            ],
         ]);
 
         session(['shipping_method' => $validated['method']]);
@@ -273,7 +278,9 @@ class CartController extends Controller
         // Get the address details
         $selectedAddress = null;
         if ($selectedAddressId) {
-            $selectedAddress = Address::find($selectedAddressId);
+            $selectedAddress = Address::where('id', $selectedAddressId)
+                ->where('user_id', auth()->id())
+                ->first();
         }
 
         // If no address is selected, get the default address
@@ -282,8 +289,6 @@ class CartController extends Controller
                 ->where('is_default', true)
                 ->first();
         }
-
-        \Log::info('selected_address_id in session: '.session('selected_address_id'));
 
         return view('toko.shipping', compact('cart', 'selectedAddress'));
     }
