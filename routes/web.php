@@ -271,14 +271,16 @@ Route::controller(CustomerController::class)->group(function () {
     // Tampilkan form tambah supplier
 });
 
-Route::controller(UserController::class)->group(function () {
-    Route::get('/admin/all-users', 'Index')->name('allusers');
-    Route::get('/admin/search-users/search', 'SearchUsers')->name('searchusers');
-    Route::get('/admin/add-users', 'AddUsers')->name('add-users');
-    Route::post('/admin/store-users', 'StoreUsers')->name('storeusers');
-    Route::get('/admin/edit-users/{id}', 'EditUsers')->name('editusers');
-    Route::post('/admin/update-users', 'UpdateUsers')->name('update-users');
-    Route::get('/admin/delete-users/{id}', 'DeleteUsers')->name('deleteusers');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::controller(UserController::class)->group(function () {
+        Route::get('/admin/all-users', 'Index')->name('allusers');
+        Route::get('/admin/search-users/search', 'SearchUsers')->name('searchusers');
+        Route::get('/admin/add-users', 'AddUsers')->name('add-users');
+        Route::post('/admin/store-users', 'StoreUsers')->name('storeusers');
+        Route::get('/admin/edit-users/{id}', 'EditUsers')->name('editusers');
+        Route::post('/admin/update-users', 'UpdateUsers')->name('update-users');
+        Route::get('/admin/delete-users/{id}', 'DeleteUsers')->name('deleteusers');
+    });
 });
 
 // Route::controller(DiagnosaController::class)->group(function () {

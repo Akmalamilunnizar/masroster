@@ -21,7 +21,11 @@ class UserController extends Controller
 
     public function SearchUsers(Request $request)
     {
-        $search = $request->search;
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
 
         $users = User::where(function ($query) use ($search) {
 
@@ -103,15 +107,10 @@ class UserController extends Controller
         return redirect()->route('allusers')->with('message', 'Pengguna berhasil diupdate!');
     }
 
-    public function DeleteUsers(User $id)
+    public function DeleteUsers(User $user)
     {
-        // $user_id= User::where('id', $id)->value('id');
-        // User::findOrFail($id)->delete();
-        $users = User::find($id);
-        $users->each->delete();
+        $user->delete();
 
-        // Category::where('id', $cat_id)->decrement('subcategory_count', 1);
-        // $subcategory->delete();
         return redirect()->route('allusers')->with('message', 'Pengguna berhasil dihapus');
     }
 }
