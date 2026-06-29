@@ -79,9 +79,7 @@ class OrderController extends Controller
             $transactionId = $this->generateTransactionId();
             Log::info('Generated transaction ID:', ['id' => $transactionId]);
 
-            // Get payment method and calculate total
-            $isPaid = session('midtrans_paid', false);
-            $paymentMethod = session('payment_method', 'cod'); // default to cod
+            // Calculate total from the authoritative cart and shipping session data.
             $total = 0;
             $shippingCost = session('shipping_cost', 0);
             foreach ($cart as $item) {
@@ -120,13 +118,8 @@ class OrderController extends Controller
             $transaction->ongkir = (int) $shippingCost;
             $transaction->notes = session('order_notes', null); // Add order notes
 
-            if ($paymentMethod === 'midtrans' && $isPaid) {
-                $transaction->Bayar = $total;
-                $transaction->StatusPembayaran = 'Lunas';
-            } else {
-                $transaction->Bayar = 0;
-                $transaction->StatusPembayaran = 'Belum Lunas';
-            }
+            $transaction->Bayar = 0;
+            $transaction->StatusPembayaran = 'Belum Lunas';
 
             $transaction->GrandTotal = $total;
             $transaction->tglTransaksi = now();

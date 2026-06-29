@@ -220,4 +220,61 @@ class OrderFlowTest extends TestCase
             'id_customer' => $customer->id,
         ]);
     }
+
+    public function test_confirm_order_ignores_forged_midtrans_paid_session_flags(): void
+    {
+        $customer = $this->createCustomerUser([
+            'email' => 'checkout-paid-flag@example.test',
+            'password' => 'password',
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'MAS804',
+            'NamaProduk' => 'Roster Checkout Paid Flag Test',
+            'stock' => 100,
+        ]);
+
+        $this->actingAs($customer)->post('/cart/add', [
+            'id' => $product->IdRoster,
+            'quantity' => 1,
+            'nama' => $product->NamaProduk,
+            'harga' => 63000,
+            'img' => $product->Img,
+            'ukuran' => 1,
+            'ukuran_label' => 'Standard',
+            'subtotal' => 63000,
+        ])->assertOk();
+
+        $address = $this->createMasrosterAddress($customer, [
+            'label' => 'Rumah Paid Flag',
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($customer)->postJson('/save-shipping', [
+            'method' => 'Online',
+            'type' => 'Delivery',
+            'cost' => 15000,
+            'address_id' => $address->id,
+        ])->assertOk();
+
+        session([
+            'midtrans_paid' => true,
+            'payment_method' => 'midtrans',
+        ]);
+
+        $response = $this->actingAs($customer)->postJson('/confirm-order');
+
+        $response->assertOk()->assertJsonPath('success', true);
+
+        $transactionId = $response->json('transaction_id');
+
+        $this->assertDatabaseHas('transaksi', [
+            'IdTransaksi' => $transactionId,
+            'id_customer' => $customer->id,
+            'GrandTotal' => 78000,
+            'Bayar' => 0,
+            'StatusPembayaran' => 'Belum Lunas',
+            'workflow_status' => 'Draft',
+        ]);
+    }
 }
