@@ -79,4 +79,26 @@ class ProductCrudTest extends TestCase
             'IdRoster' => $product->IdRoster,
         ]);
     }
+
+    public function test_admin_can_search_product_by_name(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'product-search-admin@example.test',
+            'password' => 'password',
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'MAS-SEARCH-1',
+            'NamaProduk' => 'Roster Searchable Test',
+            'deskripsi' => 'Produk untuk pengujian pencarian',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/search-produk?search=Searchable');
+
+        $response->assertOk();
+        $response->assertViewHas('dataProduk', function ($dataProduk) use ($product) {
+            return $dataProduk->contains('IdRoster', $product->IdRoster);
+        });
+        $this->assertSame($product->IdRoster, $product->fresh()->IdRoster);
+    }
 }

@@ -278,11 +278,15 @@ class ProdukController extends Controller
     // Fitur pencarian produk
     public function searchProduk(Request $request)
     {
-        $search = $request->search;
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
         $usesSku = Schema::hasColumn('produk', 'sku');
 
         $dataProduk = Produk::with(['sizes', 'jenisRoster', 'tipeRoster', 'motif'])
-            ->where(function ($query) use ($search) {
+            ->where(function ($query) use ($search, $usesSku) {
                 $query->where('IdRoster', 'like', "%$search%")
                     ->when($usesSku, function ($builder) use ($search) {
                         $builder->orWhere('sku', 'like', "%$search%");
