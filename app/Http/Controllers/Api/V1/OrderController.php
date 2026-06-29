@@ -75,8 +75,8 @@ class OrderController extends Controller
             );
             Log::info('Customer created/retrieved', ['id' => $customer->id, 'name' => $customer->NamaCust ?? null]);
 
-            // Generate transaction ID
-            $transactionId = 'TR'.str_pad(Transaksi::count() + 1, 4, '0', STR_PAD_LEFT);
+            // Generate a collision-resistant transaction ID within the existing 6-character schema.
+            $transactionId = $this->generateTransactionId();
             Log::info('Generated transaction ID:', ['id' => $transactionId]);
 
             // Get payment method and calculate total
@@ -267,5 +267,14 @@ class OrderController extends Controller
         $grandTotal = $subtotal + $shippingCost;
 
         return view('toko.review', compact('cart', 'orderNotes', 'selectedAddress', 'shippingCost', 'subtotal', 'grandTotal'));
+    }
+
+    private function generateTransactionId(): string
+    {
+        do {
+            $transactionId = 'TR'.str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        } while (Transaksi::where('IdTransaksi', $transactionId)->exists());
+
+        return $transactionId;
     }
 }

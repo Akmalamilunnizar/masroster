@@ -163,4 +163,61 @@ class OrderFlowTest extends TestCase
             'address_id' => $intruderAddress->id,
         ]);
     }
+
+    public function test_confirm_order_skips_colliding_transaction_id(): void
+    {
+        $customer = $this->createCustomerUser([
+            'email' => 'checkout-collision@example.test',
+            'password' => 'password',
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'MAS803',
+            'NamaProduk' => 'Roster Checkout Collision Test',
+            'stock' => 100,
+        ]);
+
+        $this->actingAs($customer)->post('/cart/add', [
+            'id' => $product->IdRoster,
+            'quantity' => 1,
+            'nama' => $product->NamaProduk,
+            'harga' => 63000,
+            'img' => $product->Img,
+            'ukuran' => 1,
+            'ukuran_label' => 'Standard',
+            'subtotal' => 63000,
+        ])->assertOk();
+
+        $address = $this->createMasrosterAddress($customer, [
+            'label' => 'Rumah Collision',
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($customer)->postJson('/save-shipping', [
+            'method' => 'Online',
+            'type' => 'Delivery',
+            'cost' => 15000,
+            'address_id' => $address->id,
+        ])->assertOk();
+
+        foreach (['TR0001', 'TR0002', 'TR0003', 'TR0004', 'TR0005', 'TR0006', 'TR0007', 'TR0008', 'TR0010'] as $transactionId) {
+            $this->createMasrosterTransaction([
+                'IdTransaksi' => $transactionId,
+                'id_customer' => $customer->id,
+                'StatusPesanan' => 'Menunggu Konfirmasi',
+            ]);
+        }
+
+        $response = $this->actingAs($customer)->postJson('/confirm-order');
+
+        $response->assertOk()->assertJsonPath('success', true);
+
+        $generatedTransactionId = $response->json('transaction_id');
+
+        $this->assertNotSame('TR0010', $generatedTransactionId);
+        $this->assertDatabaseHas('transaksi', [
+            'IdTransaksi' => $generatedTransactionId,
+            'id_customer' => $customer->id,
+        ]);
+    }
 }
