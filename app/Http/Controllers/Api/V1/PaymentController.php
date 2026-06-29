@@ -53,9 +53,9 @@ class PaymentController extends Controller
             foreach ($cart as $item) {
                 $quantity = (int) ($item['quantity'] ?? 1);
                 $price = (int) round($item['harga'] ?? 0);
-                $subtotal = (int) round(($item['subtotal'] ?? ($price * $quantity)));
+                $lineTotal = $price * $quantity;
 
-                $grossAmount += $subtotal;
+                $grossAmount += $lineTotal;
 
                 $itemDetails[] = [
                     'id' => (string) ($item['id'] ?? 'item-'.count($itemDetails)),
