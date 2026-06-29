@@ -6,6 +6,15 @@ use Tests\TestCase;
 
 class AddressManagementTest extends TestCase
 {
+    public function test_guest_is_redirected_from_address_management_pages(): void
+    {
+        $this->get('/addresses')->assertRedirect(route('login'));
+
+        $this->postJson('/set-selected-address', [
+            'address_id' => 1,
+        ])->assertUnauthorized();
+    }
+
     public function test_customer_can_store_set_default_update_and_delete_own_address(): void
     {
         $customer = $this->createCustomerUser([
@@ -183,7 +192,25 @@ class AddressManagementTest extends TestCase
             ->postJson('/set-selected-address', [
                 'address_id' => $ownerAddress->id,
             ])
-            ->assertForbidden();
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['address_id']);
+
+        $this->assertNull(session('selected_address_id'));
+    }
+
+    public function test_guest_cannot_set_selected_address(): void
+    {
+        $customer = $this->createCustomerUser([
+            'email' => 'guest-selected-address@example.test',
+        ]);
+
+        $address = $this->createMasrosterAddress($customer, [
+            'is_default' => false,
+        ]);
+
+        $this->postJson('/set-selected-address', [
+            'address_id' => $address->id,
+        ])->assertUnauthorized();
 
         $this->assertNull(session('selected_address_id'));
     }

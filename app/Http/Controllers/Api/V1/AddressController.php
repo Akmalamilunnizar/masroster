@@ -6,12 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AddressController extends Controller
 {
-    public function index()
+    public function __construct()
     {
-        $addresses = Auth::user()->addresses;
+        $this->middleware('auth');
+    }
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $addresses = $user->addresses;
 
         return view('toko.details', compact('addresses'));
     }
@@ -29,7 +38,8 @@ class AddressController extends Controller
         ]);
 
         /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = $request->user();
+        abort_unless($user, 401);
 
         // If this is set as default, unset any existing default
         if (! empty($validated['is_default'])) {
@@ -109,12 +119,15 @@ class AddressController extends Controller
 
     public function setSelectedAddress(Request $request)
     {
-        $request->validate(['address_id' => 'required|integer|exists:addresses,id']);
+        $request->validate([
+            'address_id' => [
+                'required',
+                'integer',
+                Rule::exists('addresses', 'id')->where(fn ($query) => $query->where('user_id', Auth::id())),
+            ],
+        ]);
 
         $address = Address::findOrFail($request->address_id);
-        if ($address->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
 
         session(['selected_address_id' => $address->id]);
 
