@@ -193,4 +193,30 @@ class TransactionManagementTest extends TestCase
             'data_type' => 'Eceran',
         ]);
     }
+
+    public function test_admin_transaction_search_trims_whitespace(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'trx-search-admin@example.test',
+        ]);
+
+        $customer = $this->createCustomerUser([
+            'email' => 'trx-search-customer@example.test',
+            'f_name' => 'Whitespace Target',
+        ]);
+
+        $transaction = $this->createMasrosterTransaction([
+            'IdTransaksi' => 'TX200020',
+            'id_admin' => $admin->id,
+            'id_customer' => $customer->id,
+            'StatusPesanan' => 'Menunggu Konfirmasi',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/all-transaksi?search=%20%20TX200020%20%20&status_pesanan=%20Menunggu%20Konfirmasi%20');
+
+        $response->assertOk();
+        $response->assertViewHas('search', 'TX200020');
+        $response->assertViewHas('status_pesanan', 'Menunggu Konfirmasi');
+        $response->assertSee($transaction->IdTransaksi);
+    }
 }

@@ -29,8 +29,11 @@ class TransaksiController extends Controller
     {
         $bulan = $request->query('bulan');
         $tahun = $request->query('tahun');
-        $search = $request->input('search');
-        $status_pesanan = $request->input('status_pesanan'); // Add status_pesanan filter
+        $search = trim((string) $request->input('search', ''));
+        $status_pesanan = trim((string) $request->input('status_pesanan', ''));
+
+        $search = $search !== '' ? $search : null;
+        $status_pesanan = $status_pesanan !== '' ? $status_pesanan : null;
 
         // Mulai query Transaksi dengan eager loading 'detail' dan 'customer'
         $query = Transaksi::with(['detail', 'customer']);
@@ -51,7 +54,7 @@ class TransaksiController extends Controller
         }
 
         // Filter jika ada pencarian
-        if ($search) {
+        if ($search !== null) {
             $query->where(function ($q) use ($search) {
                 $q->where('IdTransaksi', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($qCustomer) use ($search) {
