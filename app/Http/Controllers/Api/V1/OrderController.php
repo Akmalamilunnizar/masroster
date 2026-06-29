@@ -87,9 +87,20 @@ class OrderController extends Controller
             $total += $shippingCost;
             Log::info('Calculated total:', ['total' => $total]);
 
-            // Get selected address
+            // Get selected address, but only if it belongs to the authenticated user.
             $selectedAddressId = session('selected_address_id'); // or from request
-            $address = \App\Models\Address::find($selectedAddressId);
+            $address = null;
+            if ($selectedAddressId) {
+                $address = \App\Models\Address::where('id', $selectedAddressId)
+                    ->where('user_id', $user->id)
+                    ->first();
+            }
+
+            if (! $address) {
+                $address = \App\Models\Address::where('user_id', $user->id)
+                    ->where('is_default', true)
+                    ->first();
+            }
 
             // Create transaction
             $transaction = new Transaksi;
@@ -171,7 +182,9 @@ class OrderController extends Controller
         $selectedAddressId = session('selected_address_id');
         $selectedAddress = null;
         if ($selectedAddressId) {
-            $selectedAddress = \App\Models\Address::find($selectedAddressId);
+            $selectedAddress = \App\Models\Address::where('id', $selectedAddressId)
+                ->where('user_id', auth()->id())
+                ->first();
         }
         if (! $selectedAddress) {
             $selectedAddress = \App\Models\Address::where('user_id', auth()->id())

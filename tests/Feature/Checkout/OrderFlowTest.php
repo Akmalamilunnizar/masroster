@@ -90,4 +90,70 @@ class OrderFlowTest extends TestCase
 
         $this->assertFalse(session()->has('cart'));
     }
+
+    public function test_checkout_ignores_forged_selected_address_and_uses_customer_default(): void
+    {
+        $customer = $this->createCustomerUser([
+            'email' => 'checkout-forged-address@example.test',
+            'password' => 'password',
+        ]);
+
+        $intruder = $this->createCustomerUser([
+            'email' => 'checkout-forged-address-intruder@example.test',
+            'password' => 'password',
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'MAS802',
+            'NamaProduk' => 'Roster Checkout Forged Address Test',
+            'stock' => 100,
+        ]);
+
+        $this->actingAs($customer)->post('/cart/add', [
+            'id' => $product->IdRoster,
+            'quantity' => 1,
+            'nama' => $product->NamaProduk,
+            'harga' => 63000,
+            'img' => $product->Img,
+            'ukuran' => 1,
+            'ukuran_label' => 'Standard',
+            'subtotal' => 63000,
+        ])->assertOk();
+
+        $customerDefaultAddress = $this->createMasrosterAddress($customer, [
+            'label' => 'Rumah Utama',
+            'is_default' => true,
+        ]);
+
+        $intruderAddress = $this->createMasrosterAddress($intruder, [
+            'label' => 'Alamat Jahat',
+            'is_default' => false,
+        ]);
+
+        $this->actingAs($customer)->postJson('/save-shipping', [
+            'method' => 'Online',
+            'type' => 'Delivery',
+            'cost' => 15000,
+            'address_id' => $intruderAddress->id,
+        ])->assertOk();
+
+        $response = $this->actingAs($customer)->postJson('/confirm-order');
+
+        $response->assertOk()->assertJsonPath('success', true);
+
+        $transactionId = $response->json('transaction_id');
+
+        $this->assertDatabaseHas('transaksi', [
+            'IdTransaksi' => $transactionId,
+            'id_customer' => $customer->id,
+            'address_id' => $customerDefaultAddress->id,
+            'GrandTotal' => 78000,
+            'ongkir' => 15000,
+        ]);
+
+        $this->assertDatabaseMissing('transaksi', [
+            'IdTransaksi' => $transactionId,
+            'address_id' => $intruderAddress->id,
+        ]);
+    }
 }
