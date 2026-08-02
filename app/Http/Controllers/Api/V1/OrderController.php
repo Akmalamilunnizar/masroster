@@ -8,6 +8,7 @@ use App\Models\DetailHarga;
 use App\Models\DetailTransaksi;
 use App\Models\Produk;
 use App\Models\Transaksi;
+use App\Enums\WorkflowStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -79,18 +80,6 @@ class OrderController extends Controller
             $transactionId = $this->generateTransactionId();
             Log::info('Generated transaction ID:', ['id' => $transactionId]);
 
-            // Calculate total from the authoritative cart and shipping session data.
-            $total = 0;
-            $shippingCost = session('shipping_cost', 0);
-            foreach ($cart as $item) {
-                $quantity = (int) ($item['quantity'] ?? 0);
-                $price = $this->resolveCartLinePrice($item, $user->id);
-
-                $total += $price * $quantity;
-            }
-            $total += $shippingCost;
-            Log::info('Calculated total:', ['total' => $total]);
-
             // Get selected address, but only if it belongs to the authenticated user.
             $selectedAddressId = session('selected_address_id'); // or from request
             $address = null;
@@ -106,12 +95,64 @@ class OrderController extends Controller
                     ->first();
             }
 
+            $addressId = $address ? $address->id : null;
+
+            // Calculate total from the authoritative cart and shipping session data.
+            $total = 0;
+            $shippingCost = session('shipping_cost', 0);
+            foreach ($cart as $item) {
+                $quantity = (int) ($item['quantity'] ?? 0);
+                $price = $this->resolveCartLinePrice($item, $user->id, $addressId);
+
+                $total += $price * $quantity;
+            }
+            $total += $shippingCost;
+            Log::info('Calculated total:', ['total' => $total]);
+
+            // Determine workflow_status based on retailer verification & location-scoped pricing status
+            $workflowStatus = WorkflowStatus::MENUNGGU_PEMBAYARAN->value;
+            if ($user->tipe_user === 'retailer' && $user->status_verifikasi === 'pending') {
+                $hasAllLocationPrices = true;
+                foreach ($cart as $item) {
+                    $productIdentifier = (string) ($item['id'] ?? '');
+                    $sizeId = isset($item['ukuran']) ? (int) $item['ukuran'] : null;
+
+                    $product = Produk::query()
+                        ->where('IdRoster', $productIdentifier)
+                        ->orWhere('sku', $productIdentifier)
+                        ->first();
+
+                    if ($product && $sizeId !== null && $addressId !== null) {
+                        $priceForeignKey = Schema::hasColumn('detail_harga', 'produk_id') ? 'produk_id' : 'id_roster';
+                        $priceIdentifier = $priceForeignKey === 'produk_id' ? $product->getKey() : $productIdentifier;
+
+                        $exists = DetailHarga::where('id_user', $user->id)
+                            ->where($priceForeignKey, $priceIdentifier)
+                            ->where('id_ukuran', $sizeId)
+                            ->where('address_id', $addressId)
+                            ->exists();
+
+                        if (! $exists) {
+                            $hasAllLocationPrices = false;
+                            break;
+                        }
+                    } else {
+                        $hasAllLocationPrices = false;
+                        break;
+                    }
+                }
+
+                if (! $hasAllLocationPrices) {
+                    $workflowStatus = WorkflowStatus::DRAFT->value;
+                }
+            }
+
             // Create transaction
             $transaction = new Transaksi;
             $transaction->IdTransaksi = $transactionId;
             $transaction->id_admin = 0;
             $transaction->id_customer = $user->id;
-            $transaction->address_id = $address ? $address->id : null;
+            $transaction->address_id = $addressId;
             $transaction->shipping_method = session('shipping_method');
             $transaction->delivery_method = session('delivery_method');
             $transaction->shipping_type = session('shipping_type');
@@ -120,6 +161,7 @@ class OrderController extends Controller
 
             $transaction->Bayar = 0;
             $transaction->StatusPembayaran = 'Belum Lunas';
+            $transaction->workflow_status = $workflowStatus;
 
             $transaction->GrandTotal = $total;
             $transaction->tglTransaksi = now();
@@ -131,15 +173,24 @@ class OrderController extends Controller
 
             // Create transaction details
             foreach ($cart as $id => $details) {
-                $linePrice = $this->resolveCartLinePrice($details, $user->id);
+                $linePrice = $this->resolveCartLinePrice($details, $user->id, $addressId);
                 $quantity = (int) ($details['quantity'] ?? 0);
+
+                $productIdentifier = (string) ($details['id'] ?? '');
+                $product = Produk::query()
+                    ->where('IdRoster', $productIdentifier)
+                    ->orWhere('sku', $productIdentifier)
+                    ->first();
 
                 $detailData = [
                     'IdTransaksi' => $transactionId,
                     'IdRoster' => $details['id'],
+                    'produk_id' => $product ? $product->id : null,
                     'id_ukuran' => isset($details['ukuran']) ? (int) $details['ukuran'] : null,
+                    'harga_satuan' => $linePrice,
                     'QtyProduk' => $quantity,
                     'SubTotal' => $linePrice * $quantity,
+                    'data_type' => $quantity > 100 ? 'Borongan' : 'Eceran',
                 ];
                 DetailTransaksi::create($detailData);
                 Log::info('Transaction detail created', [
@@ -174,7 +225,7 @@ class OrderController extends Controller
         }
     }
 
-    private function resolveCartLinePrice(array $details, int $userId): int
+    private function resolveCartLinePrice(array $details, int $userId, ?int $addressId = null): int
     {
         $productIdentifier = (string) ($details['id'] ?? '');
         $sizeId = isset($details['ukuran']) ? (int) $details['ukuran'] : null;
@@ -192,25 +243,58 @@ class OrderController extends Controller
             return (int) round($details['harga'] ?? 0);
         }
 
-        foreach ([
-            'produk_id' => $product->getKey(),
-            'id_roster' => $productIdentifier,
-        ] as $priceForeignKey => $priceIdentifier) {
-            if (! Schema::hasColumn('detail_harga', $priceForeignKey)) {
-                continue;
-            }
+        $priceForeignKey = Schema::hasColumn('detail_harga', 'produk_id') ? 'produk_id' : 'id_roster';
+        $priceIdentifier = $priceForeignKey === 'produk_id' ? $product->getKey() : $productIdentifier;
 
-            $detailHarga = DetailHarga::query()
+        // 1. User specific + location specific (id_user = $userId, address_id = $addressId)
+        if ($addressId !== null) {
+            $price = DB::table('detail_harga')
                 ->where($priceForeignKey, $priceIdentifier)
                 ->where('id_user', $userId)
                 ->where('id_ukuran', $sizeId)
-                ->first();
-
-            if ($detailHarga && isset($detailHarga->harga)) {
-                return (int) $detailHarga->harga;
+                ->where('address_id', $addressId)
+                ->value('harga');
+            if ($price !== null) {
+                return (int) $price;
             }
         }
 
+        // 2. User specific + national default (id_user = $userId, address_id = null)
+        $price = DB::table('detail_harga')
+            ->where($priceForeignKey, $priceIdentifier)
+            ->where('id_user', $userId)
+            ->where('id_ukuran', $sizeId)
+            ->whereNull('address_id')
+            ->value('harga');
+        if ($price !== null) {
+            return (int) $price;
+        }
+
+        // 3. General default + location specific (id_user = 0, address_id = $addressId)
+        if ($addressId !== null) {
+            $price = DB::table('detail_harga')
+                ->where($priceForeignKey, $priceIdentifier)
+                ->where('id_user', 0)
+                ->where('id_ukuran', $sizeId)
+                ->where('address_id', $addressId)
+                ->value('harga');
+            if ($price !== null) {
+                return (int) $price;
+            }
+        }
+
+        // 4. General default + national default (id_user = 0, address_id = null)
+        $price = DB::table('detail_harga')
+            ->where($priceForeignKey, $priceIdentifier)
+            ->where('id_user', 0)
+            ->where('id_ukuran', $sizeId)
+            ->whereNull('address_id')
+            ->value('harga');
+        if ($price !== null) {
+            return (int) $price;
+        }
+
+        // Fallback to produk_size standard price
         foreach ([
             'produk_id' => $product->getKey(),
             'IdRoster' => $productIdentifier,
@@ -254,8 +338,10 @@ class OrderController extends Controller
 
         // Calculate subtotal and grand total
         $subtotal = 0;
+        $addressId = $selectedAddress ? $selectedAddress->id : null;
         foreach ($cart as $item) {
-            $subtotal += $item['harga'] * $item['quantity'];
+            $price = $this->resolveCartLinePrice($item, auth()->id(), $addressId);
+            $subtotal += $price * $item['quantity'];
         }
         $grandTotal = $subtotal + $shippingCost;
 

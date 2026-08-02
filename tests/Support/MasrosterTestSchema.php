@@ -232,6 +232,7 @@ trait MasrosterTestSchema
                 $table->unsignedBigInteger('id_user');
                 $table->integer('id_ukuran');
                 $table->integer('harga');
+                $table->unsignedBigInteger('address_id')->nullable();
             });
         }
 
@@ -251,6 +252,7 @@ trait MasrosterTestSchema
                 $table->unsignedBigInteger('produk_id')->nullable();
                 $table->string('IdRoster', 13)->nullable();
                 $table->integer('id_ukuran')->nullable();
+                $table->integer('harga_satuan')->nullable();
                 $table->integer('QtyProduk')->nullable();
                 $table->integer('SubTotal')->nullable();
                 $table->string('data_type', 20)->default('Eceran');
@@ -396,7 +398,11 @@ trait MasrosterTestSchema
             'alamat' => 'Jl. Testing No. 1',
         ];
 
-        $user = User::create(array_merge($defaults, $attributes));
+        $merged = array_merge($defaults, $attributes);
+        $user = new User(array_diff_key($merged, array_flip(['tipe_user', 'status_verifikasi'])));
+        $user->tipe_user = $merged['tipe_user'] ?? 'end_customer';
+        $user->status_verifikasi = $merged['status_verifikasi'] ?? ($user->tipe_user === 'retailer' ? 'pending' : 'approved');
+        $user->save();
 
         $this->attachRole($user, strtolower($role));
 

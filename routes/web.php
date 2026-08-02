@@ -281,6 +281,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('/admin/update-users', 'UpdateUsers')->name('update-users');
         Route::get('/admin/delete-users/{id}', 'DeleteUsers')->name('deleteusers');
     });
+
+    Route::controller(\App\Http\Controllers\Admin\UserVerificationController::class)->group(function () {
+        Route::get('/admin/users/pending-retailers', 'index')->name('admin.users.pending-retailers');
+        Route::post('/admin/users/{id}/approve-retailer', 'approve')->name('admin.users.approve-retailer');
+        Route::post('/admin/users/{id}/reject-retailer', 'reject')->name('admin.users.reject-retailer');
+    });
+
+    Route::controller(\App\Http\Controllers\Admin\KeywordResearchController::class)->group(function () {
+        Route::get('/admin/keywords', 'index')->name('admin.keywords.index');
+        Route::post('/admin/keywords/search', 'search')->name('admin.keywords.search');
+    });
 });
 
 // Route::controller(DiagnosaController::class)->group(function () {

@@ -52,7 +52,7 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'nomor_telepon' => ['required', 'string', 'min:11', 'unique:users'],
             'tipe_user' => ['sometimes', 'required', 'in:end_customer,retailer'],
-            'foto_toko' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'required_if:tipe_user,retailer'],
+            'foto_toko' => ['required_if:tipe_user,retailer', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -83,7 +83,7 @@ class RegisterController extends Controller
             $counter++;
         }
 
-        $user = User::create([
+        $user = new User([
             'f_name' => $data['name'],
             'email' => $data['email'],
             'nomor_telepon' => $data['nomor_telepon'],
@@ -91,10 +91,11 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
             'user' => 'User', // Set default role
             'img' => 'default-avatar.png',
-            'tipe_user' => $tipeUser,
-            'status_verifikasi' => $statusVerifikasi,
             'foto_toko' => $fotoTokoPath,
         ]);
+        $user->tipe_user = $tipeUser;
+        $user->status_verifikasi = $statusVerifikasi;
+        $user->save();
 
         // Assign role using Laratrust
         $user->addRole('user');

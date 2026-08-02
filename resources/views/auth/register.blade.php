@@ -161,7 +161,7 @@
   <!-- Card Register -->
   <div class="register-card">
     <h2>Register</h2>
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
       @csrf
 
       <div class="mb-3">
@@ -193,6 +193,43 @@
           </span>
         @enderror
       </div>
+
+      <div class="mb-3">
+        <label for="tipe_user" class="form-label">Tipe Pelanggan</label>
+        <select id="tipe_user" name="tipe_user" class="form-select @error('tipe_user') is-invalid @enderror" onchange="toggleStorePhoto(this.value)">
+          <option value="end_customer" {{ old('tipe_user') == 'end_customer' ? 'selected' : '' }}>Pelanggan Umum (End Customer)</option>
+          <option value="retailer" {{ old('tipe_user') == 'retailer' ? 'selected' : '' }}>Toko / Grosir (Retailer)</option>
+        </select>
+        @error('tipe_user')
+          <span class="invalid-feedback" role="alert">
+            <strong>{{ $message }}</strong>
+          </span>
+        @enderror
+      </div>
+
+      <div class="mb-3" id="foto_toko_container" style="display: none;">
+        <label for="foto_toko" class="form-label">Foto Toko</label>
+        <input id="foto_toko" type="file" class="form-control @error('foto_toko') is-invalid @enderror" name="foto_toko">
+        @error('foto_toko')
+          <span class="invalid-feedback" role="alert">
+            <strong>{{ $message }}</strong>
+          </span>
+        @enderror
+      </div>
+
+      <script>
+        function toggleStorePhoto(value) {
+          const container = document.getElementById('foto_toko_container');
+          if (value === 'retailer') {
+            container.style.display = 'block';
+          } else {
+            container.style.display = 'none';
+          }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+          toggleStorePhoto(document.getElementById('tipe_user').value);
+        });
+      </script>
 
       <div class="mb-3">
         <label for="password" class="form-label">{{ __('Password') }}</label>

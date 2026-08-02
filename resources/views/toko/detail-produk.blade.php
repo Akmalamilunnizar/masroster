@@ -535,14 +535,17 @@ function addToCart() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Issue 1: update cart badge without page reload
+            if (window.updateCartCount) {
+                window.updateCartCount(data.cartCount);
+            }
+            // Issue 3: stay on page, show toast only
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
                 text: 'Produk berhasil ditambahkan ke keranjang',
                 showConfirmButton: false,
                 timer: 1500
-            }).then(() => {
-                window.location.href = '{{ route("cart") }}';
             });
         } else {
             Swal.fire({

@@ -243,9 +243,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Handle proceed button click
   proceedButton.addEventListener('click', function() {
+    const shippingType = selectedMethod === 'kurir'
+      ? (parseInt(selectedOption) === 20000 ? 'Reguler' : 'Express')
+      : null;
+
     const shippingData = {
-      method: selectedMethod,
-      type: selectedMethod === 'kurir' ? (selectedOption == 20000 ? 'Reguler' : 'Express') : null,
+      method: selectedMethod,   // 'kurir' or 'pickup' — mapped to Online/Offline by controller
+      type: shippingType,
       cost: selectedMethod === 'kurir' ? parseInt(selectedOption) : 0,
       address_id: '{{ session('selected_address_id') }}'
     };
@@ -255,15 +259,27 @@ document.addEventListener('DOMContentLoaded', function() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': '{{ csrf_token() }}'
       },
       body: JSON.stringify(shippingData)
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => { throw err; });
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.success) {
         window.location.href = '{{ route("payment") }}';
+      } else {
+        alert('Gagal menyimpan pengiriman: ' + (data.message || 'Terjadi kesalahan.'));
       }
+    })
+    .catch(err => {
+      console.error('Save shipping error:', err);
+      alert('Terjadi kesalahan saat menyimpan pilihan pengiriman. Silakan coba lagi.');
     });
   });
 });

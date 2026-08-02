@@ -351,7 +351,7 @@
           <!-- Cart Icon -->
           <a href="{{ route('cart') }}" class="position-relative text-decoration-none">
             <i class="bi bi-cart3 fs-4 text-primary"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
               {{ session()->get('cart') ? array_sum(array_column(session()->get('cart'), 'quantity')) : 0 }}
             </span>
           </a>
@@ -396,6 +396,13 @@
 
   <!-- Session Flash Messages Handler -->
   <script>
+      // Global cart counter updater — call after any successful cart.add AJAX
+      window.updateCartCount = function(count) {
+          document.querySelectorAll('#cart-count').forEach(function(el) {
+              el.textContent = count;
+          });
+      };
+
       document.addEventListener('DOMContentLoaded', function() {
           @if(session()->has('message'))
               CustomModal.success('{{ session()->get("message") }}', 'Berhasil!');

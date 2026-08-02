@@ -219,4 +219,15 @@ class TransactionManagementTest extends TestCase
         $response->assertViewHas('status_pesanan', 'Menunggu Konfirmasi');
         $response->assertSee($transaction->IdTransaksi);
     }
+
+    public function test_admin_transaction_index_rejects_invalid_month_filter(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'trx-invalid-month-admin@example.test',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/all-transaksi?bulan=13&tahun=2026');
+
+        $response->assertSessionHasErrors(['bulan']);
+    }
 }

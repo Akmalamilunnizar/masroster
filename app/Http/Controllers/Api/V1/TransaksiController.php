@@ -27,10 +27,17 @@ class TransaksiController extends Controller
      */
     public function index(Request $request)
     {
-        $bulan = $request->query('bulan');
-        $tahun = $request->query('tahun');
-        $search = trim((string) $request->input('search', ''));
-        $status_pesanan = trim((string) $request->input('status_pesanan', ''));
+        $validated = $request->validate([
+            'bulan' => 'nullable|integer|between:1,12',
+            'tahun' => 'nullable|integer|min:2000|max:2100',
+            'search' => 'nullable|string|max:255',
+            'status_pesanan' => 'nullable|string|max:50',
+        ]);
+
+        $bulan = $validated['bulan'] ?? null;
+        $tahun = $validated['tahun'] ?? null;
+        $search = trim((string) ($validated['search'] ?? ''));
+        $status_pesanan = trim((string) ($validated['status_pesanan'] ?? ''));
 
         $search = $search !== '' ? $search : null;
         $status_pesanan = $status_pesanan !== '' ? $status_pesanan : null;

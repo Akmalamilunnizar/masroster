@@ -243,10 +243,32 @@ class CartController extends Controller
 
     public function saveShipping(Request $request)
     {
+        // Accept both frontend display values ('kurir','pickup') and canonical DB values ('Online','Offline')
+        $methodMap = [
+            'kurir'   => 'Online',
+            'pickup'  => 'Offline',
+            'Online'  => 'Online',
+            'Offline' => 'Offline',
+        ];
+
+        $rawMethod = $request->input('method');
+        $mappedMethod = $methodMap[$rawMethod] ?? null;
+
+        if (! $mappedMethod) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Metode pengiriman tidak valid.',
+                'errors'  => ['method' => ['Pilih metode pengiriman yang valid.']],
+            ], 422);
+        }
+
+        // Merge mapped method so validation sees the canonical value
+        $request->merge(['method' => $mappedMethod]);
+
         $validated = $request->validate([
             'method' => 'required|string|in:Online,Offline',
-            'type' => 'nullable|string|in:Pickup,Delivery',
-            'cost' => 'required|numeric|min:0',
+            'type'   => 'nullable|string|in:Reguler,Express,Pickup,Delivery',
+            'cost'   => 'required|numeric|min:0',
             'address_id' => [
                 'nullable',
                 'integer',
@@ -255,8 +277,8 @@ class CartController extends Controller
         ]);
 
         session(['shipping_method' => $validated['method']]);
-        session(['shipping_type' => $validated['type'] ?? null]);
-        session(['shipping_cost' => (int) round($validated['cost'])]);
+        session(['shipping_type'   => $validated['type'] ?? null]);
+        session(['shipping_cost'   => (int) round($validated['cost'])]);
 
         if (! empty($validated['address_id'])) {
             session(['selected_address_id' => (int) $validated['address_id']]);

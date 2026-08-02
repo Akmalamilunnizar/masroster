@@ -274,7 +274,7 @@ class OrderFlowTest extends TestCase
             'GrandTotal' => 78000,
             'Bayar' => 0,
             'StatusPembayaran' => 'Belum Lunas',
-            'workflow_status' => 'Draft',
+            'workflow_status' => 'Menunggu Pembayaran',
         ]);
     }
 }

@@ -31,8 +31,6 @@ class User extends Authenticatable implements CanResetPasswordContract
         'username',
         'user',          // Kolom 'user' untuk peran (role)
         'img',           // Kolom untuk gambar profil
-        'tipe_user',
-        'status_verifikasi',
         'foto_toko',
     ];
 

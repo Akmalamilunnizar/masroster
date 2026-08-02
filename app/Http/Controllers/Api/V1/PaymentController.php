@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
+use App\Enums\WorkflowStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -34,45 +35,79 @@ class PaymentController extends Controller
                 return response()->json(['error' => 'Unauthorized.'], 401);
             }
 
-            $cart = session('cart', []);
-            $shippingCost = (int) session('shipping_cost', 0);
-
-            if (empty($cart)) {
-                return response()->json(['error' => 'Keranjang masih kosong.'], 422);
-            }
-
-            $orderId = session('midtrans_order_id');
-            if (! $orderId) {
-                $orderId = 'ORD-'.now()->format('YmdHis').'-'.random_int(1000, 9999);
-                session(['midtrans_order_id' => $orderId]);
-            }
-
+            $transactionId = $request->input('transaction_id');
             $itemDetails = [];
             $grossAmount = 0;
+            $orderId = null;
 
-            foreach ($cart as $item) {
-                $quantity = (int) ($item['quantity'] ?? 1);
-                $price = (int) round($item['harga'] ?? 0);
-                $lineTotal = $price * $quantity;
+            if ($transactionId) {
+                // Dynamic Just-In-Time snap token retrieval using persisted database transaction
+                $transaction = Transaksi::where('IdTransaksi', $transactionId)
+                    ->where('id_customer', Auth::id())
+                    ->firstOrFail();
 
-                $grossAmount += $lineTotal;
+                $orderId = $transaction->IdTransaksi;
+                $grossAmount = (int) $transaction->GrandTotal;
 
-                $itemDetails[] = [
-                    'id' => (string) ($item['id'] ?? 'item-'.count($itemDetails)),
-                    'price' => $price,
-                    'quantity' => $quantity,
-                    'name' => substr((string) ($item['nama'] ?? 'Produk'), 0, 50),
-                ];
-            }
+                foreach ($transaction->detailTransaksi as $detail) {
+                    $quantity = (int) $detail->QtyProduk;
+                    $price = $detail->harga_satuan ? (int) $detail->harga_satuan : (int) ($detail->SubTotal / $quantity);
+                    $itemDetails[] = [
+                        'id' => (string) $detail->IdRoster,
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'name' => substr((string) ($detail->produk?->NamaProduk ?? 'Produk Roster'), 0, 50),
+                    ];
+                }
 
-            if ($shippingCost > 0) {
-                $grossAmount += $shippingCost;
-                $itemDetails[] = [
-                    'id' => 'shipping',
-                    'price' => $shippingCost,
-                    'quantity' => 1,
-                    'name' => 'Biaya Pengiriman',
-                ];
+                $shippingCost = (int) $transaction->ongkir;
+                if ($shippingCost > 0) {
+                    $itemDetails[] = [
+                        'id' => 'shipping',
+                        'price' => $shippingCost,
+                        'quantity' => 1,
+                        'name' => 'Biaya Pengiriman',
+                    ];
+                }
+            } else {
+                // Cart session fallback for backward compatibility
+                $cart = session('cart', []);
+                $shippingCost = (int) session('shipping_cost', 0);
+
+                if (empty($cart)) {
+                    return response()->json(['error' => 'Keranjang masih kosong.'], 422);
+                }
+
+                $orderId = session('midtrans_order_id');
+                if (! $orderId) {
+                    $orderId = 'ORD-'.now()->format('YmdHis').'-'.random_int(1000, 9999);
+                    session(['midtrans_order_id' => $orderId]);
+                }
+
+                foreach ($cart as $item) {
+                    $quantity = (int) ($item['quantity'] ?? 1);
+                    $price = (int) round($item['harga'] ?? 0);
+                    $lineTotal = $price * $quantity;
+
+                    $grossAmount += $lineTotal;
+
+                    $itemDetails[] = [
+                        'id' => (string) ($item['id'] ?? 'item-'.count($itemDetails)),
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'name' => substr((string) ($item['nama'] ?? 'Produk'), 0, 50),
+                    ];
+                }
+
+                if ($shippingCost > 0) {
+                    $grossAmount += $shippingCost;
+                    $itemDetails[] = [
+                        'id' => 'shipping',
+                        'price' => $shippingCost,
+                        'quantity' => 1,
+                        'name' => 'Biaya Pengiriman',
+                    ];
+                }
             }
 
             $user = Auth::user();
@@ -182,9 +217,9 @@ class PaymentController extends Controller
 
         if ($resolvedStatus === 'Lunas') {
             $transaction->Bayar = $transaction->GrandTotal;
-            $transaction->workflow_status = 'Paid';
+            $transaction->workflow_status = WorkflowStatus::PAID->value;
         } else {
-            $transaction->workflow_status = 'Draft';
+            $transaction->workflow_status = WorkflowStatus::DRAFT->value;
         }
 
         $transaction->save();

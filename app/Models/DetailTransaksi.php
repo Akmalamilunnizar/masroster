@@ -20,6 +20,7 @@ class DetailTransaksi extends Model
         'IdRoster',
         'produk_id',
         'id_ukuran',
+        'harga_satuan',
         'QtyProduk',
         'data_type',
         'SubTotal',
