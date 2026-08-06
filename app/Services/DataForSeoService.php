@@ -19,6 +19,39 @@ class DataForSeoService
      * @param array $keywords
      * @return array
      */
+
+    public function getKeywordMetrics(array $keywords): array
+    {
+        // 2360 is the Location Code for Indonesia, 1017 is Indonesian language
+        $payload = [
+            [
+                "location_code" => 2360,
+                "language_code" => "id",
+                "keywords" => $keywords
+            ]
+        ];
+
+        $response = Http::withBasicAuth(env('DATAFORSEO_LOGIN'), env('DATAFORSEO_PASSWORD'))
+            ->post('https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live', $payload);
+
+        $results = [];
+
+        if ($response->successful() && isset($response->json()['tasks'][0]['result'])) {
+            $items = $response->json()['tasks'][0]['result'];
+            
+            foreach ($items as $item) {
+                $results[] = [
+                    'keyword' => $item['keyword'],
+                    'search_volume' => $item['search_volume'] ?? 0,
+                    'cpc' => $item['cpc'] ?? 0.00,
+                    'competition' => $item['competition_level'] ?? 'UNKNOWN', // Usually LOW, MEDIUM, or HIGH
+                ];
+            }
+        }
+
+        return $results;
+    }
+
     public function getMetrics(array $keywords): array
     {
         // Check if real credentials are set. If so, call real API; otherwise return mock data.

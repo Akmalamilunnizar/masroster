@@ -258,6 +258,27 @@ trait MasrosterTestSchema
                 $table->string('data_type', 20)->default('Eceran');
             });
         }
+        if (! Schema::hasTable('keyword_research_logs')) {
+            Schema::create('keyword_research_logs', function (Blueprint $table) {
+                $table->id();
+                $table->string('base_query')->index();
+                $table->string('status');
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::hasTable('keyword_metrics')) {
+            Schema::create('keyword_metrics', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('keyword_research_log_id');
+                $table->string('keyword');
+                $table->integer('search_volume')->nullable()->default(0);
+                $table->decimal('cpc', 8, 2)->nullable();
+                $table->string('competition')->nullable();
+                $table->json('monthly_trend')->nullable();
+                $table->timestamps();
+            });
+        }
 
         $this->createInventoryTriggers();
 
@@ -267,6 +288,8 @@ trait MasrosterTestSchema
     protected function resetMasrosterData(): void
     {
         foreach ([
+            'keyword_metrics',
+            'keyword_research_logs',
             'permission_user',
             'permission_role',
             'role_user',

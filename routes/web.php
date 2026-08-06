@@ -291,6 +291,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::controller(\App\Http\Controllers\Admin\KeywordResearchController::class)->group(function () {
         Route::get('/admin/keywords', 'index')->name('admin.keywords.index');
         Route::post('/admin/keywords/search', 'search')->name('admin.keywords.search');
+        Route::get('/admin/keywords/autocomplete', 'autocomplete')->name('admin.keywords.autocomplete');
     });
 });
 

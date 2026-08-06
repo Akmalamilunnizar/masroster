@@ -40,81 +40,118 @@ class KeywordResearchController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function search(Request $request)
+    public function search(Request $request, GoogleAutocompleteService $autocomplete, DataForSeoService $metricsService)
     {
         $request->validate([
-            'query' => 'required|string|min:2|max:255',
+            'query' => 'required|string',
+            'fetch_metrics' => 'boolean' // New optional flag
         ]);
-
-        $baseQuery = strtolower(trim((string) $request->input('query')));
+        
+        $baseQuery = strtolower(trim($request->input('query')));
+        $fetchMetrics = $request->input('fetch_metrics', false);
 
         // Check cache in keyword_research_logs for last 14 days
         $cachedLog = KeywordResearchLog::where('base_query', $baseQuery)
             ->where('status', 'completed')
             ->where('created_at', '>=', Carbon::now()->subDays(14))
-            ->with('metrics')
             ->first();
 
         if ($cachedLog) {
+            $query = KeywordMetric::where('keyword_research_log_id', $cachedLog->id);
+            if ($fetchMetrics) {
+                $query->orderBy('search_volume', 'desc');
+            } else {
+                $query->orderBy('id', 'asc');
+            }
+
             return response()->json([
                 'success' => true,
                 'source' => 'cache',
-                'data' => $cachedLog->metrics,
+                'with_metrics' => $fetchMetrics,
+                'data' => $query->get()
             ]);
         }
 
-        // Cache miss: initiate query log
         $log = KeywordResearchLog::create([
             'base_query' => $baseQuery,
-            'status' => 'processing',
+            'status' => 'processing'
         ]);
 
+        // 1. Get Free Keywords (Always runs)
+        $expandedKeywords = $autocomplete->expandKeywords($baseQuery);
+        
+        $metricsData = [];
+
+        // 2. Fetch Exact Numbers ONLY if requested
+        if ($fetchMetrics && count($expandedKeywords) > 0) {
+            // Limit to top 100 to protect your API budget
+            $targetKeywords = array_slice($expandedKeywords, 0, 100);
+            $metricsData = $metricsService->getMetrics($targetKeywords);
+        }
+
+        // 3. Save to Database
+        foreach ($expandedKeywords as $index => $keyword) {
+            // Check if we pulled real metrics for this specific keyword
+            $metric = collect($metricsData)->firstWhere('keyword', $keyword);
+
+            KeywordMetric::create([
+                'keyword_research_log_id' => $log->id,
+                'keyword' => $keyword,
+                'search_volume' => $metric['search_volume'] ?? null, // Null if metrics are off
+                'cpc' => $metric['cpc'] ?? null,
+                'competition' => $metric['competition'] ?? null,
+            ]);
+        }
+
+        $log->update(['status' => 'completed']);
+
+        // 4. Return sorted data (Sort by ID/Google Rank if no volume, otherwise by Volume)
+        $query = KeywordMetric::where('keyword_research_log_id', $log->id);
+        
+        if ($fetchMetrics) {
+            $query->orderBy('search_volume', 'desc');
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        return response()->json([
+            'success' => true,
+            'source' => 'api',
+            'with_metrics' => $fetchMetrics,
+            'data' => $query->get()
+        ]);
+    }
+
+    /**
+     * Provide real-time autocomplete suggestions with metric volumes.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function autocomplete(Request $request)
+    {
+        $query = $request->query('query');
+        if (empty($query) || strlen(trim($query)) < 2) {
+            return response()->json([]);
+        }
+
         try {
-            // Get Google suggestions
-            $suggestions = $this->googleService->getSuggestions($baseQuery);
+            // Fetch suggestions from Google Autocomplete Service
+            $suggestions = $this->googleService->getSuggestions($query);
 
             if (empty($suggestions)) {
-                // At least analyze the base query itself if no suggestions
-                $suggestions = [$baseQuery];
+                return response()->json([]);
             }
 
-            // Get DataForSeo/Mock metrics
-            $metricsData = $this->seoService->getMetrics($suggestions);
+            // Cap at 10 items for dropdown performance
+            $suggestions = array_slice($suggestions, 0, 10);
 
-            // Save metrics to DB using transaction
-            DB::transaction(function () use ($log, $metricsData) {
-                foreach ($metricsData as $item) {
-                    KeywordMetric::create([
-                        'keyword_research_log_id' => $log->id,
-                        'keyword' => $item['keyword'],
-                        'search_volume' => $item['search_volume'],
-                        'cpc' => $item['cpc'],
-                        'competition' => $item['competition'],
-                        'monthly_trend' => $item['monthly_trend'],
-                    ]);
-                }
+            // Fetch metrics from DataForSeo/Mock service
+            $metrics = $this->seoService->getMetrics($suggestions);
 
-                $log->status = 'completed';
-                $log->save();
-            });
-
-            // Reload metrics from DB to ensure structure consistency
-            $metrics = $log->metrics()->get();
-
-            return response()->json([
-                'success' => true,
-                'source' => 'api',
-                'data' => $metrics,
-            ]);
-
+            return response()->json($metrics);
         } catch (\Exception $e) {
-            $log->status = 'failed';
-            $log->save();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Keyword research failed: ' . $e->getMessage(),
-            ], 500);
+            return response()->json([]);
         }
     }
 }
