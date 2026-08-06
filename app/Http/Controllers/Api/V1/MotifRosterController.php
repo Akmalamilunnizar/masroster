@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\MotifRoster;
 use App\Models\DetailMotif;
+use App\Models\MotifRoster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,6 +13,7 @@ class MotifRosterController extends Controller
     public function index()
     {
         $motifs = MotifRoster::with(['tipeRosters'])->orderBy('IdMotif', 'asc')->get();
+
         return view('admin.allmotif', compact('motifs'));
     }
 
@@ -20,6 +21,7 @@ class MotifRosterController extends Controller
     {
         $tipeList = \App\Models\TipeRoster::all();
         $motifList = MotifRoster::all();
+
         return view('admin.addmotif', compact('tipeList', 'motifList'));
     }
 
@@ -65,36 +67,37 @@ class MotifRosterController extends Controller
     {
         $motif = MotifRoster::with('tipeRosters')->findOrFail($id);
         $tipeList = \App\Models\TipeRoster::all();
+
         return view('admin.editmotif', compact('motif', 'tipeList'));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nama_motif' => 'required|string|max:35|unique:motif_roster,nama_motif,' . $id . ',IdMotif',
+            'nama_motif' => 'required|string|max:35|unique:motif_roster,nama_motif,'.$id.',IdMotif',
             'tipe_connections' => 'nullable|array',
             'tipe_connections.*' => 'exists:tipe_roster,IdTipe',
         ]);
 
         $motif = MotifRoster::findOrFail($id);
-        
+
         // Update motif name
         $motif->update(['nama_motif' => $request->nama_motif]);
-        
+
         // Update connections
         $tipeConnections = $request->tipe_connections ?? [];
-        
+
         // Get current connections
         $currentConnections = $motif->tipeRosters->pluck('IdTipe')->toArray();
-        
+
         // Remove old connections that are no longer selected
         $connectionsToRemove = array_diff($currentConnections, $tipeConnections);
-        if (!empty($connectionsToRemove)) {
+        if (! empty($connectionsToRemove)) {
             DetailMotif::where('id_motif', $id)
                 ->whereIn('id_tipe', $connectionsToRemove)
                 ->delete();
         }
-        
+
         // Add new connections
         $connectionsToAdd = array_diff($tipeConnections, $currentConnections);
         foreach ($connectionsToAdd as $tipeId) {
@@ -103,13 +106,14 @@ class MotifRosterController extends Controller
                 'id_motif' => $id,
             ]);
         }
-        
+
         return redirect()->route('allmotif')->with('message', 'Motif berhasil diperbarui!');
     }
 
     public function destroy($id)
     {
         MotifRoster::findOrFail($id)->delete();
+
         return redirect()->route('allmotif')->with('message', 'Motif berhasil dihapus!');
     }
 
@@ -117,7 +121,7 @@ class MotifRosterController extends Controller
     {
         $request->validate([
             'motif_ids' => 'required|array',
-            'motif_ids.*' => 'required|integer'
+            'motif_ids.*' => 'required|integer',
         ]);
 
         $ids = $request->motif_ids;
@@ -131,20 +135,20 @@ class MotifRosterController extends Controller
         try {
             $request->validate([
                 'nama_motif' => 'required|string|max:35|unique:motif_roster,nama_motif',
-                'id_tipe' => 'required|exists:tipe_roster,IdTipe'
+                'id_tipe' => 'required|exists:tipe_roster,IdTipe',
             ]);
 
             DB::beginTransaction();
-            
+
             // Create the motif
             $motif = MotifRoster::create([
-                'nama_motif' => $request->nama_motif
+                'nama_motif' => $request->nama_motif,
             ]);
 
             // Create the connection in detail_motif
             DetailMotif::create([
                 'id_tipe' => $request->id_tipe,
-                'id_motif' => $motif->IdMotif
+                'id_motif' => $motif->IdMotif,
             ]);
 
             DB::commit();
@@ -152,16 +156,15 @@ class MotifRosterController extends Controller
             return response()->json([
                 'success' => true,
                 'id' => $motif->IdMotif,
-                'name' => $motif->nama_motif
+                'name' => $motif->nama_motif,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
 }
-
-

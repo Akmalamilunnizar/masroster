@@ -2,13 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\Produk;
 use App\Models\ModelHistory;
+use App\Models\Produk;
+use Carbon\Carbon;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ForecastAllProducts extends Command
 {
@@ -19,7 +19,9 @@ class ForecastAllProducts extends Command
     protected $description = 'Fast inference-only batch forecast using active model versions';
 
     private const FLASK_BASE_URL = 'http://127.0.0.1:5000';
+
     private const TIMEOUT_SECONDS = 120;
+
     private const CHUNK_SIZE = 50;
 
     public function handle()
@@ -28,8 +30,9 @@ class ForecastAllProducts extends Command
         $model = $this->option('model');
         $force = $this->option('force');
 
-        if (!in_array($model, ['lstm', 'prophet'])) {
+        if (! in_array($model, ['lstm', 'prophet'])) {
             $this->error("Invalid model. Use 'lstm' or 'prophet'");
+
             return Command::FAILURE;
         }
 
@@ -39,17 +42,18 @@ class ForecastAllProducts extends Command
         // ── Step 1: Check Flask server ──
         $flaskAvailable = $this->checkFlaskServer();
 
-        if (!$flaskAvailable) {
+        if (! $flaskAvailable) {
             $this->error('Flask server is not available. Fast prediction requires AI server online.');
+
             return Command::FAILURE;
         }
 
         // ── Step 3: Predict for each product ──
-        $this->info("📦 Step 2: Predicting for all products...");
+        $this->info('📦 Step 2: Predicting for all products...');
 
         $query = Produk::query();
 
-        if (!$force) {
+        if (! $force) {
             $query->where(function ($q) {
                 $q->whereNull('last_forecast_at')
                     ->orWhere('last_forecast_at', '<', now()->subDays(7));
@@ -60,6 +64,7 @@ class ForecastAllProducts extends Command
 
         if ($totalProducts === 0) {
             $this->info('✅ All products have recent forecasts. Use --force to recalculate.');
+
             return Command::SUCCESS;
         }
 
@@ -101,7 +106,7 @@ class ForecastAllProducts extends Command
                         ->where('is_active', true)
                         ->first();
 
-                    if (!$activeModel) {
+                    if (! $activeModel) {
                         $details[] = [
                             'id_roster' => $product->IdRoster,
                             'nama_produk' => $product->NamaProduk,
@@ -113,6 +118,7 @@ class ForecastAllProducts extends Command
                         $skippedCount++;
                         $skippedNoVersionCount++;
                         $progressBar->advance();
+
                         continue;
                     }
 
@@ -142,6 +148,7 @@ class ForecastAllProducts extends Command
                         $failCount++;
                         $failedProducts[] = $product->IdRoster;
                         $progressBar->advance();
+
                         continue;
                     }
 
@@ -169,6 +176,7 @@ class ForecastAllProducts extends Command
                         $failCount++;
                         $failedProducts[] = $product->IdRoster;
                         $progressBar->advance();
+
                         continue;
                     }
 
@@ -211,7 +219,7 @@ class ForecastAllProducts extends Command
                     $successCount++;
                 } catch (\Exception $e) {
                     Log::error("Forecast failed for product {$product->IdRoster}", [
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ]);
                     $details[] = [
                         'id_roster' => $product->IdRoster,
@@ -235,7 +243,7 @@ class ForecastAllProducts extends Command
         $this->newLine(2);
 
         $duration = $startTime->diffInSeconds(now());
-        $this->info("✅ Forecast complete!");
+        $this->info('✅ Forecast complete!');
         $this->table(
             ['Metric', 'Value'],
             [
@@ -244,11 +252,11 @@ class ForecastAllProducts extends Command
                 ['Skipped (no data)', $skippedCount],
                 ['Skipped (no active version)', $skippedNoVersionCount],
                 ['Duration', "{$duration}s"],
-                ['Model Used', strtoupper($model)]
+                ['Model Used', strtoupper($model)],
             ]
         );
 
-        $this->line('SUMMARY: ' . json_encode([
+        $this->line('SUMMARY: '.json_encode([
             'success' => $successCount,
             'failed' => $failCount,
             'skipped' => $skippedCount,
@@ -265,6 +273,7 @@ class ForecastAllProducts extends Command
         ], JSON_UNESCAPED_UNICODE));
 
         $this->showStatusBreakdown();
+
         return Command::SUCCESS;
     }
 
@@ -274,7 +283,8 @@ class ForecastAllProducts extends Command
     private function checkFlaskServer(): bool
     {
         try {
-            $response = Http::timeout(5)->get(self::FLASK_BASE_URL . '/health');
+            $response = Http::timeout(5)->get(self::FLASK_BASE_URL.'/health');
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -289,7 +299,7 @@ class ForecastAllProducts extends Command
         $query = DB::table('detail_transaksi')
             ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
             ->select(
-                DB::raw($this->monthExpression() . ' as bulan'),
+                DB::raw($this->monthExpression().' as bulan'),
                 DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
             )
             ->where('detail_transaksi.IdRoster', $idRoster)
@@ -304,7 +314,7 @@ class ForecastAllProducts extends Command
 
         return [
             'bulan' => $salesData->pluck('bulan'),
-            'terjual' => $salesData->pluck('terjual')
+            'terjual' => $salesData->pluck('terjual'),
         ];
     }
 
@@ -344,16 +354,17 @@ class ForecastAllProducts extends Command
 
             $response = Http::timeout(self::TIMEOUT_SECONDS)
                 ->asJson()
-                ->post(self::FLASK_BASE_URL . $endpoint, $payload);
+                ->post(self::FLASK_BASE_URL.$endpoint, $payload);
 
             if ($response->successful()) {
                 $result = $response->json();
 
-                if (!is_array($result)) {
+                if (! is_array($result)) {
                     Log::warning('Flask predict returned non-array payload', [
                         'id_roster' => $idRoster,
                         'framework' => $model,
                     ]);
+
                     return null;
                 }
 
@@ -365,6 +376,7 @@ class ForecastAllProducts extends Command
                         'framework' => $model,
                         'payload' => $result,
                     ]);
+
                     return null;
                 }
 
@@ -403,6 +415,7 @@ class ForecastAllProducts extends Command
                 'framework' => $model,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -421,6 +434,7 @@ class ForecastAllProducts extends Command
         if ($currentStock > (($forecast + $safetyStock) * 3)) {
             return 'overstock';
         }
+
         return 'safe';
     }
 
@@ -448,8 +462,8 @@ class ForecastAllProducts extends Command
             };
 
             $tableData[] = [
-                $emoji . ' ' . ucfirst($item->forecast_status),
-                $item->count
+                $emoji.' '.ucfirst($item->forecast_status),
+                $item->count,
             ];
         }
 

@@ -8,8 +8,11 @@ use Illuminate\Support\Facades\Schema;
 class DetailTransaksi extends Model
 {
     protected $table = 'detail_transaksi';
+
     protected $primaryKey = null;
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -17,6 +20,7 @@ class DetailTransaksi extends Model
         'IdRoster',
         'produk_id',
         'id_ukuran',
+        'harga_satuan',
         'QtyProduk',
         'data_type',
         'SubTotal',
@@ -31,7 +35,7 @@ class DetailTransaksi extends Model
     {
         $foreignKey = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'IdRoster';
 
-        return $this->belongsTo(Produk::class, $foreignKey, (new Produk())->getKeyName());
+        return $this->belongsTo(Produk::class, $foreignKey, (new Produk)->getKeyName());
     }
 
     public function size()

@@ -6,39 +6,53 @@ use App\Http\Controllers\Controller;
 use App\Models\Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AddressController extends Controller
 {
-    public function index()
+    public function __construct()
     {
-        $addresses = Auth::user()->addresses;
+        $this->middleware('auth');
+    }
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $addresses = $user->addresses;
+
         return view('toko.details', compact('addresses'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'label' => 'required|string|max:255',
             'recipient_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
             'city' => 'required|string|max:255',
             'postal_code' => 'required|string|max:10',
             'full_address' => 'required|string',
-            'is_default' => 'boolean'
+            'is_default' => 'boolean',
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        abort_unless($user, 401);
+
         // If this is set as default, unset any existing default
-        if ($request->is_default) {
-            Auth::user()->addresses()->update(['is_default' => false]);
+        if (! empty($validated['is_default'])) {
+            $user->addresses()->update(['is_default' => false]);
         }
 
-        $address = Auth::user()->addresses()->create($request->all());
+        $address = $user->addresses()->create($validated);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Address saved successfully',
-                'address' => $address
+                'address' => $address,
             ]);
         }
 
@@ -52,16 +66,20 @@ class AddressController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // Unset any existing default
-        Auth::user()->addresses()->update(['is_default' => false]);
+        $user->addresses()->update(['is_default' => false]);
 
         // Set this address as default
         $address->update(['is_default' => true]);
 
         session(['selected_address_id' => $address->id]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Default address updated'
+            'message' => 'Default address updated',
         ]);
     }
 
@@ -76,13 +94,17 @@ class AddressController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Address deleted successfully'
+            'message' => 'Address deleted successfully',
         ]);
     }
 
     public function update(Request $request, Address $address)
     {
-        $request->validate([
+        if ($address->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
             'label' => 'required',
             'recipient_name' => 'required',
             'phone_number' => 'required',
@@ -90,14 +112,25 @@ class AddressController extends Controller
             'postal_code' => 'required',
             'full_address' => 'required',
         ]);
-        $address->update($request->all());
+        $address->update($validated);
+
         return response()->json(['success' => true]);
     }
 
     public function setSelectedAddress(Request $request)
     {
-        $request->validate(['address_id' => 'required|integer|exists:addresses,id']);
-        session(['selected_address_id' => $request->address_id]);
+        $request->validate([
+            'address_id' => [
+                'required',
+                'integer',
+                Rule::exists('addresses', 'id')->where(fn ($query) => $query->where('user_id', Auth::id())),
+            ],
+        ]);
+
+        $address = Address::findOrFail($request->address_id);
+
+        session(['selected_address_id' => $address->id]);
+
         return response()->json(['success' => true]);
     }
-} 
+}

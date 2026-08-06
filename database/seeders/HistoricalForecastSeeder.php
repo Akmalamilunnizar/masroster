@@ -23,14 +23,14 @@ class HistoricalForecastSeeder extends Seeder
         mt_srand(20260403); // deterministic but realistic randomness
 
         $hasCustomUkuran = Schema::hasColumn('detail_transaksi', 'CustomUkuran');
-        $hasDesignFile   = Schema::hasColumn('detail_transaksi', 'design_file');
+        $hasDesignFile = Schema::hasColumn('detail_transaksi', 'design_file');
 
         $transaksiRows = [];
         $detailRows = [];
 
         $seq = 1;
         $start = Carbon::create(2024, 1, 1)->startOfMonth();
-        $end   = Carbon::create(2026, 3, 31)->endOfMonth();
+        $end = Carbon::create(2026, 3, 31)->endOfMonth();
 
         for ($month = $start->copy(); $month->lte($end); $month->addMonth()) {
             $targetTx = $this->monthlyTransactionTarget($month);
@@ -43,7 +43,7 @@ class HistoricalForecastSeeder extends Seeder
                     ->second(mt_rand(0, 59));
 
                 // detail_transaksi.IdTransaksi is varchar(8), so keep IDs fixed to 8 chars.
-                $idTransaksi = 'TR' . str_pad((string)$seq, 6, '0', STR_PAD_LEFT);
+                $idTransaksi = 'TR'.str_pad((string) $seq, 6, '0', STR_PAD_LEFT);
                 $seq++;
 
                 $details = $this->buildTransactionDetails($month);
@@ -52,33 +52,33 @@ class HistoricalForecastSeeder extends Seeder
                 $grandTotal = $subtotalTotal + self::ONGKIR;
 
                 $transaksiRows[] = [
-                    'IdTransaksi'      => $idTransaksi,
-                    'id_admin'         => 1,
-                    'id_customer'      => 4,
-                    'address_id'       => 2,
-                    'Bayar'            => $grandTotal,
-                    'GrandTotal'       => $grandTotal,
-                    'tglTransaksi'     => $tgl->format('Y-m-d H:i:s'),
+                    'IdTransaksi' => $idTransaksi,
+                    'id_admin' => 1,
+                    'id_customer' => 4,
+                    'address_id' => 2,
+                    'Bayar' => $grandTotal,
+                    'GrandTotal' => $grandTotal,
+                    'tglTransaksi' => $tgl->format('Y-m-d H:i:s'),
                     'StatusPembayaran' => 'Lunas',
-                    'StatusPesanan'    => 'Diterima',
-                    'tglUpdate'        => $tgl->format('Y-m-d H:i:s'),
-                    'shipping_method'  => 'Online',
-                    'delivery_method'  => 'Delivery',
-                    'shipping_type'    => 'Ongkir',
-                    'ongkir'           => self::ONGKIR,
-                    'notes'            => null,
-                    'created_at'       => $tgl->format('Y-m-d H:i:s'),
-                    'updated_at'       => $tgl->format('Y-m-d H:i:s'),
+                    'StatusPesanan' => 'Diterima',
+                    'tglUpdate' => $tgl->format('Y-m-d H:i:s'),
+                    'shipping_method' => 'Online',
+                    'delivery_method' => 'Delivery',
+                    'shipping_type' => 'Ongkir',
+                    'ongkir' => self::ONGKIR,
+                    'notes' => null,
+                    'created_at' => $tgl->format('Y-m-d H:i:s'),
+                    'updated_at' => $tgl->format('Y-m-d H:i:s'),
                 ];
 
                 foreach ($details as $d) {
                     $row = [
                         'IdTransaksi' => $idTransaksi,
-                        'IdRoster'    => $d['IdRoster'],
-                        'id_ukuran'   => $d['id_ukuran'],
-                        'QtyProduk'   => $d['QtyProduk'],
-                        'SubTotal'    => $d['SubTotal'],
-                        'data_type'   => $d['data_type'],
+                        'IdRoster' => $d['IdRoster'],
+                        'id_ukuran' => $d['id_ukuran'],
+                        'QtyProduk' => $d['QtyProduk'],
+                        'SubTotal' => $d['SubTotal'],
+                        'data_type' => $d['data_type'],
                     ];
 
                     if ($hasCustomUkuran) {
@@ -108,7 +108,7 @@ class HistoricalForecastSeeder extends Seeder
         $base = 6;
 
         // Seasonality kemarau (Juli-Agustus): demand naik
-        if (in_array((int)$month->month, [7, 8], true)) {
+        if (in_array((int) $month->month, [7, 8], true)) {
             $base += 3;
         }
 
@@ -162,11 +162,12 @@ class HistoricalForecastSeeder extends Seeder
 
     private function isSeasonPeak(Carbon $month): bool
     {
-        if (in_array((int)$month->month, [7, 8], true)) {
+        if (in_array((int) $month->month, [7, 8], true)) {
             return true;
         }
 
         $ym = $month->format('Y-m');
+
         return in_array($ym, [
             '2024-03', '2024-04',
             '2025-02', '2025-03', '2025-04',
@@ -180,10 +181,10 @@ class HistoricalForecastSeeder extends Seeder
         $subTotal = $qty * $p['harga'];
 
         return [
-            'IdRoster'  => $idRoster,
+            'IdRoster' => $idRoster,
             'id_ukuran' => $p['id_ukuran'],
             'QtyProduk' => $qty,
-            'SubTotal'  => $subTotal,
+            'SubTotal' => $subTotal,
             'data_type' => $dataType,
         ];
     }

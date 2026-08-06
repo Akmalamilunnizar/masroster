@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Items;
 use App\Models\Produk;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
-
     public function Index()
     {
         // Get all items
@@ -106,7 +105,7 @@ class DashboardController extends Controller
 
             $revenueByMonth->push([
                 'ym' => $month,
-                'total' => (int) $revenue
+                'total' => (int) $revenue,
             ]);
         }
 
@@ -121,15 +120,15 @@ class DashboardController extends Controller
         // If no sales data, show sample data for demonstration
         if ($topSelling->isEmpty()) {
             $topSelling = collect([
-                (object)['IdRoster' => 'MAS001', 'total_qty' => 0],
-                (object)['IdRoster' => 'Sample1', 'total_qty' => 0],
-                (object)['IdRoster' => 'Sample2', 'total_qty' => 0],
-                (object)['IdRoster' => 'Sample3', 'total_qty' => 0],
-                (object)['IdRoster' => 'Sample4', 'total_qty' => 0],
+                (object) ['IdRoster' => 'MAS001', 'total_qty' => 0],
+                (object) ['IdRoster' => 'Sample1', 'total_qty' => 0],
+                (object) ['IdRoster' => 'Sample2', 'total_qty' => 0],
+                (object) ['IdRoster' => 'Sample3', 'total_qty' => 0],
+                (object) ['IdRoster' => 'Sample4', 'total_qty' => 0],
             ]);
         }
 
-        return view("admin.dashboard", compact(
+        return view('admin.dashboard', compact(
             'roster',
             'itemsByType',
             'lowStockItems',
@@ -192,6 +191,7 @@ class DashboardController extends Controller
             '11' => 'November',
             '12' => 'Desember',
         ];
+
         return $bulanArray[$bulanAngka + 0];
     }
 }

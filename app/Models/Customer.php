@@ -10,7 +10,9 @@ class Customer extends Model
     use HasFactory;
 
     protected $table = 'users';
+
     protected $primaryKey = 'id';  // <- PENTING: Ini harus sesuai nama kolom PK di DB
+
     // public $incrementing = false;         // Jika IdSatuan bukan auto increment
     // protected $keyType = 'string';        // Jika IdSatuan bertipe VARCHAR
     public $timestamps = false;

@@ -11,9 +11,11 @@ class DetailHarga extends Model
     use HasFactory;
 
     protected $table = 'detail_harga';
+
     // Use id_roster as primary key for Laravel compatibility
     // The composite key (id_roster, id_user, id_ukuran) uniqueness is handled manually in the controller
     protected $primaryKey = 'id_roster';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -21,7 +23,7 @@ class DetailHarga extends Model
         'produk_id',
         'id_user',
         'id_ukuran',
-        'harga'
+        'harga',
     ];
 
     public $timestamps = false;
@@ -31,7 +33,7 @@ class DetailHarga extends Model
     {
         $foreignKey = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'id_roster';
 
-        return $this->belongsTo(Produk::class, $foreignKey, (new Produk())->getKeyName());
+        return $this->belongsTo(Produk::class, $foreignKey, (new Produk)->getKeyName());
     }
 
     public function user()

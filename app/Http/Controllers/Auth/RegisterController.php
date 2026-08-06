@@ -43,7 +43,6 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
@@ -52,6 +51,8 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'nomor_telepon' => ['required', 'string', 'min:11', 'unique:users'],
+            'tipe_user' => ['sometimes', 'required', 'in:end_customer,retailer'],
+            'foto_toko' => ['required_if:tipe_user,retailer', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -59,11 +60,18 @@ class RegisterController extends Controller
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
      * @return \App\Models\User
      */
     protected function create(array $data)
     {
+        $tipeUser = $data['tipe_user'] ?? 'end_customer';
+        $statusVerifikasi = $tipeUser === 'retailer' ? 'pending' : 'approved';
+        $fotoTokoPath = null;
+
+        if (! empty($data['foto_toko']) && is_object($data['foto_toko']) && method_exists($data['foto_toko'], 'store')) {
+            $fotoTokoPath = $data['foto_toko']->store('foto-toko', 'public');
+        }
+
         // Generate username from name (remove spaces, lowercase)
         $baseUsername = strtolower(str_replace(' ', '', $data['name']));
         $username = $baseUsername;
@@ -71,19 +79,23 @@ class RegisterController extends Controller
         // Ensure username is unique by appending number if needed
         $counter = 1;
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
+            $username = $baseUsername.$counter;
             $counter++;
         }
 
-        $user = User::create([
+        $user = new User([
             'f_name' => $data['name'],
             'email' => $data['email'],
             'nomor_telepon' => $data['nomor_telepon'],
             'username' => $username,
             'password' => Hash::make($data['password']),
             'user' => 'User', // Set default role
-            'img' => 'default-avatar.png'
+            'img' => 'default-avatar.png',
+            'foto_toko' => $fotoTokoPath,
         ]);
+        $user->tipe_user = $tipeUser;
+        $user->status_verifikasi = $statusVerifikasi;
+        $user->save();
 
         // Assign role using Laratrust
         $user->addRole('user');

@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\Transaksi;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class CustomerController extends Controller
 {
@@ -18,7 +16,8 @@ class CustomerController extends Controller
     public function Index()
     {
         $customer = User::with('defaultAddress')->get();
-        return view("admin.allcustomer", compact('customer'));
+
+        return view('admin.allcustomer', compact('customer'));
     }
 
     public function customerDetails($id)
@@ -42,8 +41,10 @@ class CustomerController extends Controller
         $customer = User::find($id);
         if ($customer) {
             $customer->delete();
+
             return redirect()->back()->with('message', 'Customer berhasil dihapus!');
         }
+
         return redirect()->back()->with('error', 'Customer tidak ditemukan!');
     }
 
@@ -51,7 +52,7 @@ class CustomerController extends Controller
     {
         $customer = User::findOrFail($id);
         $addresses = $customer->addresses;
-        
+
         return response()->json($addresses);
     }
 }

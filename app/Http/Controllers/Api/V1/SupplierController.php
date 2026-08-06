@@ -3,28 +3,33 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Supplier;
 use App\Models\DetailMasuk;
+use App\Models\Supplier;
 use App\Models\TypeItems;
+use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
     public function index()
     {
         $suppliers = Supplier::suppliers()->get();
+
         return view('admin.allsupplier', compact('suppliers'));
     }
 
     public function searchSupplier(Request $request)
     {
-        $search = $request->search;
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
 
         $suppliers = Supplier::suppliers()->where(function ($query) use ($search) {
             $query->where('id', 'like', "%$search%")
-                  ->orWhere('f_name', 'like', "%$search%")
-                  ->orWhere('nomor_telepon', 'like', "%$search%")
-                  ->orWhere('alamat', 'like', "%$search%");
+                ->orWhere('f_name', 'like', "%$search%")
+                ->orWhere('nomor_telepon', 'like', "%$search%")
+                ->orWhere('alamat', 'like', "%$search%");
         })->get();
 
         return view('admin.allsupplier', compact('suppliers', 'search'));
@@ -33,16 +38,16 @@ class SupplierController extends Controller
     public function addSupplier()
     {
         $lastMasuk = DetailMasuk::orderBy('IdMasuk', 'desc')->first();
-        $newIdMasuk = $lastMasuk ? 'BM' . str_pad((int) substr($lastMasuk->IdMasuk, 2) + 1, 4, '0', STR_PAD_LEFT) : 'BM0001';
+        $newIdMasuk = $lastMasuk ? 'BM'.str_pad((int) substr($lastMasuk->IdMasuk, 2) + 1, 4, '0', STR_PAD_LEFT) : 'BM0001';
 
         // Ambil ID terakhir dari tabel users dengan role "User"
         $lastSupplier = Supplier::suppliers()->orderBy('id', 'desc')->first();
-        $newIdSupplier = $lastSupplier ? 'SP' . str_pad($lastSupplier->id + 1, 4, '0', STR_PAD_LEFT) : 'SP0001';
+        $newIdSupplier = $lastSupplier ? 'SP'.str_pad($lastSupplier->id + 1, 4, '0', STR_PAD_LEFT) : 'SP0001';
 
         $suppliers = Supplier::suppliers()->get();
         $typeid = TypeItems::all();
 
-        return view("admin.additems", compact('typeid', 'newIdSupplier', 'newIdMasuk', 'typeid', 'suppliers'));
+        return view('admin.additems', compact('typeid', 'newIdSupplier', 'newIdMasuk', 'typeid', 'suppliers'));
     }
 
     public function storeSupplier(Request $request)
@@ -60,11 +65,11 @@ class SupplierController extends Controller
             'id' => $numericId,
             'f_name' => $request->NamaSupplier,
             'nomor_telepon' => $request->NoTelp,
-            'email' => $request->NamaSupplier . '@supplier.com', // Generate email
+            'email' => $request->NamaSupplier.'@supplier.com', // Generate email
             'username' => strtolower(str_replace(' ', '', $request->NamaSupplier)), // Generate username
             'password' => bcrypt('password123'), // Default password
             'user' => 'User', // Set role as User
-            'img' => 'default-avatar.png'
+            'img' => 'default-avatar.png',
         ]);
 
         return redirect()->route('allsuppliers')->with('message', 'Supplier berhasil ditambahkan!');
@@ -75,6 +80,7 @@ class SupplierController extends Controller
         // Extract numeric ID from IdSupplier
         $numericId = (int) substr($IdSupplier, 2);
         $supplier = Supplier::suppliers()->findOrFail($numericId);
+
         return view('admin.editsupplier', compact('supplier'));
     }
 
@@ -102,12 +108,14 @@ class SupplierController extends Controller
         // Extract numeric ID from IdSupplier
         $numericId = (int) substr($IdSupplier, 2);
         Supplier::suppliers()->findOrFail($numericId)->delete();
+
         return redirect()->route('allsuppliers')->with('message', 'Supplier berhasil dihapus!');
     }
 
     public function get_supplier_list()
     {
         $supplier = Supplier::suppliers()->get();
+
         return response()->json($supplier, 200);
     }
 
@@ -115,11 +123,12 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::suppliers()->find($id);
 
-        if (!$supplier) {
+        if (! $supplier) {
             return redirect()->back()->with('error', 'Supplier tidak ditemukan.');
         }
 
         $supplier->delete();
+
         return redirect()->back()->with('message', 'Supplier berhasil dihapus.');
     }
 }

@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -21,7 +20,7 @@ return new class extends Migration
         Schema::table('produk', function (Blueprint $table) {
             // Fix id_jenis to reference jenisbarang.IdJenisBarang
             $table->foreign('id_jenis')->references('IdJenisBarang')->on('jenisbarang');
-            
+
             // Add foreign key for id_tipe to reference tipe_roster.IdTipe
             $table->foreign('id_tipe')->references('IdTipe')->on('tipe_roster');
         });

@@ -32,7 +32,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post('/admin/all-transaksi/' . $acceptTransaction->IdTransaksi . '/terima')
+            ->post('/admin/all-transaksi/'.$acceptTransaction->IdTransaksi.'/terima')
             ->assertRedirect(route('alltransaksi'));
 
         $this->assertDatabaseHas('transaksi', [
@@ -41,7 +41,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post('/admin/all-transaksi/' . $rejectTransaction->IdTransaksi . '/tolak')
+            ->post('/admin/all-transaksi/'.$rejectTransaction->IdTransaksi.'/tolak')
             ->assertRedirect(route('alltransaksi'));
 
         $this->assertDatabaseHas('transaksi', [
@@ -63,7 +63,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($customer)
-            ->post('/admin/all-transaksi/' . $transaction->IdTransaksi . '/terima')
+            ->post('/admin/all-transaksi/'.$transaction->IdTransaksi.'/terima')
             ->assertForbidden();
 
         $this->assertDatabaseHas('transaksi', [
@@ -112,7 +112,7 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post('/admin/all-transaksi/' . $transaction->IdTransaksi . '/update-invoice', [
+            ->post('/admin/all-transaksi/'.$transaction->IdTransaksi.'/update-invoice', [
                 'invoice_number' => 'INV-2026-0001',
             ])
             ->assertRedirect();
@@ -123,8 +123,111 @@ class TransactionManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->get('/admin/print-invoice/' . $transaction->IdTransaksi)
+            ->get('/admin/print-invoice/'.$transaction->IdTransaksi)
             ->assertOk()
             ->assertSee($transaction->IdTransaksi);
+    }
+
+    public function test_admin_can_store_manual_transaction_with_extra_payload_ignored(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'trx-store-admin@example.test',
+        ]);
+
+        $customer = $this->createCustomerUser([
+            'email' => 'trx-store-customer@example.test',
+        ]);
+
+        $address = $this->createMasrosterAddress($customer, [
+            'is_default' => true,
+        ]);
+
+        $product = $this->createMasrosterProduct([
+            'IdRoster' => 'TXS001',
+            'NamaProduk' => 'Roster Store Test',
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/transaksi', [
+                'IdTransaksi' => 'TX200010',
+                'id_customer' => $customer->id,
+                'address_id' => $address->id,
+                'Bayar' => '141.000',
+                'GrandTotal' => '141.000',
+                'StatusPembayaran' => 'Transfer',
+                'StatusPesanan' => 'MENUNGGU KONFIRMASI',
+                'shipping_method' => 'Online',
+                'delivery_method' => 'Delivery',
+                'shipping_type' => 'Ongkir',
+                'ongkir' => '15.000',
+                'notes' => 'Manual test order',
+                'workflow_status' => 'Paid',
+                'id_admin' => 999,
+                'products' => [
+                    [
+                        'product_id' => $product->IdRoster,
+                        'size_id' => 1,
+                        'qty' => 2,
+                        'price' => 63000,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('alltransaksi'));
+
+        $this->assertDatabaseHas('transaksi', [
+            'IdTransaksi' => 'TX200010',
+            'id_admin' => 1,
+            'id_customer' => $customer->id,
+            'GrandTotal' => 141000,
+            'Bayar' => 141000,
+            'workflow_status' => 'Draft',
+            'StatusPesanan' => 'MENUNGGU KONFIRMASI',
+        ]);
+
+        $this->assertDatabaseHas('detail_transaksi', [
+            'IdTransaksi' => 'TX200010',
+            'IdRoster' => $product->IdRoster,
+            'id_ukuran' => 1,
+            'QtyProduk' => 2,
+            'SubTotal' => 126000,
+            'data_type' => 'Eceran',
+        ]);
+    }
+
+    public function test_admin_transaction_search_trims_whitespace(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'trx-search-admin@example.test',
+        ]);
+
+        $customer = $this->createCustomerUser([
+            'email' => 'trx-search-customer@example.test',
+            'f_name' => 'Whitespace Target',
+        ]);
+
+        $transaction = $this->createMasrosterTransaction([
+            'IdTransaksi' => 'TX200020',
+            'id_admin' => $admin->id,
+            'id_customer' => $customer->id,
+            'StatusPesanan' => 'Menunggu Konfirmasi',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/all-transaksi?search=%20%20TX200020%20%20&status_pesanan=%20Menunggu%20Konfirmasi%20');
+
+        $response->assertOk();
+        $response->assertViewHas('search', 'TX200020');
+        $response->assertViewHas('status_pesanan', 'Menunggu Konfirmasi');
+        $response->assertSee($transaction->IdTransaksi);
+    }
+
+    public function test_admin_transaction_index_rejects_invalid_month_filter(): void
+    {
+        $admin = $this->createAdminUser([
+            'email' => 'trx-invalid-month-admin@example.test',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/all-transaksi?bulan=13&tahun=2026');
+
+        $response->assertSessionHasErrors(['bulan']);
     }
 }

@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\User; // Keep if you use User model directly for other methods
 use App\Models\Transaksi;
-use Illuminate\Support\Facades\Validator; // Keep if you use validation in other methods
-use Illuminate\Support\Facades\DB; // Keep if you use raw DB queries in other methods
-use Illuminate\Support\Facades\Log; // For debugging
-use Illuminate\Support\Facades\Schema;
+use App\Models\User; // Keep if you use User model directly for other methods
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon; // Keep if you use Carbon for date manipulations
+// Keep if you use validation in other methods
+use Carbon\Carbon; // Keep if you use raw DB queries in other methods
+use Illuminate\Http\Request; // For debugging
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema; // Keep if you use Carbon for date manipulations
+
 // Excel export will use HTML table streamed as .xls to avoid external type deps
 
 class TransaksiController extends Controller
@@ -22,15 +23,24 @@ class TransaksiController extends Controller
      * Menampilkan daftar transaksi dengan fitur filter bulan/tahun dan pencarian.
      * Menggunakan eager loading untuk relasi 'detail'.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
     {
-        $bulan = $request->query('bulan');
-        $tahun = $request->query('tahun');
-        $search = $request->input('search');
-        $status_pesanan = $request->input('status_pesanan'); // Add status_pesanan filter
+        $validated = $request->validate([
+            'bulan' => 'nullable|integer|between:1,12',
+            'tahun' => 'nullable|integer|min:2000|max:2100',
+            'search' => 'nullable|string|max:255',
+            'status_pesanan' => 'nullable|string|max:50',
+        ]);
+
+        $bulan = $validated['bulan'] ?? null;
+        $tahun = $validated['tahun'] ?? null;
+        $search = trim((string) ($validated['search'] ?? ''));
+        $status_pesanan = trim((string) ($validated['status_pesanan'] ?? ''));
+
+        $search = $search !== '' ? $search : null;
+        $status_pesanan = $status_pesanan !== '' ? $status_pesanan : null;
 
         // Mulai query Transaksi dengan eager loading 'detail' dan 'customer'
         $query = Transaksi::with(['detail', 'customer']);
@@ -51,7 +61,7 @@ class TransaksiController extends Controller
         }
 
         // Filter jika ada pencarian
-        if ($search) {
+        if ($search !== null) {
             $query->where(function ($q) use ($search) {
                 $q->where('IdTransaksi', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($qCustomer) use ($search) {
@@ -71,14 +81,14 @@ class TransaksiController extends Controller
      * Metode untuk menerima orderan transaksi.
      * Menggunakan POST request.
      *
-     * @param string $id ID dari transaksi yang akan diterima.
+     * @param  string  $id  ID dari transaksi yang akan diterima.
      * @return \Illuminate\Http\RedirectResponse
      */
     public function terimaOrderan($id)
     {
         $transaksi = Transaksi::find($id);
 
-        if (!$transaksi) {
+        if (! $transaksi) {
             return redirect()->route('alltransaksi')->with('error', 'Transaksi tidak ditemukan.');
         }
 
@@ -93,14 +103,14 @@ class TransaksiController extends Controller
      * Metode untuk menolak orderan transaksi.
      * Menggunakan POST request.
      *
-     * @param string $id ID dari transaksi yang akan ditolak.
+     * @param  string  $id  ID dari transaksi yang akan ditolak.
      * @return \Illuminate\Http\RedirectResponse
      */
     public function tolakOrderan($id)
     {
         $transaksi = Transaksi::find($id);
 
-        if (!$transaksi) {
+        if (! $transaksi) {
             return redirect()->route('alltransaksi')->with('error', 'Transaksi tidak ditemukan.');
         }
 
@@ -114,7 +124,6 @@ class TransaksiController extends Controller
     /**
      * Mengekspor data transaksi ke PDF dengan filter bulan/tahun.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function exportPdf(Request $request)
@@ -139,6 +148,7 @@ class TransaksiController extends Controller
 
         return $pdf->stream('laporan-transaksi.pdf');
     }
+
     public function exportExcel(Request $request)
     {
         $bulan = $request->query('bulan');
@@ -177,11 +187,11 @@ class TransaksiController extends Controller
         $totalPendapatan = (int) $transaksis->sum('GrandTotal');
         $labaBersih = $totalPendapatan - $biayaOperasional - $retur;
 
-        $filename = 'laporan-transaksi-' . now()->format('Ymd_His') . '.xls';
+        $filename = 'laporan-transaksi-'.now()->format('Ymd_His').'.xls';
 
         $headers = [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $html = view('admin.transaksi_excel', compact(
@@ -209,7 +219,7 @@ class TransaksiController extends Controller
         $filename = 'dataset_lstm.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($transactions) {
@@ -225,7 +235,7 @@ class TransaksiController extends Controller
                         $detail->produk ? $detail->produk->jenisRoster->JenisBarang ?? 'N/A' : 'N/A',
                         $detail->QtyProduk ?? 0,
                         $this->getStokAwal($detail->IdRoster ?? null),
-                        $this->getStokAkhir($detail->IdRoster ?? null)
+                        $this->getStokAkhir($detail->IdRoster ?? null),
                     ];
                     fputcsv($file, $row);
                 }
@@ -249,7 +259,7 @@ class TransaksiController extends Controller
         $filename = 'dataset_prophet.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($transactions) {
@@ -265,7 +275,7 @@ class TransaksiController extends Controller
                         $detail->QtyProduk ?? 0, // y field (jumlah_terjual)
                         $this->isHariLibur(\Carbon\Carbon::parse($transaksi->tglTransaksi)) ? 1 : 0,
                         $this->hasPromo($transaksi) ? 1 : 0,
-                        $detail->produk ? $detail->produk->jenisRoster->JenisBarang ?? 'N/A' : 'N/A'
+                        $detail->produk ? $detail->produk->jenisRoster->JenisBarang ?? 'N/A' : 'N/A',
                     ];
                     fputcsv($file, $row);
                 }
@@ -279,30 +289,61 @@ class TransaksiController extends Controller
 
     private function getStokAwal($productId)
     {
-        // TODO: Implement stock calculation logic
-        // For now, return a default value
-        return 100;
+        if (! $productId) {
+            return 0;
+        }
+
+        $product = DB::table('produk')
+            ->where('IdRoster', $productId)
+            ->orWhere('sku', $productId)
+            ->first(['stock']);
+
+        if (! $product) {
+            return 0;
+        }
+
+        $currentStock = (int) ($product->stock ?? 0);
+        $soldQuantity = (int) DB::table('detail_transaksi')
+            ->where('IdRoster', $productId)
+            ->sum('QtyProduk');
+
+        return max(0, $currentStock + $soldQuantity);
     }
 
     private function getStokAkhir($productId)
     {
-        // TODO: Implement stock calculation logic
-        // For now, return a default value
-        return 80;
+        if (! $productId) {
+            return 0;
+        }
+
+        $product = DB::table('produk')
+            ->where('IdRoster', $productId)
+            ->orWhere('sku', $productId)
+            ->first(['stock']);
+
+        return (int) ($product->stock ?? 0);
     }
 
     private function isHariLibur($date)
     {
-        // TODO: Implement holiday detection logic
-        // For now, check if it's weekend
         return $date->isWeekend();
     }
 
     private function hasPromo($transaksi)
     {
-        // TODO: Implement promo detection logic
-        // For now, return false
-        return 0;
+        $totalItem = (int) DB::table('detail_transaksi')
+            ->where('IdTransaksi', $transaksi->IdTransaksi)
+            ->sum('SubTotal');
+        $ongkir = (int) preg_replace('/\D/', '', (string) ($transaksi->ongkir ?? 0));
+        $grandTotal = (int) preg_replace('/\D/', '', (string) ($transaksi->GrandTotal ?? 0));
+
+        if ($grandTotal > 0 && ($totalItem + $ongkir) > 0 && $grandTotal < ($totalItem + $ongkir)) {
+            return true;
+        }
+
+        $notes = strtolower(trim((string) ($transaksi->notes ?? '')));
+
+        return $notes !== '' && preg_match('/promo|diskon|voucher|potong/i', $notes) === 1;
     }
 
     public function showTransaction($id)
@@ -338,14 +379,13 @@ class TransaksiController extends Controller
     /**
      * Update invoice number for a transaction
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param string $id ID of the transaction
+     * @param  string  $id  ID of the transaction
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateInvoice(Request $request, $id)
     {
         $request->validate([
-            'invoice_number' => 'required|string|max:50'
+            'invoice_number' => 'required|string|max:50',
         ]);
 
         $transaksi = Transaksi::findOrFail($id);
@@ -368,7 +408,7 @@ class TransaksiController extends Controller
         if ($lastTransaksi) {
             // Extract the numeric part and increment
             $numericPart = (int) substr($lastTransaksi->IdTransaksi, 2) + 1;
-            $newId = 'TX' . str_pad($numericPart, 6, '0', STR_PAD_LEFT);
+            $newId = 'TX'.str_pad($numericPart, 6, '0', STR_PAD_LEFT);
         } else {
             $newId = 'TX000001';
         }
@@ -381,39 +421,34 @@ class TransaksiController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug: Log the incoming request data
-        Log::info('Transaction store request received:', $request->all());
+        $requestData = $request->only([
+            'IdTransaksi',
+            'id_customer',
+            'address_id',
+            'Bayar',
+            'GrandTotal',
+            'StatusPembayaran',
+            'StatusPesanan',
+            'shipping_method',
+            'delivery_method',
+            'shipping_type',
+            'ongkir',
+            'notes',
+            'products',
+        ]);
 
-        // Clean up formatted values before validation
-        $requestData = $request->all();
-
-        // Convert formatted Bayar to raw number
-        if (isset($requestData['Bayar'])) {
-            $requestData['Bayar'] = (int) str_replace(['.', ','], '', $requestData['Bayar']);
+        foreach (['Bayar', 'GrandTotal', 'ongkir'] as $field) {
+            if (isset($requestData[$field])) {
+                $requestData[$field] = (int) str_replace(['.', ','], '', (string) $requestData[$field]);
+            }
         }
 
-        // Convert formatted GrandTotal to raw number
-        if (isset($requestData['GrandTotal'])) {
-            $requestData['GrandTotal'] = (int) str_replace(['.', ','], '', $requestData['GrandTotal']);
-        }
-
-        // Convert formatted ongkir to raw number
-        if (isset($requestData['ongkir'])) {
-            $requestData['ongkir'] = (int) str_replace(['.', ','], '', $requestData['ongkir']);
-        }
-
-        // Update the request with cleaned values
-        $request->merge($requestData);
-
-        Log::info('Cleaned request data:', $request->all());
+        Log::info('Transaction store request received', [
+            'keys' => array_keys($requestData),
+        ]);
 
         try {
-            // Set default shipping method for offline transactions
-            if ($request->shipping_method === 'Offline') {
-                $request->merge(['shipping_method' => 'Offline']);
-            }
-
-            $validated = $request->validate([
+            $validated = validator($requestData, [
                 'IdTransaksi' => 'required|unique:transaksi,IdTransaksi',
                 'id_customer' => 'required|exists:users,id',
                 'address_id' => 'required|exists:addresses,id',
@@ -431,44 +466,41 @@ class TransaksiController extends Controller
                 'products.*.size_id' => 'required|exists:size,id_ukuran',
                 'products.*.qty' => 'required|integer|min:1',
                 'products.*.price' => 'required|numeric|min:0',
-            ]);
+            ])->validate();
 
             Log::info('Validation passed:', $validated);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed:', [
                 'errors' => $e->errors(),
-                'request_data' => $request->all()
+                'request_keys' => array_keys($requestData),
             ]);
             throw $e;
         }
 
         DB::beginTransaction();
         try {
-            // Debug: Log the request data
-            Log::info('Transaction creation request:', $request->all());
-
             // Create transaction
             $transaksi = Transaksi::create([
-                'IdTransaksi' => $request->IdTransaksi,
-                'id_customer' => $request->id_customer,
+                'IdTransaksi' => $validated['IdTransaksi'],
+                'id_customer' => $validated['id_customer'],
                 'id_admin' => 1, // Set default admin ID - adjust as needed
-                'address_id' => $request->address_id,
-                'Bayar' => $request->Bayar,
-                'GrandTotal' => $request->GrandTotal,
+                'address_id' => $validated['address_id'],
+                'Bayar' => $validated['Bayar'],
+                'GrandTotal' => $validated['GrandTotal'],
                 'tglTransaksi' => now(),
-                'StatusPembayaran' => $request->StatusPembayaran,
-                'StatusPesanan' => $request->StatusPesanan,
-                'shipping_method' => $request->shipping_method,
-                'delivery_method' => $request->delivery_method,
-                'shipping_type' => $request->shipping_type,
-                'ongkir' => $request->ongkir,
-                'notes' => $request->notes,
+                'StatusPembayaran' => $validated['StatusPembayaran'],
+                'StatusPesanan' => $validated['StatusPesanan'],
+                'shipping_method' => $validated['shipping_method'],
+                'delivery_method' => $validated['delivery_method'],
+                'shipping_type' => $validated['shipping_type'],
+                'ongkir' => $validated['ongkir'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             Log::info('Transaction created successfully:', $transaksi->toArray());
 
             // Create detail transactions
-            foreach ($request->products as $product) {
+            foreach ($validated['products'] as $product) {
                 Log::info('Creating detail transaction:', $product);
                 $detailPayload = [
                     'IdTransaksi' => $transaksi->IdTransaksi,
@@ -490,7 +522,7 @@ class TransaksiController extends Controller
                     DB::table('detail_harga')->updateOrInsert(
                         [
                             'id_roster' => $product['product_id'],
-                            'id_user' => $request->id_customer,
+                            'id_user' => $validated['id_customer'],
                             'id_ukuran' => $product['size_id'],
                         ],
                         [
@@ -499,7 +531,7 @@ class TransaksiController extends Controller
                     );
                     Log::info('Detail harga upserted', [
                         'id_roster' => $product['product_id'],
-                        'id_user' => $request->id_customer,
+                        'id_user' => $validated['id_customer'],
                         'id_ukuran' => $product['size_id'],
                         'harga' => $hargaSatuan,
                     ]);
@@ -507,21 +539,23 @@ class TransaksiController extends Controller
                     Log::error('Failed to upsert detail_harga', [
                         'error' => $e->getMessage(),
                         'product' => $product,
-                        'id_customer' => $request->id_customer,
+                        'id_customer' => $validated['id_customer'],
                     ]);
                     throw $e;
                 }
             }
 
             DB::commit();
+
             return redirect()->route('alltransaksi')->with('message', 'Transaksi berhasil ditambahkan!');
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Transaction creation failed:', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage())->withInput();
         }
     }
 
@@ -548,12 +582,28 @@ class TransaksiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Set default shipping method for offline transactions
-        if ($request->shipping_method === 'Offline') {
-            $request->merge(['shipping_method' => 'Offline']);
+        $requestData = $request->only([
+            'id_customer',
+            'address_id',
+            'Bayar',
+            'GrandTotal',
+            'StatusPembayaran',
+            'StatusPesanan',
+            'shipping_method',
+            'delivery_method',
+            'shipping_type',
+            'ongkir',
+            'notes',
+            'products',
+        ]);
+
+        foreach (['Bayar', 'GrandTotal', 'ongkir'] as $field) {
+            if (isset($requestData[$field])) {
+                $requestData[$field] = (int) str_replace(['.', ','], '', (string) $requestData[$field]);
+            }
         }
 
-        $request->validate([
+        $validated = validator($requestData, [
             'id_customer' => 'required|exists:users,id',
             'address_id' => 'required|exists:addresses,id',
             'Bayar' => 'required|numeric|min:0',
@@ -570,7 +620,7 @@ class TransaksiController extends Controller
             'products.*.size_id' => 'required|exists:size,id_ukuran',
             'products.*.qty' => 'required|integer|min:1',
             'products.*.price' => 'required|numeric|min:0',
-        ]);
+        ])->validate();
 
         DB::beginTransaction();
         try {
@@ -578,17 +628,17 @@ class TransaksiController extends Controller
 
             // Update transaction
             $transaksi->update([
-                'id_customer' => $request->id_customer,
-                'address_id' => $request->address_id,
-                'Bayar' => $request->Bayar,
-                'GrandTotal' => $request->GrandTotal,
-                'StatusPembayaran' => $request->StatusPembayaran,
-                'StatusPesanan' => $request->StatusPesanan,
-                'shipping_method' => $request->shipping_method,
-                'delivery_method' => $request->delivery_method,
-                'shipping_type' => $request->shipping_type,
-                'ongkir' => $request->ongkir,
-                'notes' => $request->notes,
+                'id_customer' => $validated['id_customer'],
+                'address_id' => $validated['address_id'],
+                'Bayar' => $validated['Bayar'],
+                'GrandTotal' => $validated['GrandTotal'],
+                'StatusPembayaran' => $validated['StatusPembayaran'],
+                'StatusPesanan' => $validated['StatusPesanan'],
+                'shipping_method' => $validated['shipping_method'],
+                'delivery_method' => $validated['delivery_method'],
+                'shipping_type' => $validated['shipping_type'],
+                'ongkir' => $validated['ongkir'],
+                'notes' => $validated['notes'] ?? null,
                 'tglUpdate' => now(),
             ]);
 
@@ -596,7 +646,7 @@ class TransaksiController extends Controller
             \App\Models\DetailTransaksi::where('IdTransaksi', $id)->delete();
 
             // Create new detail transactions
-            foreach ($request->products as $product) {
+            foreach ($validated['products'] as $product) {
                 $detailPayload = [
                     'IdTransaksi' => $transaksi->IdTransaksi,
                     'IdRoster' => $product['product_id'],
@@ -617,7 +667,7 @@ class TransaksiController extends Controller
                     DB::table('detail_harga')->updateOrInsert(
                         [
                             'id_roster' => $product['product_id'],
-                            'id_user' => $request->id_customer,
+                            'id_user' => $validated['id_customer'],
                             'id_ukuran' => $product['size_id'],
                         ],
                         [
@@ -626,7 +676,7 @@ class TransaksiController extends Controller
                     );
                     Log::info('Detail harga upserted (update)', [
                         'id_roster' => $product['product_id'],
-                        'id_user' => $request->id_customer,
+                        'id_user' => $validated['id_customer'],
                         'id_ukuran' => $product['size_id'],
                         'harga' => $hargaSatuan,
                     ]);
@@ -634,17 +684,19 @@ class TransaksiController extends Controller
                     Log::error('Failed to upsert detail_harga on update', [
                         'error' => $e->getMessage(),
                         'product' => $product,
-                        'id_customer' => $request->id_customer,
+                        'id_customer' => $validated['id_customer'],
                     ]);
                     throw $e;
                 }
             }
 
             DB::commit();
+
             return redirect()->route('alltransaksi')->with('message', 'Transaksi berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage())->withInput();
         }
     }
 
@@ -662,10 +714,12 @@ class TransaksiController extends Controller
             Transaksi::findOrFail($id)->delete();
 
             DB::commit();
+
             return redirect()->route('alltransaksi')->with('message', 'Transaksi berhasil dihapus!');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 

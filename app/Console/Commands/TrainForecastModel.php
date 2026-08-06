@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Produk;
 use App\Models\ModelHistory;
+use App\Models\Produk;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -18,33 +18,38 @@ class TrainForecastModel extends Command
     protected $description = 'Train global AI model only, then promote if WMAPE improves';
 
     private const FLASK_BASE_URL = 'http://127.0.0.1:5000';
+
     private const TIMEOUT_SECONDS = 180;
 
     public function handle(): int
     {
         $model = strtolower((string) $this->option('model'));
 
-        if (!in_array($model, ['lstm', 'prophet'], true)) {
+        if (! in_array($model, ['lstm', 'prophet'], true)) {
             $this->error("Invalid model. Use 'lstm' or 'prophet'.");
+
             return Command::FAILURE;
         }
 
-        $this->info('🚀 Starting training-only flow for ' . strtoupper($model));
+        $this->info('🚀 Starting training-only flow for '.strtoupper($model));
 
-        if (!$this->checkFlaskServer()) {
+        if (! $this->checkFlaskServer()) {
             $this->error('Flask server is not reachable.');
+
             return Command::FAILURE;
         }
 
         $trainPayload = $this->buildTrainingPayload();
         if ($trainPayload === null) {
             $this->error('Insufficient data to train model. Need at least 6 months.');
+
             return Command::FAILURE;
         }
 
         $trainResult = $this->callTrainEndpoint($model, $trainPayload);
         if ($trainResult === null) {
             $this->error('Training endpoint returned failure.');
+
             return Command::FAILURE;
         }
 
@@ -114,7 +119,7 @@ class TrainForecastModel extends Command
         ];
 
         $this->info('✅ Training flow finished.');
-        $this->line('SUMMARY: ' . json_encode($summary, JSON_UNESCAPED_UNICODE));
+        $this->line('SUMMARY: '.json_encode($summary, JSON_UNESCAPED_UNICODE));
 
         return Command::SUCCESS;
     }
@@ -122,7 +127,8 @@ class TrainForecastModel extends Command
     private function checkFlaskServer(): bool
     {
         try {
-            $response = Http::timeout(5)->get(self::FLASK_BASE_URL . '/health');
+            $response = Http::timeout(5)->get(self::FLASK_BASE_URL.'/health');
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -134,7 +140,7 @@ class TrainForecastModel extends Command
         $salesData = DB::table('detail_transaksi')
             ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
             ->select(
-                DB::raw($this->monthExpression() . ' as bulan'),
+                DB::raw($this->monthExpression().' as bulan'),
                 DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
             )
             ->where('transaksi.tglTransaksi', '>=', Carbon::now()->subMonths(24))
@@ -159,14 +165,15 @@ class TrainForecastModel extends Command
 
             $response = Http::timeout(self::TIMEOUT_SECONDS)
                 ->asJson()
-                ->post(self::FLASK_BASE_URL . $endpoint, $payload);
+                ->post(self::FLASK_BASE_URL.$endpoint, $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('Train endpoint failed', [
                     'model' => $model,
                     'status' => $response->status(),
                     'error' => $response->json('error') ?? $response->body(),
                 ]);
+
                 return null;
             }
 
@@ -176,6 +183,7 @@ class TrainForecastModel extends Command
 
             if ($modelVersion === '') {
                 Log::warning('Train endpoint response missing model_version', ['payload' => $result]);
+
                 return null;
             }
 
@@ -194,6 +202,7 @@ class TrainForecastModel extends Command
                 'model' => $model,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }

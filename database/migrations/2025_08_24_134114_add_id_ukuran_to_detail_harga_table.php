@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('detail_harga', function (Blueprint $table) {
             // Add id_ukuran column after id_user
             $table->integer('id_ukuran')->after('id_user');
-            
+
             // Add foreign key constraint
             $table->foreign('id_ukuran')->references('id_ukuran')->on('size')->onDelete('cascade');
         });
@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::table('detail_harga', function (Blueprint $table) {
             // Drop foreign key constraint first
             $table->dropForeign(['id_ukuran']);
-            
+
             // Drop the column
             $table->dropColumn('id_ukuran');
         });

@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/DetailMasuk.php
 
 namespace App\Models;
@@ -9,14 +10,16 @@ use Illuminate\Database\Eloquent\Model;
 class DetailMasuk extends Model
 {
     use HasFactory;
+
     protected $table = 'detail_barangmasuk';
+
     protected $fillable = [
         'IdRoster',
         'IdMasuk',
         'IdSupplier', // ini buat id
         'QtyMasuk',
         'HargaSatuan',
-        'SubTotal'
+        'SubTotal',
     ];
 
     // relasi ke laporan

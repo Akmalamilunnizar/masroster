@@ -56,7 +56,7 @@ class BatchForecastTest extends TestCase
 
         for ($i = 6; $i >= 1; $i--) {
             $transaction = $this->createMasrosterTransaction([
-                'IdTransaksi' => 'TXS' . $i . '001',
+                'IdTransaksi' => 'TXS'.$i.'001',
                 'id_admin' => $admin->id,
                 'id_customer' => $admin->id,
                 'Bayar' => 0,
@@ -203,7 +203,7 @@ class BatchForecastTest extends TestCase
 
         for ($i = 6; $i >= 1; $i--) {
             $transaction = $this->createMasrosterTransaction([
-                'IdTransaksi' => 'TXB' . $i . '001',
+                'IdTransaksi' => 'TXB'.$i.'001',
                 'id_admin' => $admin->id,
                 'id_customer' => $admin->id,
                 'Bayar' => 0,

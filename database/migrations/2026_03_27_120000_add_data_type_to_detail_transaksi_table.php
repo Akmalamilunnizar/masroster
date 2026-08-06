@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('detail_transaksi', 'data_type')) {
+        if (! Schema::hasColumn('detail_transaksi', 'data_type')) {
             Schema::table('detail_transaksi', function (Blueprint $table) {
                 $table->string('data_type', 20)
                     ->default('Eceran')

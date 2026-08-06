@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transaksi', function (Blueprint $table): void {
-            if (!Schema::hasColumn('transaksi', 'workflow_status')) {
+            if (! Schema::hasColumn('transaksi', 'workflow_status')) {
                 $table->string('workflow_status', 30)
                     ->default('Draft')
                     ->comment('CEO approval and payment workflow state: Draft, Menunggu Pembayaran, Paid');

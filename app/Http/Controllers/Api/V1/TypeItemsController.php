@@ -3,56 +3,56 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\TypeItems;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Encore\Admin\Layout\Content;
-
 
 class TypeItemsController extends Controller
 {
     public function Index()
     {
-        // Ambil jumlah ikan per kolam berdasarkan pond_id
-        // $jml_ikan = DB::table('detail_koi')
-        //     ->selectRaw('count(*) as jml_ikan, pond_id')
-        //     ->groupBy('pond_id')
-        //     ->get();
-
-        // Ambil data kolam
         $type = TypeItems::all();
 
-        // Kirim data ke view
-        return view("admin.alltype", compact('type'));
+        return view('admin.alltype', compact('type'));
     }
 
-
-    public function SearchItem(Request $request)
+    public function SearchType(Request $request)
     {
-        $search = $request->search;
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
+
+        if ($search === '') {
+            $type = TypeItems::all();
+
+            return view('admin.alltype', compact('type', 'search'));
+        }
 
         $type = TypeItems::where(function ($query) use ($search) {
-
-            $query->where('id', 'like', "%$search%")
-                ->orWhere('name', 'like', "%$search%");
+            $query->where('IdJenisBarang', 'like', "%{$search}%")
+                ->orWhere('JenisBarang', 'like', "%{$search}%");
         })->get();
 
         return view('admin.alltype', compact('type', 'search'));
+    }
+
+    public function SearchItem(Request $request)
+    {
+        return $this->SearchType($request);
     }
 
     public function AddType()
     {
         $typeid = TypeItems::all();
 
-        return view("admin.addtype", compact('typeid'));
+        return view('admin.addtype', compact('typeid'));
     }
 
     public function StoreType(Request $request)
     {
-        // dd($request->all());
-
         $request->validate([
             'JenisBarang' => 'required|unique:jenisbarang,JenisBarang',
         ]);
@@ -66,49 +66,44 @@ class TypeItemsController extends Controller
 
     public function EditType($IdJenisBarang)
     {
-
         $typeinfo = TypeItems::findOrFail($IdJenisBarang);
         $category_parent = $typeinfo->IdJenisBarang;
-        // dd($category_parent);
         $parent_title = TypeItems::where('IdJenisBarang', $category_parent)->first();
-        // dd($iteminfo);
         $typeid = TypeItems::all();
 
         return view('admin.edittype', compact('typeinfo', 'typeid', 'parent_title'));
     }
 
+    public function UpdateType(Request $request)
+    {
+        $validated = $request->validate([
+            'original_id' => 'required|integer|exists:jenisbarang,IdJenisBarang',
+            'JenisBarang' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('jenisbarang', 'JenisBarang')->ignore($request->original_id, 'IdJenisBarang'),
+            ],
+        ]);
 
+        $oldData = TypeItems::where('IdJenisBarang', $validated['original_id'])->first();
 
-public function UpdateType(Request $request)
-{
-    // Ambil data lama dari database
-    $oldData = TypeItems::where('IdJenisBarang', $request->original_id)->first();
+        if (! $oldData) {
+            return redirect()->route('alltype')->with('error', 'Data tidak ditemukan.');
+        }
 
-    if (!$oldData) {
-        return redirect()->route('alltype')->with('error', 'Data tidak ditemukan.');
+        // Cek apakah ada perubahan
+        if ($oldData->JenisBarang === $validated['JenisBarang']) {
+            return redirect()->route('alltype')->with('message', 'Tidak ada perubahan yang dilakukan.');
+        }
+
+        // Update data jika ada perubahan (hanya JenisBarang)
+        TypeItems::where('IdJenisBarang', $validated['original_id'])->update([
+            'JenisBarang' => $validated['JenisBarang'],
+        ]);
+
+        return redirect()->route('alltype')->with('message', 'Update Informasi Jenis Barang Berhasil!');
     }
-
-    // Validasi
-    $request->validate([
-        'JenisBarang' => [
-            'required',
-            Rule::unique('jenisbarang', 'JenisBarang')->ignore($request->original_id, 'IdJenisBarang'),
-        ],
-    ]);
-
-    // Cek apakah ada perubahan
-    if ($oldData->JenisBarang === $request->JenisBarang) {
-        return redirect()->route('alltype')->with('message', 'Tidak ada perubahan yang dilakukan.');
-    }
-
-    // Update data jika ada perubahan (hanya JenisBarang)
-    TypeItems::where('IdJenisBarang', $request->original_id)->update([
-        'JenisBarang' => $request->JenisBarang,
-    ]);
-
-    return redirect()->route('alltype')->with('message', 'Update Informasi Jenis Barang Berhasil!');
-}
-
 
     public function DeleteType($IdJenisBarang)
     {
@@ -147,8 +142,6 @@ public function UpdateType(Request $request)
             'message' => 'TypeItems not found.',
         ], 404);
     }
-
-
 
     /**
      * Title for current resource.
@@ -194,8 +187,6 @@ public function UpdateType(Request $request)
     // {
     //     $show = new Show(Food::findOrFail($id));
 
-
-
     //     return $show;
     // }
 
@@ -217,8 +208,6 @@ public function UpdateType(Request $request)
     //     $form->image('img', __('Thumbnail'))->uniqueName();
     //     $form->UEditor('description','Description');
 
-
-
     //     return $form;
     //     }
 
@@ -226,7 +215,7 @@ public function UpdateType(Request $request)
     {
         $request->validate([
             'type_ids' => 'required|array',
-            'type_ids.*' => 'required|string'
+            'type_ids.*' => 'required|integer|exists:jenisbarang,IdJenisBarang',
         ]);
 
         $deletedCount = 0;
@@ -236,9 +225,10 @@ public function UpdateType(Request $request)
             try {
                 // Check if this type is being used by any items
                 $itemsUsingType = \App\Models\Produk::where('id_jenis', $typeId)->count();
-                
+
                 if ($itemsUsingType > 0) {
                     $errors[] = "Jenis barang dengan ID: $typeId tidak dapat dihapus karena masih digunakan oleh $itemsUsingType item";
+
                     continue;
                 }
 
@@ -246,12 +236,12 @@ public function UpdateType(Request $request)
                 \App\Models\TypeItems::where('IdJenisBarang', $typeId)->delete();
                 $deletedCount++;
             } catch (\Exception $e) {
-                $errors[] = "Gagal menghapus jenis barang dengan ID: $typeId - " . $e->getMessage();
+                $errors[] = "Gagal menghapus jenis barang dengan ID: $typeId - ".$e->getMessage();
             }
         }
 
         if (count($errors) > 0) {
-            return redirect()->route('alltype')->with('message', 'Beberapa jenis barang gagal dihapus: ' . implode(', ', $errors))->with('alert', 'warning');
+            return redirect()->route('alltype')->with('message', 'Beberapa jenis barang gagal dihapus: '.implode(', ', $errors))->with('alert', 'warning');
         }
 
         return redirect()->route('alltype')->with('message', "Berhasil menghapus $deletedCount jenis barang!")->with('alert', 'success');
@@ -260,23 +250,23 @@ public function UpdateType(Request $request)
     public function quickAddJenis(Request $request)
     {
         try {
-            $request->validate([
-                'JenisBarang' => 'required|unique:jenisbarang,JenisBarang'
+            $validated = $request->validate([
+                'JenisBarang' => 'required|unique:jenisbarang,JenisBarang',
             ]);
 
             $jenis = TypeItems::create([
-                'JenisBarang' => $request->JenisBarang
+                'JenisBarang' => $validated['JenisBarang'],
             ]);
 
             return response()->json([
                 'success' => true,
                 'id' => $jenis->IdJenisBarang,
-                'name' => $jenis->JenisBarang
+                'name' => $jenis->JenisBarang,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

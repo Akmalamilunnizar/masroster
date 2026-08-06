@@ -21,71 +21,102 @@ CIME | Halaman Dashboard E-Commerce
         <link href="css/toko.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <script>
-            // alert("Script jalan!");
             $(document).ready(function () {
             console.log('DOM siap!');
+
+            // Open size selection modal when Pesan button is clicked
             $(document).on('click', '.pesan-btn', function() {
-                console.log('Tombol Pesan diklik!');
-                var productId = $(this).data('id');
-                var productNama = $(this).data('nama');
-                var productHarga = $(this).data('harga');
-                var productImg = $(this).data('img');
-                var productUkuran = $(this).data('ukuran') || 1;
-                var productUkuranLabel = $(this).data('ukuran-label') || 'Ukuran Standar';
-                var quantity = 1;
-                var subtotal = productHarga * quantity;
+                var productId    = $(this).data('id');
+                var productNama  = $(this).data('nama');
+                var productImg   = $(this).data('img');
+                var sizes        = $(this).data('sizes'); // array of {id, label, harga}
 
-                console.log('Data yang dikirim:', {
-                    id: productId,
-                    nama: productNama,
-                    harga: productHarga,
-                    img: productImg,
-                    ukuran: productUkuran,
-                    ukuran_label: productUkuranLabel,
-                    quantity: quantity,
-                    subtotal: subtotal,
-                    _token: '{{ csrf_token() }}'
-                });
+                // Populate modal
+                $('#modalProductName').text(productNama);
+                $('#modalProductId').val(productId);
+                $('#modalProductNama').val(productNama);
+                $('#modalProductImg').val(productImg);
 
-        $.ajax({
-            url: "{{ route('cart.add') }}",
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                id: productId,
-                nama: productNama,
-                harga: productHarga,
-                img: productImg,
-                ukuran: productUkuran,
-                ukuran_label: productUkuranLabel,
-                quantity: quantity,
-                subtotal: subtotal
-            },
+                // Build size options
+                var $sizeList = $('#modalSizeList').empty();
+                if (sizes && sizes.length) {
+                    sizes.forEach(function(s) {
+                        var label = 'Rp ' + Number(s.harga).toLocaleString('id-ID') + ' — ' + s.label;
+                        $sizeList.append(
+                            '<button type="button" class="list-group-item list-group-item-action modal-size-option" ' +
+                            'data-id="' + s.id + '" data-label="' + s.label + '" data-harga="' + s.harga + '">' +
+                            label + '</button>'
+                        );
+                    });
+                } else {
+                    $sizeList.append('<p class="text-muted">Ukuran tidak tersedia.</p>');
+                }
+
+                // Reset selection
+                $('#modalAddToCart').prop('disabled', true);
+                $('#pesanModal').modal('show');
+            });
+
+            // Select a size inside the modal
+            $(document).on('click', '.modal-size-option', function() {
+                $('.modal-size-option').removeClass('active');
+                $(this).addClass('active');
+                $('#modalSizeId').val($(this).data('id'));
+                $('#modalSizeLabel').val($(this).data('label'));
+                $('#modalSizeHarga').val($(this).data('harga'));
+                $('#modalAddToCart').prop('disabled', false);
+            });
+
+            // Confirm add to cart from modal
+            $(document).on('click', '#modalAddToCart', function() {
+                var productId    = $('#modalProductId').val();
+                var productNama  = $('#modalProductNama').val();
+                var productImg   = $('#modalProductImg').val();
+                var ukuran       = $('#modalSizeId').val();
+                var ukuran_label = $('#modalSizeLabel').val();
+                var harga        = parseInt($('#modalSizeHarga').val()) || 0;
+                var quantity     = 1;
+                var subtotal     = harga * quantity;
+
+                $.ajax({
+                    url: "{{ route('cart.add') }}",
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        id: productId,
+                        nama: productNama,
+                        harga: harga,
+                        img: productImg,
+                        ukuran: ukuran,
+                        ukuran_label: ukuran_label,
+                        quantity: quantity,
+                        subtotal: subtotal
+                    },
                     success: function(response) {
-            console.log('Respon sukses:', response);
-            if (response.success) {
-                $('#cart-count').text(response.cartCount);
-
-                // Tambahkan notifikasi SweetAlert2
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Pesanan berhasil ditambahkan ke keranjang.',
-                    showConfirmButton: false,
-                    timer: 1500
+                        if (response.success) {
+                            $('#pesanModal').modal('hide');
+                            // Issue 1: update cart badge in real-time
+                            if (window.updateCartCount) {
+                                window.updateCartCount(response.cartCount);
+                            }
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Pesanan berhasil ditambahkan ke keranjang.',
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Gagal!', text: response.message });
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan.' });
+                    }
                 });
-            }
-        },
-
-            error: function(xhr, status, error) {
-                console.log('Error:', error);
-                console.log('Status:', status);
-                console.log('XHR:', xhr);
-            }
+            });
         });
-    });
-});
-
         </script>
     @endsection
 
@@ -424,11 +455,12 @@ CIME | Halaman Dashboard E-Commerce
                     Product Terlaris
                 </h2>
                 <div class="row g-4">
-                    @foreach ($produkTerlaris as $item)
+                            @foreach ($produkTerlaris as $item)
                         @php
                             $minHarga = null;
                             $defaultUkuran = 1;
                             $defaultUkuranLabel = 'Ukuran Standar';
+                            $sizesJson = '[]';
 
                             if ($item->sizes && count($item->sizes)) {
                                 $firstSize = $item->sizes->first();
@@ -437,6 +469,11 @@ CIME | Halaman Dashboard E-Commerce
                                 });
                                 $defaultUkuran = $firstSize->id_ukuran;
                                 $defaultUkuranLabel = $firstSize->nama . ' (' . $firstSize->panjang . ' x ' . $firstSize->lebar . ' cm)';
+                                $sizesJson = json_encode($item->sizes->map(fn($s) => [
+                                    'id'    => $s->id_ukuran,
+                                    'label' => $s->nama . ' (' . $s->panjang . ' x ' . $s->lebar . ' cm)',
+                                    'harga' => $s->pivot->harga,
+                                ])->values()->toArray());
                             }
                             if (!$minHarga) {
                                 $minHarga = 0;
@@ -464,10 +501,8 @@ CIME | Halaman Dashboard E-Commerce
                                         <button class="btn-pesan pesan-btn"
                                                 data-id="{{ $item->sku ?? $item->IdRoster ?? $item->id }}"
                                                 data-nama="{{ $item->NamaProduk }}"
-                                                data-harga="{{ $minHarga }}"
                                                 data-img="{{ $item->Img }}"
-                                                data-ukuran="{{ $defaultUkuran }}"
-                                                data-ukuran-label="{{ $defaultUkuranLabel }}">
+                                                data-sizes='{{ $sizesJson }}'>
                                             <i class="bi bi-cart-plus me-1"></i>Pesan
                                         </button>
                                     </div>
@@ -492,6 +527,7 @@ CIME | Halaman Dashboard E-Commerce
                             $minHarga = null;
                             $defaultUkuran = 1;
                             $defaultUkuranLabel = 'Ukuran Standar';
+                            $sizesJson = '[]';
 
                             if ($item->sizes && count($item->sizes)) {
                                 $firstSize = $item->sizes->first();
@@ -500,6 +536,11 @@ CIME | Halaman Dashboard E-Commerce
                                 });
                                 $defaultUkuran = $firstSize->id_ukuran;
                                 $defaultUkuranLabel = $firstSize->nama . ' (' . $firstSize->panjang . ' x ' . $firstSize->lebar . ' cm)';
+                                $sizesJson = json_encode($item->sizes->map(fn($s) => [
+                                    'id'    => $s->id_ukuran,
+                                    'label' => $s->nama . ' (' . $s->panjang . ' x ' . $s->lebar . ' cm)',
+                                    'harga' => $s->pivot->harga,
+                                ])->values()->toArray());
                             }
                             if (!$minHarga) {
                                 $minHarga = 0;
@@ -527,10 +568,8 @@ CIME | Halaman Dashboard E-Commerce
                                         <button class="btn-pesan pesan-btn"
                                                 data-id="{{ $item->sku ?? $item->IdRoster ?? $item->id }}"
                                                 data-nama="{{ $item->NamaProduk }}"
-                                                data-harga="{{ $minHarga }}"
                                                 data-img="{{ $item->Img }}"
-                                                data-ukuran="{{ $defaultUkuran }}"
-                                                data-ukuran-label="{{ $defaultUkuranLabel }}">
+                                                data-sizes='{{ $sizesJson }}'>
                                             <i class="bi bi-cart-plus me-1"></i>Pesan
                                         </button>
                                     </div>
@@ -543,3 +582,39 @@ CIME | Halaman Dashboard E-Commerce
         </div>
     </div>
     @endsection
+
+{{-- ============================================================ --}}
+{{-- Size Selection Modal (Issue 2) --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="pesanModal" tabindex="-1" aria-labelledby="pesanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1D1E94,#4318FF);border-radius:16px 16px 0 0;">
+        <h5 class="modal-title text-white" id="pesanModalLabel">
+          <i class="bi bi-rulers me-2"></i>Pilih Ukuran
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="fw-semibold text-secondary mb-3" id="modalProductName"></p>
+
+        {{-- Hidden fields --}}
+        <input type="hidden" id="modalProductId">
+        <input type="hidden" id="modalProductNama">
+        <input type="hidden" id="modalProductImg">
+        <input type="hidden" id="modalSizeId">
+        <input type="hidden" id="modalSizeLabel">
+        <input type="hidden" id="modalSizeHarga">
+
+        <div class="list-group" id="modalSizeList"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" id="modalAddToCart" class="btn btn-primary" disabled
+                style="background:linear-gradient(135deg,#1D1E94,#4318FF);border:none;">
+          <i class="bi bi-cart-plus me-1"></i> Tambah ke Keranjang
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

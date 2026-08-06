@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transaksi;
+use App\Enums\WorkflowStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
-use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -20,54 +22,92 @@ class PaymentController extends Controller
 
         Log::info('Midtrans configuration initialized', [
             'is_production' => Config::$isProduction,
-            'server_key_present' => !empty(Config::$serverKey),
-            'merchant_id_present' => !empty(config('midtrans.merchant_id')),
-            'client_key_present' => !empty(config('midtrans.client_key')),
+            'server_key_present' => ! empty(Config::$serverKey),
+            'merchant_id_present' => ! empty(config('midtrans.merchant_id')),
+            'client_key_present' => ! empty(config('midtrans.client_key')),
         ]);
     }
 
     public function createSnapToken(Request $request)
     {
         try {
-            $cart = session('cart', []);
-            $shippingCost = (int) session('shipping_cost', 0);
-
-            if (empty($cart)) {
-                return response()->json(['error' => 'Keranjang masih kosong.'], 422);
+            if (! Auth::check()) {
+                return response()->json(['error' => 'Unauthorized.'], 401);
             }
 
-            $orderId = session('midtrans_order_id');
-            if (!$orderId) {
-                $orderId = 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999);
-                session(['midtrans_order_id' => $orderId]);
-            }
-
+            $transactionId = $request->input('transaction_id');
             $itemDetails = [];
             $grossAmount = 0;
+            $orderId = null;
 
-            foreach ($cart as $item) {
-                $quantity = (int) ($item['quantity'] ?? 1);
-                $price = (int) round($item['harga'] ?? 0);
-                $subtotal = (int) round(($item['subtotal'] ?? ($price * $quantity)));
+            if ($transactionId) {
+                // Dynamic Just-In-Time snap token retrieval using persisted database transaction
+                $transaction = Transaksi::where('IdTransaksi', $transactionId)
+                    ->where('id_customer', Auth::id())
+                    ->firstOrFail();
 
-                $grossAmount += $subtotal;
+                $orderId = $transaction->IdTransaksi;
+                $grossAmount = (int) $transaction->GrandTotal;
 
-                $itemDetails[] = [
-                    'id' => (string) ($item['id'] ?? 'item-' . count($itemDetails)),
-                    'price' => $price,
-                    'quantity' => $quantity,
-                    'name' => substr((string) ($item['nama'] ?? 'Produk'), 0, 50),
-                ];
-            }
+                foreach ($transaction->detailTransaksi as $detail) {
+                    $quantity = (int) $detail->QtyProduk;
+                    $price = $detail->harga_satuan ? (int) $detail->harga_satuan : (int) ($detail->SubTotal / $quantity);
+                    $itemDetails[] = [
+                        'id' => (string) $detail->IdRoster,
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'name' => substr((string) ($detail->produk?->NamaProduk ?? 'Produk Roster'), 0, 50),
+                    ];
+                }
 
-            if ($shippingCost > 0) {
-                $grossAmount += $shippingCost;
-                $itemDetails[] = [
-                    'id' => 'shipping',
-                    'price' => $shippingCost,
-                    'quantity' => 1,
-                    'name' => 'Biaya Pengiriman',
-                ];
+                $shippingCost = (int) $transaction->ongkir;
+                if ($shippingCost > 0) {
+                    $itemDetails[] = [
+                        'id' => 'shipping',
+                        'price' => $shippingCost,
+                        'quantity' => 1,
+                        'name' => 'Biaya Pengiriman',
+                    ];
+                }
+            } else {
+                // Cart session fallback for backward compatibility
+                $cart = session('cart', []);
+                $shippingCost = (int) session('shipping_cost', 0);
+
+                if (empty($cart)) {
+                    return response()->json(['error' => 'Keranjang masih kosong.'], 422);
+                }
+
+                $orderId = session('midtrans_order_id');
+                if (! $orderId) {
+                    $orderId = 'ORD-'.now()->format('YmdHis').'-'.random_int(1000, 9999);
+                    session(['midtrans_order_id' => $orderId]);
+                }
+
+                foreach ($cart as $item) {
+                    $quantity = (int) ($item['quantity'] ?? 1);
+                    $price = (int) round($item['harga'] ?? 0);
+                    $lineTotal = $price * $quantity;
+
+                    $grossAmount += $lineTotal;
+
+                    $itemDetails[] = [
+                        'id' => (string) ($item['id'] ?? 'item-'.count($itemDetails)),
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'name' => substr((string) ($item['nama'] ?? 'Produk'), 0, 50),
+                    ];
+                }
+
+                if ($shippingCost > 0) {
+                    $grossAmount += $shippingCost;
+                    $itemDetails[] = [
+                        'id' => 'shipping',
+                        'price' => $shippingCost,
+                        'quantity' => 1,
+                        'name' => 'Biaya Pengiriman',
+                    ];
+                }
             }
 
             $user = Auth::user();
@@ -81,6 +121,7 @@ class PaymentController extends Controller
                 ?? 'customer@example.com';
 
             $customerPhone = $user->phone
+                ?? $user->nomor_telepon
                 ?? session('customer_phone')
                 ?? null;
 
@@ -107,10 +148,10 @@ class PaymentController extends Controller
 
             return response()->json(['snap_token' => $snapToken]);
         } catch (\Throwable $e) {
-            Log::error('Midtrans error: ' . $e->getMessage(), [
+            Log::error('Midtrans error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'user' => Auth::check() ? (Auth::user()->username ?? Auth::user()->name ?? 'authenticated') : 'not authenticated',
-                'request' => $request->all(),
+                'request_keys' => $request->keys(),
             ]);
 
             return response()->json(['error' => $e->getMessage()], 500);
@@ -119,29 +160,94 @@ class PaymentController extends Controller
 
     public function handleNotification(Request $request)
     {
-        $payload = $request->all();
-        Log::info('Midtrans notification:', $payload);
+        // Only extract the fields we need from the webhook payload to avoid processing/storing unexpected keys
+        $payload = $request->only([
+            'order_id',
+            'status_code',
+            'gross_amount',
+            'signature_key',
+            'transaction_status',
+            'fraud_status',
+        ]);
 
-        $orderId = $payload['order_id'];
-        $transactionStatus = $payload['transaction_status'];
-        $fraudStatus = $payload['fraud_status'];
+        if (! $this->hasValidMidtransSignature($payload)) {
+            Log::warning('Invalid Midtrans notification signature', [
+                'order_id' => $payload['order_id'] ?? null,
+                'status_code' => $payload['status_code'] ?? null,
+            ]);
 
-        // Handle the notification based on transaction status
-        if ($transactionStatus == 'capture') {
-            if ($fraudStatus == 'challenge') {
-                // TODO: Handle challenge payment
-            } else if ($fraudStatus == 'accept') {
-                // TODO: Handle successful payment
-            }
-        } else if ($transactionStatus == 'settlement') {
-            // TODO: Handle settlement payment
-        } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
-            // TODO: Handle failed payment
-        } else if ($transactionStatus == 'pending') {
-            // TODO: Handle pending payment
+            return response()->json(['error' => 'Invalid notification signature.'], 403);
         }
 
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $transactionStatus = (string) ($payload['transaction_status'] ?? '');
+        $fraudStatus = (string) ($payload['fraud_status'] ?? '');
+
+        $transaction = Transaksi::where('IdTransaksi', $orderId)->first();
+        if (! $transaction) {
+            Log::warning('Midtrans notification for missing transaksi', [
+                'order_id' => $orderId,
+                'transaction_status' => $transactionStatus,
+            ]);
+
+            return response()->json(['error' => 'Transaction not found.'], 404);
+        }
+
+        $reportedGrossAmount = (int) ($payload['gross_amount'] ?? 0);
+        if ($reportedGrossAmount !== (int) $transaction->GrandTotal) {
+            Log::warning('Midtrans notification gross amount mismatch', [
+                'order_id' => $orderId,
+                'reported_gross_amount' => $reportedGrossAmount,
+                'expected_gross_amount' => (int) $transaction->GrandTotal,
+            ]);
+
+            return response()->json(['error' => 'Gross amount mismatch.'], 422);
+        }
+
+        $resolvedStatus = match ($transactionStatus) {
+            'capture' => $fraudStatus === 'challenge' ? 'Belum Lunas' : 'Lunas',
+            'settlement' => 'Lunas',
+            'pending' => 'Belum Lunas',
+            'cancel', 'deny', 'expire' => 'Belum Lunas',
+            default => $transaction->StatusPembayaran ?? 'Belum Lunas',
+        };
+
+        $transaction->StatusPembayaran = $resolvedStatus;
+        $transaction->tglUpdate = now();
+
+        if ($resolvedStatus === 'Lunas') {
+            $transaction->Bayar = $transaction->GrandTotal;
+            $transaction->workflow_status = WorkflowStatus::PAID->value;
+        } else {
+            $transaction->workflow_status = WorkflowStatus::DRAFT->value;
+        }
+
+        $transaction->save();
+
+        Log::info('Midtrans notification processed', [
+            'order_id' => $orderId,
+            'transaction_status' => $transactionStatus,
+            'fraud_status' => $fraudStatus,
+            'resolved_payment_status' => $resolvedStatus,
+        ]);
+
         return response()->json(['status' => 'success']);
+    }
+
+    private function hasValidMidtransSignature(array $payload): bool
+    {
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $statusCode = (string) ($payload['status_code'] ?? '');
+        $grossAmount = (string) ($payload['gross_amount'] ?? '');
+        $signatureKey = (string) ($payload['signature_key'] ?? '');
+
+        if ($orderId === '' || $statusCode === '' || $grossAmount === '' || $signatureKey === '') {
+            return false;
+        }
+
+        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.(string) config('midtrans.server_key'));
+
+        return hash_equals($expectedSignature, $signatureKey);
     }
 
     public function paymentSuccess()
@@ -163,6 +269,7 @@ class PaymentController extends Controller
         }
         $shippingCost = session('shipping_cost', 0);
         $grandTotal = $subtotal + $shippingCost;
+
         return view('toko.payment', compact('cart', 'subtotal', 'shippingCost', 'grandTotal'));
     }
 }

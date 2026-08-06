@@ -15,7 +15,7 @@ trait MasrosterTestSchema
 {
     protected function prepareMasrosterSchema(): void
     {
-        if (!Schema::hasTable('users')) {
+        if (! Schema::hasTable('users')) {
             Schema::create('users', function (Blueprint $table): void {
                 $table->id();
                 $table->string('f_name', 30);
@@ -28,11 +28,14 @@ trait MasrosterTestSchema
                 $table->rememberToken();
                 $table->string('img', 255);
                 $table->string('alamat')->nullable();
+                $table->enum('tipe_user', ['end_customer', 'retailer'])->default('end_customer');
+                $table->enum('status_verifikasi', ['pending', 'approved', 'rejected'])->default('pending');
+                $table->string('foto_toko')->nullable();
                 $table->timestamps();
             });
         }
 
-        if (!Schema::hasTable('roles')) {
+        if (! Schema::hasTable('roles')) {
             Schema::create('roles', function (Blueprint $table): void {
                 $table->id();
                 $table->string('name')->unique();
@@ -42,7 +45,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('permissions')) {
+        if (! Schema::hasTable('permissions')) {
             Schema::create('permissions', function (Blueprint $table): void {
                 $table->id();
                 $table->string('name')->unique();
@@ -52,7 +55,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('role_user')) {
+        if (! Schema::hasTable('role_user')) {
             Schema::create('role_user', function (Blueprint $table): void {
                 $table->unsignedBigInteger('role_id');
                 $table->unsignedBigInteger('user_id');
@@ -61,7 +64,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('permission_user')) {
+        if (! Schema::hasTable('permission_user')) {
             Schema::create('permission_user', function (Blueprint $table): void {
                 $table->unsignedBigInteger('permission_id');
                 $table->unsignedBigInteger('user_id');
@@ -70,7 +73,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('permission_role')) {
+        if (! Schema::hasTable('permission_role')) {
             Schema::create('permission_role', function (Blueprint $table): void {
                 $table->unsignedBigInteger('permission_id');
                 $table->unsignedBigInteger('role_id');
@@ -78,7 +81,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('addresses')) {
+        if (! Schema::hasTable('addresses')) {
             Schema::create('addresses', function (Blueprint $table): void {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
@@ -93,7 +96,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('size')) {
+        if (! Schema::hasTable('size')) {
             Schema::create('size', function (Blueprint $table): void {
                 $table->id('id_ukuran');
                 $table->string('nama', 50);
@@ -102,28 +105,28 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('jenisbarang')) {
+        if (! Schema::hasTable('jenisbarang')) {
             Schema::create('jenisbarang', function (Blueprint $table): void {
                 $table->id('IdJenisBarang');
                 $table->string('JenisBarang', 50)->unique();
             });
         }
 
-        if (!Schema::hasTable('tipe_roster')) {
+        if (! Schema::hasTable('tipe_roster')) {
             Schema::create('tipe_roster', function (Blueprint $table): void {
                 $table->id('IdTipe');
                 $table->string('namaTipe', 50);
             });
         }
 
-        if (!Schema::hasTable('motif_roster')) {
+        if (! Schema::hasTable('motif_roster')) {
             Schema::create('motif_roster', function (Blueprint $table): void {
                 $table->id('IdMotif');
                 $table->string('nama_motif', 50)->nullable();
             });
         }
 
-        if (!Schema::hasTable('produk')) {
+        if (! Schema::hasTable('produk')) {
             Schema::create('produk', function (Blueprint $table): void {
                 $table->unsignedBigInteger('id')->primary();
                 $table->string('sku', 13)->unique();
@@ -148,7 +151,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('model_histories')) {
+        if (! Schema::hasTable('model_histories')) {
             Schema::create('model_histories', function (Blueprint $table): void {
                 $table->id();
                 $table->unsignedBigInteger('produk_id')->nullable();
@@ -163,7 +166,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('transaksi')) {
+        if (! Schema::hasTable('transaksi')) {
             Schema::create('transaksi', function (Blueprint $table): void {
                 $table->string('IdTransaksi', 10)->primary();
                 $table->unsignedBigInteger('id_admin')->default(0);
@@ -174,6 +177,7 @@ trait MasrosterTestSchema
                 $table->dateTime('tglTransaksi');
                 $table->string('StatusPembayaran', 20);
                 $table->string('StatusPesanan', 20)->nullable();
+                $table->string('workflow_status', 30)->default('Draft');
                 $table->string('invoice_number', 50)->nullable();
                 $table->dateTime('tglUpdate')->nullable();
                 $table->timestamps();
@@ -185,7 +189,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('barangmasuk')) {
+        if (! Schema::hasTable('barangmasuk')) {
             Schema::create('barangmasuk', function (Blueprint $table): void {
                 $table->string('IdMasuk', 6)->primary();
                 $table->string('username', 20);
@@ -193,7 +197,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('barangkeluar')) {
+        if (! Schema::hasTable('barangkeluar')) {
             Schema::create('barangkeluar', function (Blueprint $table): void {
                 $table->string('IdKeluar', 6)->primary();
                 $table->string('username', 20)->nullable();
@@ -201,7 +205,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('detail_barangmasuk')) {
+        if (! Schema::hasTable('detail_barangmasuk')) {
             Schema::create('detail_barangmasuk', function (Blueprint $table): void {
                 $table->string('IdMasuk', 6)->nullable();
                 $table->string('IdRoster', 13)->nullable();
@@ -212,7 +216,7 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('detail_barangkeluar')) {
+        if (! Schema::hasTable('detail_barangkeluar')) {
             Schema::create('detail_barangkeluar', function (Blueprint $table): void {
                 $table->string('IdKeluar', 6)->nullable();
                 $table->string('IdRoster', 13)->nullable();
@@ -221,17 +225,18 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('detail_harga')) {
+        if (! Schema::hasTable('detail_harga')) {
             Schema::create('detail_harga', function (Blueprint $table): void {
                 $table->unsignedBigInteger('produk_id')->nullable();
                 $table->string('id_roster', 13)->nullable();
                 $table->unsignedBigInteger('id_user');
                 $table->integer('id_ukuran');
                 $table->integer('harga');
+                $table->unsignedBigInteger('address_id')->nullable();
             });
         }
 
-        if (!Schema::hasTable('produk_size')) {
+        if (! Schema::hasTable('produk_size')) {
             Schema::create('produk_size', function (Blueprint $table): void {
                 $table->unsignedBigInteger('produk_id')->nullable();
                 $table->string('IdRoster', 13)->nullable();
@@ -241,15 +246,37 @@ trait MasrosterTestSchema
             });
         }
 
-        if (!Schema::hasTable('detail_transaksi')) {
+        if (! Schema::hasTable('detail_transaksi')) {
             Schema::create('detail_transaksi', function (Blueprint $table): void {
                 $table->string('IdTransaksi', 10)->nullable();
                 $table->unsignedBigInteger('produk_id')->nullable();
                 $table->string('IdRoster', 13)->nullable();
                 $table->integer('id_ukuran')->nullable();
+                $table->integer('harga_satuan')->nullable();
                 $table->integer('QtyProduk')->nullable();
                 $table->integer('SubTotal')->nullable();
                 $table->string('data_type', 20)->default('Eceran');
+            });
+        }
+        if (! Schema::hasTable('keyword_research_logs')) {
+            Schema::create('keyword_research_logs', function (Blueprint $table) {
+                $table->id();
+                $table->string('base_query')->index();
+                $table->string('status');
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::hasTable('keyword_metrics')) {
+            Schema::create('keyword_metrics', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('keyword_research_log_id');
+                $table->string('keyword');
+                $table->integer('search_volume')->nullable()->default(0);
+                $table->decimal('cpc', 8, 2)->nullable();
+                $table->string('competition')->nullable();
+                $table->json('monthly_trend')->nullable();
+                $table->timestamps();
             });
         }
 
@@ -261,6 +288,8 @@ trait MasrosterTestSchema
     protected function resetMasrosterData(): void
     {
         foreach ([
+            'keyword_metrics',
+            'keyword_research_logs',
             'permission_user',
             'permission_role',
             'role_user',
@@ -338,7 +367,7 @@ trait MasrosterTestSchema
             DB::unprepared('DROP TRIGGER IF EXISTS stokKeluar');
 
             // Updated trigger to work with produk_id (new schema) or IdRoster (legacy)
-            DB::unprepared(<<<SQL
+            DB::unprepared(<<<'SQL'
                 CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk BEGIN
                     UPDATE produk SET stock = stock + NEW.QtyMasuk
                     WHERE (
@@ -348,7 +377,7 @@ trait MasrosterTestSchema
                 END;
             SQL);
 
-            DB::unprepared(<<<SQL
+            DB::unprepared(<<<'SQL'
                 CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar BEGIN
                     UPDATE produk SET stock = stock - NEW.QtyKeluar
                     WHERE (
@@ -361,14 +390,14 @@ trait MasrosterTestSchema
             DB::statement('DROP TRIGGER IF EXISTS stokMasuk');
             DB::statement('DROP TRIGGER IF EXISTS stokKeluar');
 
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk
                 FOR EACH ROW BEGIN
                     UPDATE produk SET stock = stock + NEW.QtyMasuk WHERE IdRoster = NEW.IdRoster OR id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster);
                 END;
             SQL);
 
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar
                 FOR EACH ROW BEGIN
                     UPDATE produk SET stock = stock - NEW.QtyKeluar WHERE IdRoster = NEW.IdRoster OR id IN (SELECT id FROM produk WHERE IdRoster = NEW.IdRoster);
@@ -385,14 +414,18 @@ trait MasrosterTestSchema
             'email' => fake()->unique()->safeEmail(),
             'nomor_telepon' => '081234567890',
             'email_verified_at' => now(),
-            'username' => Str::slug($name) . '-' . fake()->unique()->numberBetween(100, 999),
+            'username' => Str::slug($name).'-'.fake()->unique()->numberBetween(100, 999),
             'password' => 'password',
             'user' => $role,
             'img' => 'default-avatar.png',
             'alamat' => 'Jl. Testing No. 1',
         ];
 
-        $user = User::create(array_merge($defaults, $attributes));
+        $merged = array_merge($defaults, $attributes);
+        $user = new User(array_diff_key($merged, array_flip(['tipe_user', 'status_verifikasi'])));
+        $user->tipe_user = $merged['tipe_user'] ?? 'end_customer';
+        $user->status_verifikasi = $merged['status_verifikasi'] ?? ($user->tipe_user === 'retailer' ? 'pending' : 'approved');
+        $user->save();
 
         $this->attachRole($user, strtolower($role));
 
@@ -403,7 +436,7 @@ trait MasrosterTestSchema
     {
         return $this->createMasrosterUser(array_merge([
             'f_name' => 'Admin Tester',
-            'username' => 'admin-' . fake()->unique()->numberBetween(100, 999),
+            'username' => 'admin-'.fake()->unique()->numberBetween(100, 999),
             'user' => 'Admin',
         ], $attributes), 'Admin');
     }
@@ -412,7 +445,7 @@ trait MasrosterTestSchema
     {
         return $this->createMasrosterUser(array_merge([
             'f_name' => 'Customer Tester',
-            'username' => 'customer-' . fake()->unique()->numberBetween(100, 999),
+            'username' => 'customer-'.fake()->unique()->numberBetween(100, 999),
             'user' => 'User',
         ], $attributes), 'User');
     }
@@ -444,7 +477,7 @@ trait MasrosterTestSchema
 
     protected function createMasrosterProduct(array $attributes = []): Produk
     {
-        $rosterCode = 'MAS' . fake()->unique()->numberBetween(100, 999);
+        $rosterCode = 'MAS'.fake()->unique()->numberBetween(100, 999);
 
         return Produk::create(array_merge([
             'id' => null,
@@ -485,7 +518,7 @@ trait MasrosterTestSchema
     protected function createMasrosterTransaction(array $attributes = []): Transaksi
     {
         return Transaksi::create(array_merge([
-            'IdTransaksi' => 'TX' . fake()->unique()->numberBetween(1000, 9999),
+            'IdTransaksi' => 'TX'.fake()->unique()->numberBetween(1000, 9999),
             'id_admin' => 1,
             'id_customer' => 1,
             'address_id' => null,

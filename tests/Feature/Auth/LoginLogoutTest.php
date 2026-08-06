@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LoginLogoutTest extends TestCase
@@ -72,6 +74,38 @@ class LoginLogoutTest extends TestCase
             'f_name' => 'New Customer',
             'user' => 'User',
         ]);
+
+        $this->assertDatabaseHas('role_user', [
+            'role_id' => 2,
+            'user_type' => \App\Models\User::class,
+        ]);
+    }
+
+    public function test_retailer_register_requires_photo_and_sets_retailer_fields(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->post('/register', [
+            'name' => 'New Retailer',
+            'email' => 'new-retailer@example.test',
+            'nomor_telepon' => '081234567892',
+            'tipe_user' => 'retailer',
+            'foto_toko' => UploadedFile::fake()->createWithContent(
+                'foto-toko.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+Q1kAAAAASUVORK5CYII=')
+            ),
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertRedirect('/tokodashboard');
+
+        $user = \App\Models\User::where('email', 'new-retailer@example.test')->firstOrFail();
+
+        $this->assertSame('retailer', $user->tipe_user);
+        $this->assertSame('pending', $user->status_verifikasi);
+        $this->assertNotEmpty($user->foto_toko);
+        $this->assertTrue(Storage::disk('public')->exists($user->foto_toko));
 
         $this->assertDatabaseHas('role_user', [
             'role_id' => 2,

@@ -29,18 +29,21 @@ class BootstrapNativeModels extends Command
         $health = $this->fetchFlaskHealth();
         if ($health === null) {
             $this->error('Flask AI server is not reachable or returned an invalid health payload.');
+
             return Command::FAILURE;
         }
 
         $selectedModels = $this->selectBootstrapModels($health['available_models'] ?? []);
         if (empty($selectedModels)) {
             $this->error('No bootstrap-capable legacy models were found in Flask health data.');
+
             return Command::FAILURE;
         }
 
         $products = Produk::query()->select('IdRoster')->orderBy('IdRoster')->get();
         if ($products->isEmpty()) {
             $this->error('No products found in database.');
+
             return Command::FAILURE;
         }
 
@@ -74,7 +77,7 @@ class BootstrapNativeModels extends Command
                     $summary['skipped_duplicate_version'] += $result['skipped_duplicate_version'];
                     $summary['failed'] += $result['failed'];
 
-                    if (!empty($result['failed_products'])) {
+                    if (! empty($result['failed_products'])) {
                         $summary['failed_products'] = array_values(array_unique(array_merge(
                             $summary['failed_products'],
                             $result['failed_products']
@@ -96,7 +99,7 @@ class BootstrapNativeModels extends Command
         $summary['failed_products'] = array_values(array_unique($summary['failed_products']));
 
         $this->info($dryRun ? 'Dry run complete.' : 'Bootstrap complete.');
-        $this->line('SUMMARY: ' . json_encode($summary, JSON_UNESCAPED_UNICODE));
+        $this->line('SUMMARY: '.json_encode($summary, JSON_UNESCAPED_UNICODE));
 
         return Command::SUCCESS;
     }
@@ -104,18 +107,19 @@ class BootstrapNativeModels extends Command
     private function fetchFlaskHealth(): ?array
     {
         try {
-            $response = Http::timeout(30)->get(self::FLASK_BASE_URL . '/health');
+            $response = Http::timeout(30)->get(self::FLASK_BASE_URL.'/health');
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('Flask health check failed', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
+
                 return null;
             }
 
             $payload = $response->json();
-            if (!is_array($payload)) {
+            if (! is_array($payload)) {
                 return null;
             }
 
@@ -124,6 +128,7 @@ class BootstrapNativeModels extends Command
             Log::warning('Unable to fetch Flask health', [
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -136,8 +141,8 @@ class BootstrapNativeModels extends Command
             $candidates = collect($availableModels)
                 ->filter(function ($row) use ($framework) {
                     return strtoupper((string) ($row['framework'] ?? '')) === $framework
-                        && !empty($row['model_version'])
-                        && !empty($row['artifact_ready']);
+                        && ! empty($row['model_version'])
+                        && ! empty($row['artifact_ready']);
                 })
                 ->sortBy(function ($row) {
                     $name = strtolower((string) ($row['model_name'] ?? ''));
@@ -209,7 +214,7 @@ class BootstrapNativeModels extends Command
             ];
         }
 
-        if ($existingActive && !$forceReplace) {
+        if ($existingActive && ! $forceReplace) {
             return [
                 'inserted' => 0,
                 'updated' => 0,
@@ -246,6 +251,7 @@ class BootstrapNativeModels extends Command
                     'rmse_score' => $existingVersion->rmse_score ?? ($model['rmse_score'] ?? null),
                     'is_active' => true,
                 ]);
+
                 return;
             }
 

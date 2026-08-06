@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\TipeRoster;
 use App\Models\DetailTipe;
+use App\Models\TipeRoster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,6 +13,7 @@ class TipeRosterController extends Controller
     public function index()
     {
         $tipeRosters = TipeRoster::with(['jenisRosters'])->orderBy('IdTipe', 'asc')->get();
+
         return view('admin.alltiperoster', compact('tipeRosters'));
     }
 
@@ -20,6 +21,7 @@ class TipeRosterController extends Controller
     {
         $jenisList = \App\Models\TypeItems::all();
         $tipeList = TipeRoster::all();
+
         return view('admin.addtiperoster', compact('jenisList', 'tipeList'));
     }
 
@@ -65,36 +67,37 @@ class TipeRosterController extends Controller
     {
         $tipeRoster = TipeRoster::with('jenisRosters')->findOrFail($id);
         $jenisList = \App\Models\TypeItems::all();
+
         return view('admin.edittiperoster', compact('tipeRoster', 'jenisList'));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'namaTipe' => 'required|string|max:40|unique:tipe_roster,namaTipe,' . $id . ',IdTipe',
+            'namaTipe' => 'required|string|max:40|unique:tipe_roster,namaTipe,'.$id.',IdTipe',
             'jenis_connections' => 'nullable|array',
             'jenis_connections.*' => 'exists:jenisbarang,IdJenisBarang',
         ]);
-        
+
         $tipeRoster = TipeRoster::findOrFail($id);
-        
+
         // Update tipe name
         $tipeRoster->update(['namaTipe' => $request->namaTipe]);
-        
+
         // Update connections
         $jenisConnections = $request->jenis_connections ?? [];
-        
+
         // Get current connections
         $currentConnections = $tipeRoster->jenisRosters->pluck('IdJenisBarang')->toArray();
-        
+
         // Remove old connections that are no longer selected
         $connectionsToRemove = array_diff($currentConnections, $jenisConnections);
-        if (!empty($connectionsToRemove)) {
+        if (! empty($connectionsToRemove)) {
             DetailTipe::where('id_tipe', $id)
                 ->whereIn('id_jenis', $connectionsToRemove)
                 ->delete();
         }
-        
+
         // Add new connections
         $connectionsToAdd = array_diff($jenisConnections, $currentConnections);
         foreach ($connectionsToAdd as $jenisId) {
@@ -103,13 +106,14 @@ class TipeRosterController extends Controller
                 'id_tipe' => $id,
             ]);
         }
-        
+
         return redirect()->route('alltiperoster')->with('message', 'Tipe Roster berhasil diperbarui!');
     }
 
     public function destroy($id)
     {
         TipeRoster::findOrFail($id)->delete();
+
         return redirect()->route('alltiperoster')->with('message', 'Tipe Roster berhasil dihapus!');
     }
 
@@ -117,7 +121,7 @@ class TipeRosterController extends Controller
     {
         $request->validate([
             'tipe_ids' => 'required|array',
-            'tipe_ids.*' => 'required|integer'
+            'tipe_ids.*' => 'required|integer',
         ]);
 
         $ids = $request->tipe_ids;
@@ -131,20 +135,20 @@ class TipeRosterController extends Controller
         try {
             $request->validate([
                 'namaTipe' => 'required|string|max:40',
-                'id_jenis' => 'required|exists:jenisbarang,IdJenisBarang'
+                'id_jenis' => 'required|exists:jenisbarang,IdJenisBarang',
             ]);
 
             DB::beginTransaction();
-            
+
             // Create the tipe
             $tipe = TipeRoster::firstOrCreate([
-                'namaTipe' => strtoupper(trim($request->namaTipe))
+                'namaTipe' => strtoupper(trim($request->namaTipe)),
             ]);
 
             // Create the connection in detail_tipe
             DetailTipe::updateOrInsert([
                 'id_jenis' => $request->id_jenis,
-                'id_tipe' => $tipe->IdTipe
+                'id_tipe' => $tipe->IdTipe,
             ]);
 
             DB::commit();
@@ -152,13 +156,14 @@ class TipeRosterController extends Controller
             return response()->json([
                 'success' => true,
                 'id' => $tipe->IdTipe,
-                'name' => $tipe->namaTipe
+                'name' => $tipe->namaTipe,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

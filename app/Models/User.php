@@ -6,18 +6,16 @@ namespace App\Models;
 
 use Illuminate\Auth\Authenticatable as AuthenticableTrait;
 use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
-
-use Laravel\Passport\HasApiTokens;
 use Laratrust\Traits\HasRolesAndPermissions;
-
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRolesAndPermissions, CanResetPassword, AuthenticableTrait;
+    use AuthenticableTrait, CanResetPassword, HasApiTokens, HasFactory, HasRolesAndPermissions, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -32,11 +30,12 @@ class User extends Authenticatable implements CanResetPasswordContract
         'password',
         'username',
         'user',          // Kolom 'user' untuk peran (role)
-        'img'            // Kolom untuk gambar profil
+        'img',           // Kolom untuk gambar profil
+        'foto_toko',
     ];
 
     protected $attributes = [
-        'img' => 'default-avatar.png'
+        'img' => 'default-avatar.png',
     ];
 
     /**
@@ -115,5 +114,20 @@ class User extends Authenticatable implements CanResetPasswordContract
     public function latestAddress()
     {
         return $this->hasOne(Address::class, 'user_id', 'id')->latestOfMany();
+    }
+
+    public function isAdmin(): bool
+    {
+        return strtolower((string) $this->user) === 'admin' || $this->hasRole('admin');
+    }
+
+    public function isCustomer(): bool
+    {
+        return strtolower((string) $this->user) === 'user' || $this->hasRole('user');
+    }
+
+    public function isRetailer(): bool
+    {
+        return strtolower((string) $this->tipe_user) === 'retailer';
     }
 }

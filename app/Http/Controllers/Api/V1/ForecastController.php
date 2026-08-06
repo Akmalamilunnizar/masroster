@@ -1,21 +1,23 @@
 <?php
+
 namespace App\Http\Controllers\Api\V1;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\ModelHistory;
+use App\Models\Produk;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\Produk;
-use App\Models\ModelHistory;
 
 class ForecastController extends Controller
 {
     public function showForm()
     {
         $products = \App\Models\Produk::select('IdRoster', 'NamaProduk')->orderBy('NamaProduk')->get();
+
         return view('admin.forecast.form', compact('products'));
     }
 
@@ -43,7 +45,7 @@ class ForecastController extends Controller
             $query = DB::table('detail_transaksi')
                 ->join('transaksi', 'detail_transaksi.IdTransaksi', '=', 'transaksi.IdTransaksi')
                 ->select(
-                    DB::raw($this->monthExpression() . ' as bulan'),
+                    DB::raw($this->monthExpression().' as bulan'),
                     DB::raw('SUM(detail_transaksi.QtyProduk) as terjual')
                 );
 
@@ -59,16 +61,18 @@ class ForecastController extends Controller
                 ->orderBy('bulan')
                 ->get();
 
-            Log::info('Raw sales data:', [
+            Log::info('Raw sales data summary', [
                 'data_type' => $resolvedDataType,
                 'count' => $salesData->count(),
-                'data' => $salesData->toArray(),
+                'sample' => $salesData->take(3)->map(function ($r) {
+                    return ['bulan' => $r->bulan, 'terjual' => $r->terjual];
+                })->values()->all(),
             ]);
 
             if (in_array($resolvedDataType, ['Eceran', 'Borongan'], true) && $salesData->count() < 12) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => "Data {$resolvedDataType} untuk roster ini belum cukup. Minimal 12 titik data dibutuhkan agar forecast tidak tercampur."
+                    'message' => "Data {$resolvedDataType} untuk roster ini belum cukup. Minimal 12 titik data dibutuhkan agar forecast tidak tercampur.",
                 ], 422);
             }
 
@@ -84,14 +88,19 @@ class ForecastController extends Controller
                     $date = $currentDate->copy()->subMonths($i)->format('Y-m');
                     $finalData->push([
                         'bulan' => $date,
-                        'terjual' => (int)($existingBulans[$date] ?? 0)
+                        'terjual' => (int) ($existingBulans[$date] ?? 0),
                     ]);
                 }
 
                 $salesData = $finalData->sortBy('bulan')->values();
             }
 
-            Log::info('Final sales data:', ['data' => $salesData->toArray()]);
+            Log::info('Final sales data summary', [
+                'count' => is_countable($salesData) ? count($salesData) : $salesData->count(),
+                'sample' => collect($salesData)->take(3)->map(function ($r) {
+                    return ['bulan' => $r['bulan'] ?? ($r->bulan ?? null), 'terjual' => $r['terjual'] ?? ($r->terjual ?? null)];
+                })->values()->all(),
+            ]);
 
             return response()->json([
                 'status' => 'success',
@@ -124,18 +133,17 @@ class ForecastController extends Controller
                         })
                         ->values()
                         ->all()
-                    : []
+                    : [],
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in getSalesData: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
+            Log::error('Error in getSalesData: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error fetching sales data: ' . $e->getMessage()
+                'message' => 'Error fetching sales data: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -150,7 +158,7 @@ class ForecastController extends Controller
                 'bulan.*' => 'required|date_format:Y-m',
                 'terjual.*' => 'required|numeric',
                 'model' => 'required|in:lstm,prophet',
-                'version_id' => 'required|exists:model_histories,id'
+                'version_id' => 'required|exists:model_histories,id',
             ]);
 
             $idRoster = $request->input('id_roster');
@@ -191,9 +199,9 @@ class ForecastController extends Controller
             $response = Http::timeout(30)
                 ->connectTimeout(30)
                 ->asJson()
-                ->post('http://127.0.0.1:5000' . $endpoint, $payload);
+                ->post('http://127.0.0.1:5000'.$endpoint, $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $errorMessage = $response->json('error') ?? $response->body() ?? 'Unknown error';
 
                 Log::warning('Manual forecast failed', [
@@ -205,12 +213,12 @@ class ForecastController extends Controller
                     'error' => $errorMessage,
                 ]);
 
-                return back()->with('error', 'Layanan forecasting mengembalikan error: ' . $errorMessage);
+                return back()->with('error', 'Layanan forecasting mengembalikan error: '.$errorMessage);
             }
 
             $result = $response->json();
 
-            if (!is_array($result) || !isset($result['forecast']) || !is_array($result['forecast'])) {
+            if (! is_array($result) || ! isset($result['forecast']) || ! is_array($result['forecast'])) {
                 throw new \Exception('Invalid response from forecasting service');
             }
 
@@ -231,7 +239,7 @@ class ForecastController extends Controller
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return back()->with('error', 'Tidak dapat terhubung ke layanan forecasting. Pastikan server Flask berjalan di http://127.0.0.1:5000');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -239,16 +247,16 @@ class ForecastController extends Controller
     {
         try {
             // Get all products with cached forecast data
-                $products = \App\Models\Produk::with(['activeLstmHistory', 'activeProphetHistory', 'modelHistories'])->select(
-                    'IdRoster',
-                    'NamaProduk',
-                    'stock',
-                    'forecasted_demand',
-                    'forecast_model',
-                    'forecast_status',
-                    'last_forecast_at',
-                    'safety_stock'
-                )
+            $products = \App\Models\Produk::with(['activeLstmHistory', 'activeProphetHistory', 'modelHistories'])->select(
+                'IdRoster',
+                'NamaProduk',
+                'stock',
+                'forecasted_demand',
+                'forecast_model',
+                'forecast_status',
+                'last_forecast_at',
+                'safety_stock'
+            )
                 ->orderBy('forecast_status', 'asc') // Critical first
                 ->orderBy('NamaProduk')
                 ->get();
@@ -266,7 +274,7 @@ class ForecastController extends Controller
                 $activeProphetVersion = optional($product->activeProphetHistory)->version_id;
 
                 // If no forecast has been run, show placeholder
-                if (!$product->last_forecast_at) {
+                if (! $product->last_forecast_at) {
                     $forecastData[] = [
                         'id_roster' => $product->IdRoster,
                         'nama_produk' => $product->NamaProduk,
@@ -277,8 +285,9 @@ class ForecastController extends Controller
                         'active_prophet_version' => $activeProphetVersion,
                         'status' => 'safe',
                         'last_forecast_at' => null,
-                        'safety_stock' => $product->safety_stock ?? 70
+                        'safety_stock' => $product->safety_stock ?? 70,
                     ];
+
                     continue;
                 }
 
@@ -294,7 +303,7 @@ class ForecastController extends Controller
                     'last_forecast_at' => $product->last_forecast_at ?
                         Carbon::parse($product->last_forecast_at)->diffForHumans() :
                         'Never',
-                    'safety_stock' => $product->safety_stock ?? 70
+                    'safety_stock' => $product->safety_stock ?? 70,
                 ];
             }
 
@@ -331,23 +340,23 @@ class ForecastController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in stockForecast: ' . $e->getMessage(), [
+            Log::error('Error in stockForecast: '.$e->getMessage(), [
                 'exception' => $e,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            return back()->with('error', 'Terjadi kesalahan saat menghitung forecast stok: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menghitung forecast stok: '.$e->getMessage());
         }
     }
 
     /**
-    * Run fast batch forecast via inference-only command.
+     * Run fast batch forecast via inference-only command.
      */
     public function runBatchForecast(Request $request)
     {
         $request->validate([
             'model' => 'required|in:lstm,prophet',
-            'force' => 'nullable|boolean'
+            'force' => 'nullable|boolean',
         ]);
 
         $model = $request->input('model');
@@ -370,7 +379,7 @@ class ForecastController extends Controller
                 'wmape' => null,
             ];
             $details = is_array($summary['details'] ?? null) ? $summary['details'] : [];
-            if (!empty($details)) {
+            if (! empty($details)) {
                 $request->session()->flash('batch_results', $details);
             }
 
@@ -387,11 +396,11 @@ class ForecastController extends Controller
                             'Batch forecast selesai sebagian. Beberapa produk gagal diprediksi.',
                             $metrics
                         ),
-                        'duration' => $duration . 's',
+                        'duration' => $duration.'s',
                         'summary' => $summary,
                         'metrics' => $metrics,
                         'details' => $details,
-                        'output' => $output
+                        'output' => $output,
                     ]);
                 }
 
@@ -402,20 +411,20 @@ class ForecastController extends Controller
                             'Batch forecast berhasil dijalankan.',
                             $metrics
                         ),
-                        'duration' => $duration . 's',
+                        'duration' => $duration.'s',
                         'summary' => $summary,
                         'metrics' => $metrics,
                         'details' => $details,
-                        'output' => $output
+                        'output' => $output,
                     ]);
                 }
 
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Batch forecast gagal diproses.',
-                    'duration' => $duration . 's',
+                    'duration' => $duration.'s',
                     'summary' => $summary,
-                    'output' => $output
+                    'output' => $output,
                 ], 500);
             }
 
@@ -423,28 +432,28 @@ class ForecastController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => $this->formatSuccessMessage(
-                        "Batch forecast berhasil dijalankan dengan model " . strtoupper($model) . ".",
+                        'Batch forecast berhasil dijalankan dengan model '.strtoupper($model).'.',
                         $metrics
                     ),
-                    'duration' => $duration . 's',
+                    'duration' => $duration.'s',
                     'metrics' => $metrics,
-                    'output' => $output
+                    'output' => $output,
                 ]);
             } else {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Batch forecast gagal.',
-                    'output' => $output
+                    'output' => $output,
                 ], 500);
             }
         } catch (\Exception $e) {
-            Log::error('Batch forecast error: ' . $e->getMessage(), [
-                'exception' => $e
+            Log::error('Batch forecast error: '.$e->getMessage(), [
+                'exception' => $e,
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -471,7 +480,7 @@ class ForecastController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Training model selesai.',
-                    'duration' => $duration . 's',
+                    'duration' => $duration.'s',
                     'summary' => $summary,
                     'output' => $output,
                 ]);
@@ -480,17 +489,17 @@ class ForecastController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Training model gagal.',
-                'duration' => $duration . 's',
+                'duration' => $duration.'s',
                 'output' => $output,
             ], 500);
         } catch (\Exception $e) {
-            Log::error('Train model error: ' . $e->getMessage(), [
+            Log::error('Train model error: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -515,13 +524,13 @@ class ForecastController extends Controller
                 'message' => 'Model berhasil dijadikan aktif.',
             ]);
         } catch (\Exception $e) {
-            Log::error('Rollback/set-active error: ' . $e->getMessage(), [
+            Log::error('Rollback/set-active error: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal mengubah model aktif: ' . $e->getMessage(),
+                'message' => 'Gagal mengubah model aktif: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -560,8 +569,9 @@ class ForecastController extends Controller
 
                     $target = $query->orderByDesc('created_at')->first();
 
-                    if (!$target) {
+                    if (! $target) {
                         $skipped++;
+
                         continue;
                     }
 
@@ -582,13 +592,13 @@ class ForecastController extends Controller
                 'skipped' => $skipped,
             ]);
         } catch (\Exception $e) {
-            Log::error('Global override error: ' . $e->getMessage(), [
+            Log::error('Global override error: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal menjalankan global override: ' . $e->getMessage(),
+                'message' => 'Gagal menjalankan global override: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -617,6 +627,7 @@ class ForecastController extends Controller
 
                         if ($histories->isEmpty()) {
                             $skipped++;
+
                             continue;
                         }
 
@@ -642,13 +653,13 @@ class ForecastController extends Controller
                 'skipped' => $skipped,
             ]);
         } catch (\Exception $e) {
-            Log::error('Auto optimize error: ' . $e->getMessage(), [
+            Log::error('Auto optimize error: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal menjalankan auto-optimize: ' . $e->getMessage(),
+                'message' => 'Gagal menjalankan auto-optimize: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -668,18 +679,18 @@ class ForecastController extends Controller
                     'models' => $payload['models'] ?? null,
                     'registry_loaded' => $payload['registry_loaded'] ?? false,
                     'available_models' => $payload['available_models'] ?? [],
-                    'message' => 'Flask AI server is running.'
+                    'message' => 'Flask AI server is running.',
                 ]);
             }
 
             return response()->json([
                 'status' => 'offline',
-                'message' => 'Flask server returned an error.'
+                'message' => 'Flask server returned an error.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'offline',
-                'message' => 'Flask AI server is not reachable. Fast inference requires the AI server online.'
+                'message' => 'Flask AI server is not reachable. Fast inference requires the AI server online.',
             ]);
         }
     }
@@ -702,7 +713,7 @@ class ForecastController extends Controller
 
         $history = $query->first();
 
-        if (!$history && $idRoster !== null && $modelType !== null && $modelType !== '') {
+        if (! $history && $idRoster !== null && $modelType !== null && $modelType !== '') {
             $history = ModelHistory::query()
                 ->where('id_roster', $idRoster)
                 ->whereRaw('LOWER(model_type) = ?', [strtolower($modelType)])
@@ -711,7 +722,7 @@ class ForecastController extends Controller
                 ->first();
         }
 
-        if (!$history && $idRoster !== null) {
+        if (! $history && $idRoster !== null) {
             $history = ModelHistory::query()
                 ->where('id_roster', $idRoster)
                 ->where('is_active', true)
@@ -742,11 +753,12 @@ class ForecastController extends Controller
 
     private function extractBatchSummary(string $output): ?array
     {
-        if (!preg_match('/SUMMARY:\s*(\{.*\})/s', $output, $matches)) {
+        if (! preg_match('/SUMMARY:\s*(\{.*\})/s', $output, $matches)) {
             return null;
         }
 
         $summary = json_decode($matches[1], true);
+
         return is_array($summary) ? $summary : null;
     }
 
@@ -755,11 +767,11 @@ class ForecastController extends Controller
         $parts = [$message];
 
         if (isset($metrics['mae']) && $metrics['mae'] !== null) {
-            $parts[] = 'MAE: ' . rtrim(rtrim(number_format((float) $metrics['mae'], 4, '.', ''), '0'), '.');
+            $parts[] = 'MAE: '.rtrim(rtrim(number_format((float) $metrics['mae'], 4, '.', ''), '0'), '.');
         }
 
         if (isset($metrics['wmape']) && $metrics['wmape'] !== null) {
-            $parts[] = 'WMAPE: ' . rtrim(rtrim(number_format((float) $metrics['wmape'], 4, '.', ''), '0'), '.');
+            $parts[] = 'WMAPE: '.rtrim(rtrim(number_format((float) $metrics['wmape'], 4, '.', ''), '0'), '.');
         }
 
         return implode(' | ', $parts);

@@ -32,7 +32,7 @@ class ModelHistory extends Model
     {
         $foreignKey = Schema::hasColumn($this->getTable(), 'produk_id') ? 'produk_id' : 'id_roster';
 
-        return $this->belongsTo(Produk::class, $foreignKey, (new Produk())->getKeyName());
+        return $this->belongsTo(Produk::class, $foreignKey, (new Produk)->getKeyName());
     }
 
     public function scopeActive($query)

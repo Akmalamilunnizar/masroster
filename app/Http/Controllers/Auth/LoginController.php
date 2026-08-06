@@ -42,14 +42,13 @@ class LoginController extends Controller
     /**
      * The user has been authenticated.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  mixed  $user
      * @return mixed
      */
     protected function authenticated(Request $request, $user)
     {
         // Check user role and redirect accordingly
-        if ($user->user === 'Admin') {
+        if ($user->isAdmin()) {
             return redirect()->intended('/admin/dashboard');
         } else {
             return redirect()->intended('/tokodashboard');

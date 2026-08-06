@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -81,14 +81,14 @@ return new class extends Migration
             });
 
             // Recreate triggers
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk
                 FOR EACH ROW BEGIN
                     UPDATE produk SET stock = stock + NEW.QtyMasuk WHERE IdRoster = NEW.IdRoster;
                 END;
             SQL);
 
-            DB::statement(<<<SQL
+            DB::statement(<<<'SQL'
                 CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar
                 FOR EACH ROW BEGIN
                     UPDATE produk SET stock = stock - NEW.QtyKeluar WHERE IdRoster = NEW.IdRoster;
@@ -123,13 +123,13 @@ return new class extends Migration
                 $table->timestamps();
             });
 
-            DB::unprepared(<<<SQL
+            DB::unprepared(<<<'SQL'
                 CREATE TRIGGER stokMasuk AFTER INSERT ON detail_barangmasuk BEGIN
                     UPDATE produk SET stock = stock + NEW.QtyMasuk WHERE IdRoster = NEW.IdRoster;
                 END;
             SQL);
 
-            DB::unprepared(<<<SQL
+            DB::unprepared(<<<'SQL'
                 CREATE TRIGGER stokKeluar AFTER INSERT ON detail_barangkeluar BEGIN
                     UPDATE produk SET stock = stock - NEW.QtyKeluar WHERE IdRoster = NEW.IdRoster;
                 END;

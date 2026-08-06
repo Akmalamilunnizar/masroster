@@ -4,18 +4,14 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\Pivot;
-
-use Laravel\Passport\HasApiTokens;
-use Laratrust\Contracts\LaratrustUser;
+use Illuminate\Notifications\Notifiable;
 use Laratrust\Traits\HasRolesAndPermissions;
-
+use Laravel\Passport\HasApiTokens;
 
 class RoleUser extends Pivot
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRolesAndPermissions;
+    use HasApiTokens, HasFactory, HasRolesAndPermissions, Notifiable;
 
     protected $table = 'role_user';
 
@@ -27,7 +23,7 @@ class RoleUser extends Pivot
     protected $fillable = [
         'role_id',
         'user_id',
-        'user_type'
+        'user_type',
     ];
 
     /**
@@ -55,6 +51,7 @@ class RoleUser extends Pivot
     {
         return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id', 'id', 'username');
     }
+
     public function role()
     {
         return $this->hasMany(Role::class, 'role_id');

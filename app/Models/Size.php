@@ -10,14 +10,16 @@ class Size extends Model
     use HasFactory;
 
     protected $table = 'size';
+
     protected $primaryKey = 'id_ukuran';
+
     public $timestamps = false;
 
     protected $fillable = [
         'nama',
         'panjang',
         'lebar',
-        'id_satuan'
+        'id_satuan',
     ];
 
     // Satuan model has been removed; keep method for backward compatibility returning null relation
@@ -29,7 +31,7 @@ class Size extends Model
     public function produks()
     {
         return $this->belongsToMany(Produk::class, 'produk_size', 'id_ukuran', 'IdProduk')
-                    ->withPivot('harga')
-                    ->withTimestamps();
+            ->withPivot('harga')
+            ->withTimestamps();
     }
-} 
+}

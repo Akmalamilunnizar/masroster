@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ class ParameterReport extends Model
         'parameter',
         'normal_range',
         'weekly_status',
-        'information'
+        'information',
     ];
 
     protected $table = 'parameter_reports';
@@ -19,4 +20,3 @@ class ParameterReport extends Model
         return $this->limit(10)->orderBy('id', 'DESC')->get();
     }
 }
-

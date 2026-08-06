@@ -540,6 +540,12 @@
                             <div>Forecasting</div>
                         </a>
                     </li>
+                    <li class="menu-item {{ request()->is('admin/keywords*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.keywords.index') }}" class="menu-link">
+                            <i class='menu-icon tf-icons bx bx-search-alt'></i>
+                            <div>Riset Kata Kunci</div>
+                        </a>
+                    </li>
                     <li class="menu-item {{ request()->is('admin/detail-harga*') ? 'active' : '' }}">
                         <a href="{{ route('detailharga.index') }}" class="menu-link">
                             <i class='menu-icon tf-icons bx bx-dollar-circle'></i>

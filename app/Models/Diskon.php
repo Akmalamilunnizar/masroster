@@ -10,14 +10,16 @@ class Diskon extends Model
     use HasFactory;
 
     protected $table = 'diskon';
+
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = [
         'id',
         'nama',
         'description',
-        'persentase'
+        'persentase',
     ];
 
     // Relationship with Produk
@@ -25,4 +27,4 @@ class Diskon extends Model
     {
         return $this->hasMany(Produk::class, 'diskon', 'id');
     }
-} 
+}

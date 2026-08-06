@@ -10,8 +10,11 @@ class Transaksi extends Model
     use HasFactory;
 
     protected $table = 'transaksi';
+
     protected $primaryKey = 'IdTransaksi';  // <- PENTING: Ini harus sesuai nama kolom PK di DB
+
     public $incrementing = false;
+
     // protected $keyType = 'string';        // Jika IdSatuan bertipe VARCHAR
     public $timestamps = false;
 
@@ -67,12 +70,8 @@ class Transaksi extends Model
 
     public function produk()
     {
-        return $this->belongsToMany(Produk::class, 'detail_transaksi', 'IdTransaksi', (new Produk())->getKeyName())
-            ->withPivot(['QtyProduk', 'SubTotal']) // alias pivot
-            // ->withTimestamps()
-        ;
+        return $this->belongsToMany(Produk::class, 'detail_transaksi', 'IdTransaksi', (new Produk)->getKeyName())
+            ->withPivot(['QtyProduk', 'SubTotal']); // alias pivot
+        // ->withTimestamps()
     }
-
-
-
 }

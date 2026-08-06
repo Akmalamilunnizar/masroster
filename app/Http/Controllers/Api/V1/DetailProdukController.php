@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\View\View;
-use Illuminate\Support\Facades\DB; // Jika Anda menggunakan Query Builder
 use App\Models\Produk;
-use App\Models\Size;
+use Illuminate\Support\Facades\DB; // Jika Anda menggunakan Query Builder
+use Illuminate\View\View;
 
 class DetailProdukController extends Controller
 {
@@ -30,7 +28,7 @@ class DetailProdukController extends Controller
             'produk' => $produk,
             'userPhone' => $userPhone,
             'description' => $description,
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
@@ -46,7 +44,7 @@ class DetailProdukController extends Controller
             ->flatMap(function ($item) {
                 return explode(',', $item);
             })
-            ->map(fn($item) => trim($item))
+            ->map(fn ($item) => trim($item))
             ->unique()
             ->values()
             ->toArray();
